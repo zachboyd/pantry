@@ -95,11 +95,11 @@ Always consult `src/generated/database.ts` when working with database operations
 
 ```typescript
 // ❌ Bad
-const insertData: any = { chat_id: '123', user_id: '456' };
+const insertData: any = { household_id: '123', user_id: '456' };
 
 // ✅ Good
 const insertData: Insertable<TypingIndicator> = {
-  chat_id: '123',
+  household_id: '123',
   user_id: '456',
 };
 ```

@@ -96,7 +96,7 @@ Table user {
 }
 
 // ================================================================
-// CHAT & COMMUNICATION
+// HOUSEHOLD & COMMUNICATION
 // ================================================================
 
 // Define message type enum
@@ -108,44 +108,86 @@ Enum message_type {
   task_created [note: 'Task creation notification']
 }
 
-Table chat {
-  id uuid [primary key, note: 'Unique chat identifier']
-  name varchar(200) [not null, note: 'Chat name/title']
-  description text [null, note: 'Chat description']
-  created_by uuid [ref: > user.id, not null, note: 'Chat creator']
+// Define household role enum
+Enum household_role {
+  manager [note: 'Household manager - can manage members']
+  member [note: 'Household member - can participate']
+}
+
+Table household {
+  id uuid [primary key, note: 'Unique household identifier']
+  name varchar(200) [not null, note: 'Household name (e.g., "The Smith Family")']
+  description text [null, note: 'Optional household description']
+  created_by uuid [ref: > user.id, not null, note: 'Household creator']
   created_at timestamptz [default: `now()`, not null]
   updated_at timestamptz [default: `now()`, not null]
   
   Note: '''
-  Central chat/conversation entity
-  Supports any type of collaborative conversation or planning.
+  Central organizing unit for meal planning and communication.
+  Represents a family, household, or group that shares meals and planning.
+  '''
+}
+
+Table household_member {
+  id uuid [primary key, note: 'Unique membership record identifier']
+  household_id uuid [ref: > household.id, not null, note: 'Associated household']
+  user_id uuid [ref: > user.id, not null, note: 'Member user']
+  role household_role [not null, default: 'member', note: 'Member role in household']
+  joined_at timestamptz [default: `now()`, not null, note: 'When user joined household']
+  
+  indexes {
+    (household_id, user_id) [unique, note: 'One membership per user per household']
+    (user_id) [note: 'User household lookup']
+  }
+  
+  Note: '''
+  Membership relationship between users and households.
+  Users can belong to multiple households (family, friends, etc.).
+  '''
+}
+
+Table pantry {
+  id uuid [primary key, note: 'Unique pantry identifier']
+  household_id uuid [ref: > household.id, not null, note: 'Associated household']
+  name varchar(200) [not null, note: 'Pantry name/location (e.g., "Main Kitchen", "Garage Pantry")']
+  description text [null, note: 'Optional pantry description']
+  created_at timestamptz [default: `now()`, not null]
+  updated_at timestamptz [default: `now()`, not null]
+  
+  indexes {
+    (household_id) [note: 'Household pantry lookup']
+  }
+  
+  Note: '''
+  Pantry storage areas within a household.
+  Contains inventory, meal plans, shopping lists, etc.
   '''
 }
 
 Table message {
   id uuid [primary key, note: 'Unique message identifier']
-  chat_id uuid [ref: > chat.id, not null, note: 'Associated chat/conversation']
+  household_id uuid [ref: > household.id, not null, note: 'Associated household']
   user_id uuid [ref: > user.id, null, note: 'Message sender (null for AI messages)']
   content text [not null, note: 'Message content (max 4000 chars)']
   message_type message_type [not null, note: 'Type of message']
-  metadata jsonb [null, note: 'Message metadata (reactions, replies, location)']
+  metadata jsonb [null, note: 'Message metadata (reactions, replies, context)']
   created_at timestamptz [default: `now()`, not null]
   updated_at timestamptz [default: `now()`, not null]
   
   indexes {
-    (chat_id, created_at) [note: 'Chat history pagination']
+    (household_id, created_at) [note: 'Household conversation history']
   }
   
   Note: '''
-  Chat with support for different message types.
-  Rich metadata support for reactions, threading, and location sharing.
+  All household communication in a single conversation stream.
+  Supports different message types including AI assistance.
   AI messages have null user_id.
   '''
 }
 
 Table typing_indicator {
   id uuid [primary key, note: 'Unique indicator identifier']
-  chat_id uuid [ref: > chat.id, not null, note: 'Associated chat/conversation']
+  household_id uuid [ref: > household.id, not null, note: 'Associated household']
   user_id uuid [ref: > user.id, not null, note: 'Typing user']
   is_typing boolean [default: true, not null, note: 'Current typing status']
   last_typing_at timestamptz [default: `now()`, not null, note: 'Last typing activity']
@@ -153,12 +195,12 @@ Table typing_indicator {
   created_at timestamptz [default: `now()`, not null]
   
   indexes {
-    (chat_id, user_id) [unique, note: 'One indicator per user per chat']
-    (chat_id, is_typing, expires_at) [note: 'Real-time indicator queries']
+    (household_id, user_id) [unique, note: 'One indicator per user per household']
+    (household_id, is_typing, expires_at) [note: 'Real-time indicator queries']
   }
   
   Note: '''
-  Real-time typing indicators for chat.
+  Real-time typing indicators for household conversations.
   Automatic expiration for cleanup and performance.
   '''
 }
@@ -177,7 +219,5 @@ Table message_read {
   
   Note: '''
   Message read tracking for read receipts and unread counts.
-  Enables coordination and ensures critical information is seen.
-  Privacy settings control read receipt visibility.
   '''
 }

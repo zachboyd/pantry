@@ -9,6 +9,8 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type HouseholdRole = "manager" | "member";
+
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
 export type Json = JsonValue;
@@ -73,15 +75,6 @@ export interface AuthVerification {
   value: string;
 }
 
-export interface Chat {
-  created_at: Generated<Timestamp>;
-  created_by: string;
-  description: string | null;
-  id: string;
-  name: string;
-  updated_at: Generated<Timestamp>;
-}
-
 export interface CronJob {
   active: Generated<boolean>;
   command: string;
@@ -107,10 +100,27 @@ export interface CronJobRunDetails {
   username: string | null;
 }
 
+export interface Household {
+  created_at: Generated<Timestamp>;
+  created_by: string;
+  description: string | null;
+  id: string;
+  name: string;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface HouseholdMember {
+  household_id: string;
+  id: string;
+  joined_at: Generated<Timestamp>;
+  role: Generated<HouseholdRole>;
+  user_id: string;
+}
+
 export interface Message {
-  chat_id: string;
   content: string;
   created_at: Generated<Timestamp>;
+  household_id: string;
   id: string;
   message_type: MessageType;
   metadata: Json | null;
@@ -125,10 +135,19 @@ export interface MessageRead {
   user_id: string;
 }
 
+export interface Pantry {
+  created_at: Generated<Timestamp>;
+  description: string | null;
+  household_id: string;
+  id: string;
+  name: string;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface TypingIndicator {
-  chat_id: string;
   created_at: Generated<Timestamp>;
   expires_at: Generated<Timestamp>;
+  household_id: string;
   id: string;
   is_typing: Generated<boolean>;
   last_typing_at: Generated<Timestamp>;
@@ -157,11 +176,13 @@ export interface DB {
   auth_session: AuthSession;
   auth_user: AuthUser;
   auth_verification: AuthVerification;
-  chat: Chat;
   "cron.job": CronJob;
   "cron.job_run_details": CronJobRunDetails;
+  household: Household;
+  household_member: HouseholdMember;
   message: Message;
   message_read: MessageRead;
+  pantry: Pantry;
   typing_indicator: TypingIndicator;
   user: User;
 }

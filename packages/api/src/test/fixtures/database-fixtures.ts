@@ -71,7 +71,7 @@ export class DatabaseFixtures {
   ): Insertable<Message> {
     return {
       id: 'test-message-id',
-      chat_id: 'test-chat-id',
+      household_id: 'test-household-id',
       user_id: 'test-user-id',
       content: 'Test message content',
       message_type: 'text',
@@ -89,7 +89,7 @@ export class DatabaseFixtures {
     const baseMessage = this.createMessage();
     return {
       id: baseMessage.id || 'test-message-id',
-      chat_id: baseMessage.chat_id || 'test-chat-id',
+      household_id: baseMessage.household_id || 'test-household-id',
       user_id: baseMessage.user_id || 'test-user-id',
       content: baseMessage.content || 'Test message content',
       message_type: baseMessage.message_type || 'text',
@@ -108,7 +108,7 @@ export class DatabaseFixtures {
   ): Insertable<TypingIndicator> {
     return {
       id: 'test-typing-indicator-id',
-      chat_id: 'test-chat-id',
+      household_id: 'test-household-id',
       user_id: 'test-user-id',
       ...overrides,
     };
@@ -126,7 +126,7 @@ export class DatabaseFixtures {
 
     return {
       id: baseIndicator.id || 'test-typing-indicator-id',
-      chat_id: baseIndicator.chat_id || 'test-chat-id',
+      household_id: baseIndicator.household_id || 'test-household-id',
       user_id: baseIndicator.user_id || 'test-user-id',
       created_at: now,
       expires_at: expiresAt,

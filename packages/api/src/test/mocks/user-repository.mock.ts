@@ -7,7 +7,7 @@ export type UserRepositoryMockType = UserRepository & {
   getUserById: ReturnType<typeof vi.fn>;
   updateUser: ReturnType<typeof vi.fn>;
   createUser: ReturnType<typeof vi.fn>;
-  findChatAIUser: ReturnType<typeof vi.fn>;
+  findHouseholdAIUser: ReturnType<typeof vi.fn>;
 };
 
 /**
@@ -23,7 +23,7 @@ export class UserRepositoryMock {
       getUserById: vi.fn(),
       updateUser: vi.fn(),
       createUser: vi.fn(),
-      findChatAIUser: vi.fn(),
+      findHouseholdAIUser: vi.fn(),
     } as UserRepositoryMockType;
 
     return mockRepository;

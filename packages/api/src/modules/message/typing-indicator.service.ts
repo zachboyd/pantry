@@ -20,7 +20,7 @@ export class TypingIndicatorServiceImpl implements TypingIndicatorService {
     typingIndicator: Insertable<TypingIndicator>,
   ): Promise<TypingIndicator> {
     this.logger.log(
-      `Processing typing indicator for user ${typingIndicator.user_id} in chat ${typingIndicator.chat_id}`,
+      `Processing typing indicator for user ${typingIndicator.user_id} in household ${typingIndicator.household_id}`,
     );
 
     try {

@@ -62,10 +62,10 @@ describe('TypingIndicatorService', () => {
       );
     });
 
-    it('should handle upsert conflicts on chat_id and user_id composite key', async () => {
+    it('should handle upsert conflicts on household_id and user_id composite key', async () => {
       // Arrange
       const typingIndicatorInput = DatabaseFixtures.createTypingIndicator({
-        chat_id: 'test-chat',
+        household_id: 'test-household',
         user_id: 'test-user',
       });
       const savedTypingIndicator =
@@ -88,9 +88,9 @@ describe('TypingIndicatorService', () => {
       // Arrange
       // Simulate an update with new typing state
       const updatedIndicator = DatabaseFixtures.createTypingIndicator({
-        chat_id: 'test-chat',
+        household_id: 'test-household',
         user_id: 'test-user',
-        id: 'different-id', // Different ID but same chat_id/user_id
+        id: 'different-id', // Different ID but same household_id/user_id
       });
 
       const savedIndicator = DatabaseFixtures.createTypingIndicatorResult();
@@ -143,7 +143,7 @@ describe('TypingIndicatorService', () => {
     it('should preserve all typing indicator fields', async () => {
       // Arrange
       const typingIndicatorInput = DatabaseFixtures.createTypingIndicator({
-        chat_id: 'specific-chat',
+        household_id: 'specific-household',
         user_id: 'specific-user',
         id: 'specific-id',
       });
@@ -168,7 +168,7 @@ describe('TypingIndicatorService', () => {
         .spyOn(Logger.prototype, 'log')
         .mockImplementation(() => {});
       const typingIndicatorInput = DatabaseFixtures.createTypingIndicator({
-        chat_id: 'test-chat',
+        household_id: 'test-household',
         user_id: 'test-user',
       });
       const savedIndicator = DatabaseFixtures.createTypingIndicatorResult();
@@ -181,7 +181,7 @@ describe('TypingIndicatorService', () => {
       // Assert
       expect(logSpy).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Processing typing indicator for user test-user in chat test-chat',
+          'Processing typing indicator for user test-user in household test-household',
         ),
       );
       expect(logSpy).toHaveBeenCalledWith(

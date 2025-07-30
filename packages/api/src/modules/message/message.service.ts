@@ -18,7 +18,7 @@ export class MessageServiceImpl implements MessageService {
   ) {}
 
   async save(message: Insertable<Message>): Promise<Message> {
-    this.logger.log(`Saving message for chat ${message.chat_id}`);
+    this.logger.log(`Saving message for household ${message.household_id}`);
 
     try {
       // Save message using repository

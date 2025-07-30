@@ -38,11 +38,11 @@ export interface UserRepository {
   createUser(userData: Insertable<User>): Promise<UserRecord>;
 
   /**
-   * Find the AI user for a specific chat
-   * @param chatId - Chat ID
+   * Find the AI user for a specific household
+   * @param householdId - Household ID
    * @returns Promise with AI user record or null
    */
-  findChatAIUser(chatId: string): Promise<UserRecord | null>;
+  findHouseholdAIUser(householdId: string): Promise<UserRecord | null>;
 }
 
 /**

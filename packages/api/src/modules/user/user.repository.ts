@@ -125,33 +125,38 @@ export class UserRepositoryImpl implements UserRepository {
     }
   }
 
-  async findChatAIUser(chatId: string): Promise<UserRecord | null> {
-    this.logger.log(`Finding AI user for chat: ${chatId}`);
+  async findHouseholdAIUser(householdId: string): Promise<UserRecord | null> {
+    this.logger.log(`Finding AI user for household: ${householdId}`);
 
     const db = this.databaseService.getConnection();
 
     try {
-      // Find AI user by looking for AI messages in this specific chat
+      // Find AI user by looking for AI messages in this specific household
       // Since AI users don't have auth_user_id, we can identify them that way
       const aiUser = await db
         .selectFrom('user')
         .innerJoin('message', 'user.id', 'message.user_id')
         .selectAll('user')
-        .where('message.chat_id', '=', chatId)
+        .where('household_id', '=', householdId)
         .where('message.message_type', '=', 'ai')
         .where('user.auth_user_id', 'is', null)
         .distinctOn('user.id')
         .executeTakeFirst();
 
       if (!aiUser) {
-        this.logger.warn(`No AI user found for chat: ${chatId}`);
+        this.logger.warn(`No AI user found for household: ${householdId}`);
         return null;
       }
 
-      this.logger.debug(`Found AI user ${aiUser.id} for chat ${chatId}`);
+      this.logger.debug(
+        `Found AI user ${aiUser.id} for household ${householdId}`,
+      );
       return aiUser as UserRecord;
     } catch (error) {
-      this.logger.error(`Failed to find AI user for chat ${chatId}:`, error);
+      this.logger.error(
+        `Failed to find AI user for household ${householdId}:`,
+        error,
+      );
       throw error;
     }
   }

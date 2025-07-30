@@ -1,15 +1,21 @@
 import { Kysely, sql } from 'kysely';
 
 export async function up(db: Kysely<any>): Promise<void> {
+  // Create household role enum
+  await db.schema
+    .createType('household_role')
+    .asEnum(['manager', 'member'])
+    .execute();
+
   // Create message_type enum
   await db.schema
     .createType('message_type')
     .asEnum(['text', 'system', 'ai', 'location', 'task_created'])
     .execute();
 
-  // Create chat table
+  // Create household table
   await db.schema
-    .createTable('chat')
+    .createTable('household')
     .addColumn('id', 'uuid', (col) => col.primaryKey().notNull())
     .addColumn('name', 'varchar(200)', (col) => col.notNull())
     .addColumn('description', 'text')
@@ -24,12 +30,47 @@ export async function up(db: Kysely<any>): Promise<void> {
     )
     .execute();
 
+  // Create household_member table
+  await db.schema
+    .createTable('household_member')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().notNull())
+    .addColumn('household_id', 'uuid', (col) =>
+      col.notNull().references('household.id').onDelete('cascade'),
+    )
+    .addColumn('user_id', 'uuid', (col) =>
+      col.notNull().references('user.id').onDelete('cascade'),
+    )
+    .addColumn('role', sql`household_role`, (col) =>
+      col.notNull().defaultTo('member'),
+    )
+    .addColumn('joined_at', 'timestamptz', (col) =>
+      col.notNull().defaultTo(sql`now()`),
+    )
+    .execute();
+
+  // Create pantry table
+  await db.schema
+    .createTable('pantry')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().notNull())
+    .addColumn('household_id', 'uuid', (col) =>
+      col.notNull().references('household.id').onDelete('cascade'),
+    )
+    .addColumn('name', 'varchar(200)', (col) => col.notNull())
+    .addColumn('description', 'text')
+    .addColumn('created_at', 'timestamptz', (col) =>
+      col.notNull().defaultTo(sql`now()`),
+    )
+    .addColumn('updated_at', 'timestamptz', (col) =>
+      col.notNull().defaultTo(sql`now()`),
+    )
+    .execute();
+
   // Create message table
   await db.schema
     .createTable('message')
     .addColumn('id', 'uuid', (col) => col.primaryKey().notNull())
-    .addColumn('chat_id', 'uuid', (col) =>
-      col.notNull().references('chat.id').onDelete('cascade'),
+    .addColumn('household_id', 'uuid', (col) =>
+      col.notNull().references('household.id').onDelete('cascade'),
     )
     .addColumn('user_id', 'uuid', (col) =>
       col.references('user.id').onDelete('cascade'),
@@ -64,8 +105,8 @@ export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
     .createTable('typing_indicator')
     .addColumn('id', 'uuid', (col) => col.primaryKey().notNull())
-    .addColumn('chat_id', 'uuid', (col) =>
-      col.notNull().references('chat.id').onDelete('cascade'),
+    .addColumn('household_id', 'uuid', (col) =>
+      col.notNull().references('household.id').onDelete('cascade'),
     )
     .addColumn('user_id', 'uuid', (col) =>
       col.notNull().references('user.id').onDelete('cascade'),
@@ -84,9 +125,28 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   // Create indexes
   await db.schema
-    .createIndex('idx_message_chat_created')
+    .createIndex('idx_household_member_unique')
+    .on('household_member')
+    .columns(['household_id', 'user_id'])
+    .unique()
+    .execute();
+
+  await db.schema
+    .createIndex('idx_household_member_user')
+    .on('household_member')
+    .column('user_id')
+    .execute();
+
+  await db.schema
+    .createIndex('idx_pantry_household')
+    .on('pantry')
+    .column('household_id')
+    .execute();
+
+  await db.schema
+    .createIndex('idx_message_household_created')
     .on('message')
-    .columns(['chat_id', 'created_at'])
+    .columns(['household_id', 'created_at'])
     .execute();
 
   await db.schema
@@ -111,14 +171,14 @@ export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
     .createIndex('idx_typing_indicator_unique')
     .on('typing_indicator')
-    .columns(['chat_id', 'user_id'])
+    .columns(['household_id', 'user_id'])
     .unique()
     .execute();
 
   await db.schema
     .createIndex('idx_typing_indicator_active')
     .on('typing_indicator')
-    .columns(['chat_id', 'is_typing', 'expires_at'])
+    .columns(['household_id', 'is_typing', 'expires_at'])
     .execute();
 }
 
@@ -127,8 +187,11 @@ export async function down(db: Kysely<any>): Promise<void> {
   await db.schema.dropTable('typing_indicator').ifExists().execute();
   await db.schema.dropTable('message_read').ifExists().execute();
   await db.schema.dropTable('message').ifExists().execute();
-  await db.schema.dropTable('chat').ifExists().execute();
+  await db.schema.dropTable('pantry').ifExists().execute();
+  await db.schema.dropTable('household_member').ifExists().execute();
+  await db.schema.dropTable('household').ifExists().execute();
 
   // Drop enums
   await db.schema.dropType('message_type').ifExists().execute();
+  await db.schema.dropType('household_role').ifExists().execute();
 }

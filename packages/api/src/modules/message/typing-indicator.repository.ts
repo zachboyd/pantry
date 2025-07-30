@@ -21,7 +21,7 @@ export class TypingIndicatorRepositoryImpl
     typingIndicator: Insertable<TypingIndicator>,
   ): Promise<TypingIndicator> {
     this.logger.log(
-      `Saving typing indicator for user ${typingIndicator.user_id} in chat ${typingIndicator.chat_id}`,
+      `Saving typing indicator for user ${typingIndicator.user_id} in household ${typingIndicator.household_id}`,
     );
 
     const db = this.databaseService.getConnection();
@@ -31,7 +31,7 @@ export class TypingIndicatorRepositoryImpl
         .insertInto('typing_indicator')
         .values({
           id: typingIndicator.id || uuidv4(), // Generate UUID if not provided
-          chat_id: typingIndicator.chat_id,
+          household_id: typingIndicator.household_id,
           user_id: typingIndicator.user_id,
           is_typing: typingIndicator.is_typing,
           // Let database handle timestamps if not provided
@@ -46,7 +46,7 @@ export class TypingIndicatorRepositoryImpl
           }),
         })
         .onConflict((oc) =>
-          oc.columns(['chat_id', 'user_id']).doUpdateSet({
+          oc.columns(['household_id', 'user_id']).doUpdateSet({
             is_typing: typingIndicator.is_typing,
             // Always update last_typing_at to current timestamp for fresh data
             last_typing_at: typingIndicator.last_typing_at || new Date().toISOString(),

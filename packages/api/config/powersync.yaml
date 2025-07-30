@@ -31,18 +31,22 @@ sync_rules:
           # Users managed by this user (family members)
           - SELECT * FROM "user" WHERE managed_by = bucket.user_id
 
-      # Version 1.0 - Current standard chats data bucket  
-      user_chats_v1:
+      # Version 1.0 - Current standard households data bucket  
+      user_households_v1:
         parameters: 
-          - SELECT DISTINCT chat_id FROM message WHERE user_id = request.user_id()
+          - SELECT household_id FROM household_member WHERE user_id = request.user_id()
             AND request.parameters() ->> 'schema_version' = '1'
         data:
-          # Chats user has participated in
-          - SELECT * FROM chat WHERE id = bucket.chat_id
-          # Messages in accessible chats
-          - SELECT * FROM message WHERE chat_id = bucket.chat_id
-          # Typing indicators for accessible chats
-          - SELECT * FROM typing_indicator WHERE chat_id = bucket.chat_id
+          # Households user is member of
+          - SELECT * FROM household WHERE id = bucket.household_id
+          # Household memberships for accessible households
+          - SELECT * FROM household_member WHERE household_id = bucket.household_id
+          # Pantries in accessible households
+          - SELECT * FROM pantry WHERE household_id = bucket.household_id
+          # Messages in accessible households
+          - SELECT * FROM message WHERE household_id = bucket.household_id
+          # Typing indicators for accessible households
+          - SELECT * FROM typing_indicator WHERE household_id = bucket.household_id
 
       # Version 1.0 - Current standard message reads
       user_message_reads_v1:
@@ -64,14 +68,14 @@ client_auth:
   # Format: "1", "2", "3", etc.
   #
   # Current Version Strategy:
-  # - v1: Current chat-based sync rules (all existing clients)
+  # - v1: Current household-based sync rules (all existing clients)
   # - Future versions can be added with optimized sync rules
   #
   # Usage in sync rules:
   # - request.parameters() ->> 'schema_version' = '1' filters for v1 clients
   # - Each bucket definition includes schema version filtering
   # - Clients must send schema_version parameter to receive data
-  # - Chat access is determined by message participation
+  # - Household access is determined by explicit membership
   # - Future: Add new bucket definitions for newer schema versions
 
 # Settings for telemetry reporting

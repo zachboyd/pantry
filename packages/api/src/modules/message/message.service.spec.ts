@@ -51,7 +51,7 @@ describe('MessageService', () => {
       // Arrange
       const messageToSave = DatabaseFixtures.createMessage({
         content: 'Test message',
-        chat_id: 'test-chat-id',
+        household_id: 'test-household-id',
         user_id: 'test-user-id',
         message_type: 'text',
       });
@@ -59,7 +59,7 @@ describe('MessageService', () => {
       const savedMessage = DatabaseFixtures.createMessageResult({
         id: 'saved-message-id',
         content: 'Test message',
-        chat_id: 'test-chat-id',
+        household_id: 'test-household-id',
         user_id: 'test-user-id',
         message_type: 'text',
       });
@@ -80,7 +80,7 @@ describe('MessageService', () => {
       // Arrange
       const messageInput = DatabaseFixtures.createMessage({
         content: 'Test content',
-        chat_id: 'chat-123',
+        household_id: 'household-123',
         user_id: 'user-456',
         message_type: 'text',
       });

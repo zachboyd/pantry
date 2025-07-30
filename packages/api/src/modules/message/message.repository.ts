@@ -16,7 +16,7 @@ export class MessageRepositoryImpl implements MessageRepository {
   ) {}
 
   async save(message: Insertable<Message>): Promise<Message> {
-    this.logger.log(`Saving message for chat ${message.chat_id}`);
+    this.logger.log(`Saving message for household ${message.household_id}`);
 
     const db = this.databaseService.getConnection();
 
@@ -28,7 +28,7 @@ export class MessageRepositoryImpl implements MessageRepository {
         .values({
           id: message.id || uuidv4(), // Generate UUID if not provided
           content: message.content,
-          chat_id: message.chat_id,
+          household_id: message.household_id,
           message_type: message.message_type,
           user_id: message.user_id,
           ...(message.metadata && { metadata: message.metadata as any }),
@@ -56,9 +56,9 @@ export class MessageRepositoryImpl implements MessageRepository {
     }
   }
 
-  async getRecentMessages(chatId: string, limit: number): Promise<Message[]> {
+  async getRecentMessages(householdId: string, limit: number): Promise<Message[]> {
     this.logger.debug(
-      `Getting recent messages for chat ${chatId}, limit: ${limit}`,
+      `Getting recent messages for household ${householdId}, limit: ${limit}`,
     );
 
     const db = this.databaseService.getConnection();
@@ -68,7 +68,7 @@ export class MessageRepositoryImpl implements MessageRepository {
       const messages = await db
         .selectFrom('message')
         .selectAll()
-        .where('chat_id', '=', chatId)
+        .where('household_id', '=', householdId)
         .orderBy('created_at', 'desc')
         .limit(limit)
         .execute();
@@ -80,7 +80,7 @@ export class MessageRepositoryImpl implements MessageRepository {
       return chronologicalMessages as unknown as Message[];
     } catch (error) {
       this.logger.error(
-        `Failed to get recent messages for chat ${chatId}:`,
+        `Failed to get recent messages for household ${householdId}:`,
         error,
       );
       return [];

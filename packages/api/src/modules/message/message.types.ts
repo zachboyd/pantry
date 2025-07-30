@@ -13,12 +13,12 @@ export interface MessageRepository {
   save(message: Insertable<Message>): Promise<Message>;
 
   /**
-   * Get recent messages for a chat
-   * @param chatId - Chat ID to get messages for
+   * Get recent messages for a household
+   * @param householdId - Household ID to get messages for
    * @param limit - Maximum number of messages to return
    * @returns Promise with recent messages in chronological order
    */
-  getRecentMessages(chatId: string, limit: number): Promise<Message[]>;
+  getRecentMessages(householdId: string, limit: number): Promise<Message[]>;
 }
 
 /**
@@ -38,7 +38,7 @@ export interface MessageService {
  */
 export interface TypingIndicatorRepository {
   /**
-   * Save a typing indicator to the database using upsert on [chat_id, user_id]
+   * Save a typing indicator to the database using upsert on [household_id, user_id]
    * @param typingIndicator - Typing indicator data to save
    * @returns Promise with the saved typing indicator
    */
@@ -50,7 +50,7 @@ export interface TypingIndicatorRepository {
  */
 export interface TypingIndicatorService {
   /**
-   * Save a typing indicator to the database using upsert on [chat_id, user_id]
+   * Save a typing indicator to the database using upsert on [household_id, user_id]
    * @param typingIndicator - Typing indicator data to save
    * @returns Promise with the saved typing indicator
    */
