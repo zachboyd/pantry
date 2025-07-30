@@ -1,0 +1,55 @@
+import type { User } from '../../generated/database.js';
+import type { Insertable, Selectable, Updateable } from 'kysely';
+
+// Runtime type for User queries - what Kysely actually returns
+export type UserRecord = Selectable<User>;
+
+/**
+ * Interface for User repository operations (pure data access)
+ */
+export interface UserRepository {
+  /**
+   * Get user by auth user ID
+   * @param authUserId - Auth service user ID
+   * @returns Promise with user record or null
+   */
+  getUserByAuthId(authUserId: string): Promise<UserRecord | null>;
+
+  /**
+   * Get user by ID
+   * @param id - User ID
+   * @returns Promise with user record or null
+   */
+  getUserById(id: string): Promise<UserRecord | null>;
+
+  /**
+   * Update user data
+   * @param id - User ID
+   * @param userData - User data to update
+   * @returns Promise with updated user record
+   */
+  updateUser(id: string, userData: Updateable<User>): Promise<UserRecord>;
+
+  /**
+   * Create a new user
+   * @param userData - User data to create
+   * @returns Promise with created user record
+   */
+  createUser(userData: Insertable<User>): Promise<UserRecord>;
+
+  /**
+   * Find the AI user for a specific chat
+   * @param chatId - Chat ID
+   * @returns Promise with AI user record or null
+   */
+  findChatAIUser(chatId: string): Promise<UserRecord | null>;
+}
+
+/**
+ * Interface for User service operations (business logic)
+ */
+export interface UserService {
+  getUserByAuthId(authUserId: string): Promise<UserRecord | null>;
+  getUserById(id: string): Promise<UserRecord | null>;
+  updateUser(id: string, userData: Updateable<User>): Promise<UserRecord>;
+}

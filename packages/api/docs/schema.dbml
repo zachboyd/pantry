@@ -1,0 +1,183 @@
+// Pantry Database Schema
+// DBML (Database Markup Language) specification
+// 
+// This file serves as the single source of truth for the database design.
+// 
+// Generate visual diagrams: https://dbdiagram.io/
+// Generate documentation: https://dbdocs.io/
+
+Project pantry {
+  database_type: 'PostgreSQL'
+  Note: 'Pantry - Meal planning that works'
+}
+
+// ================================================================
+// AUTHENTICATION TABLES (managed by better-auth)
+// ================================================================
+
+Table auth_user {
+  id text [primary key, note: 'Better-auth user identifier']
+  name text [not null, note: 'User full name']
+  email text [unique, not null, note: 'User email address']
+  emailVerified boolean [default: false, note: 'Email verification status']
+  image text [null, note: 'Profile image URL']
+  createdAt timestamptz [default: `now()`, not null]
+  updatedAt timestamptz [default: `now()`, not null]
+  
+  Note: 'Managed by better-auth - DO NOT modify directly'
+}
+
+Table auth_session {
+  id text [primary key, note: 'Session identifier']
+  expiresAt timestamptz [not null, note: 'Session expiration']
+  token text [unique, not null, note: 'Session token']
+  createdAt timestamptz [default: `now()`, not null]
+  updatedAt timestamptz [default: `now()`, not null]
+  ipAddress text [null, note: 'Client IP address']
+  userAgent text [null, note: 'Client user agent']
+  userId text [ref: > auth_user.id, not null, note: 'Associated user']
+  
+  Note: 'Managed by better-auth - DO NOT modify directly'
+}
+
+Table auth_account {
+  id text [primary key, note: 'Account identifier']
+  accountId text [not null, note: 'Provider account ID']
+  providerId text [not null, note: 'Auth provider (e.g., google, email)']
+  userId text [ref: > auth_user.id, not null, note: 'Associated user']
+  accessToken text [null, note: 'OAuth access token']
+  refreshToken text [null, note: 'OAuth refresh token']
+  idToken text [null, note: 'OAuth ID token']
+  accessTokenExpiresAt timestamptz [null]
+  refreshTokenExpiresAt timestamptz [null]
+  scope text [null, note: 'OAuth scopes']
+  password text [null, note: 'Hashed password (for email/password auth)']
+  createdAt timestamptz [default: `now()`, not null]
+  updatedAt timestamptz [default: `now()`, not null]
+  
+  Note: 'Managed by better-auth - DO NOT modify directly'
+}
+
+Table auth_verification {
+  id text [primary key, note: 'Verification identifier']
+  identifier text [not null, note: 'What is being verified (e.g., email)']
+  value text [not null, note: 'Verification token/code']
+  expiresAt timestamptz [not null, note: 'Token expiration']
+  createdAt timestamptz [default: `now()`]
+  updatedAt timestamptz [default: `now()`]
+  
+  Note: 'Managed by better-auth - DO NOT modify directly'
+}
+
+// ================================================================
+// CORE ENTITIES
+// ================================================================
+
+Table user {
+  id uuid [primary key, note: 'Unique user identifier']
+  auth_user_id text [ref: > auth_user.id, unique, null, note: 'Links to better-auth user table (null for family members)']
+  email varchar [unique, null, note: 'User email (null for family members)']
+  first_name varchar(50) [not null, note: 'User first name']
+  last_name varchar(50) [not null, note: 'User last name']
+  display_name varchar(100) [null, note: 'Optional display name (defaults to first_name + last_name)']
+  avatar_url text [null, note: 'Profile picture URL']
+  phone varchar(20) [null, note: 'Phone number in E.164 format']
+  birth_date date [null, note: 'Date of birth']
+  preferences jsonb [null, note: 'User preferences (dietary_restrictions)']
+  managed_by uuid [ref: > user.id, null, note: 'For family members: who manages this profile']
+  relationship_to_manager varchar(50) [null, note: 'Relationship description (daughter, spouse)']
+  created_at timestamptz [default: `now()`, not null]
+  updated_at timestamptz [default: `now()`, not null]
+  
+  Note: '''
+  Central user management supporting both authenticated users and family members.
+  Family members have managed_by set and cannot login independently.
+  '''
+}
+
+// ================================================================
+// CHAT & COMMUNICATION
+// ================================================================
+
+// Define message type enum
+Enum message_type {
+  text [note: 'Regular text message']
+  ai [note: 'AI assistant message']
+  system [note: 'System notification message']
+  location [note: 'Location sharing message']
+  task_created [note: 'Task creation notification']
+}
+
+Table chat {
+  id uuid [primary key, note: 'Unique chat identifier']
+  name varchar(200) [not null, note: 'Chat name/title']
+  description text [null, note: 'Chat description']
+  created_by uuid [ref: > user.id, not null, note: 'Chat creator']
+  created_at timestamptz [default: `now()`, not null]
+  updated_at timestamptz [default: `now()`, not null]
+  
+  Note: '''
+  Central chat/conversation entity
+  Supports any type of collaborative conversation or planning.
+  '''
+}
+
+Table message {
+  id uuid [primary key, note: 'Unique message identifier']
+  chat_id uuid [ref: > chat.id, not null, note: 'Associated chat/conversation']
+  user_id uuid [ref: > user.id, null, note: 'Message sender (null for AI messages)']
+  content text [not null, note: 'Message content (max 4000 chars)']
+  message_type message_type [not null, note: 'Type of message']
+  metadata jsonb [null, note: 'Message metadata (reactions, replies, location)']
+  created_at timestamptz [default: `now()`, not null]
+  updated_at timestamptz [default: `now()`, not null]
+  
+  indexes {
+    (chat_id, created_at) [note: 'Chat history pagination']
+  }
+  
+  Note: '''
+  Chat with support for different message types.
+  Rich metadata support for reactions, threading, and location sharing.
+  AI messages have null user_id.
+  '''
+}
+
+Table typing_indicator {
+  id uuid [primary key, note: 'Unique indicator identifier']
+  chat_id uuid [ref: > chat.id, not null, note: 'Associated chat/conversation']
+  user_id uuid [ref: > user.id, not null, note: 'Typing user']
+  is_typing boolean [default: true, not null, note: 'Current typing status']
+  last_typing_at timestamptz [default: `now()`, not null, note: 'Last typing activity']
+  expires_at timestamptz [default: `now() + interval '15 seconds'`, not null, note: 'When indicator expires']
+  created_at timestamptz [default: `now()`, not null]
+  
+  indexes {
+    (chat_id, user_id) [unique, note: 'One indicator per user per chat']
+    (chat_id, is_typing, expires_at) [note: 'Real-time indicator queries']
+  }
+  
+  Note: '''
+  Real-time typing indicators for chat.
+  Automatic expiration for cleanup and performance.
+  '''
+}
+
+Table message_read {
+  id uuid [primary key, note: 'Unique read record identifier']
+  message_id uuid [ref: > message.id, not null, note: 'Associated message']
+  user_id uuid [ref: > user.id, not null, note: 'User who read the message']
+  read_at timestamptz [default: `now()`, not null, note: 'When message was read']
+  
+  indexes {
+    (message_id, user_id) [unique, note: 'One read record per user per message']
+    (user_id, read_at) [note: 'User activity tracking and unread queries']
+    (message_id, read_at) [note: 'Message read progression tracking']
+  }
+  
+  Note: '''
+  Message read tracking for read receipts and unread counts.
+  Enables coordination and ensures critical information is seen.
+  Privacy settings control read receipt visibility.
+  '''
+}
