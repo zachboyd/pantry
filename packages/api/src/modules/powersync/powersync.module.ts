@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TOKENS } from '../../common/tokens.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { DatabaseModule } from '../database/database.module.js';
+import { HouseholdModule } from '../household/household.module.js';
 import { MessageModule } from '../message/message.module.js';
 import { UserModule } from '../user/user.module.js';
 import { PowerSyncController } from './powersync.controller.js';
@@ -9,7 +10,7 @@ import { PowerSyncAuthServiceImpl } from './powersync-auth.service.js';
 import { PowerSyncOperationServiceImpl } from './powersync-operation.service.js';
 
 @Module({
-  imports: [AuthModule, DatabaseModule, MessageModule, UserModule],
+  imports: [AuthModule, DatabaseModule, HouseholdModule, MessageModule, UserModule],
   controllers: [PowerSyncController],
   providers: [
     {

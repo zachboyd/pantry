@@ -112,6 +112,7 @@ Enum message_type {
 Enum household_role {
   manager [note: 'Household manager - can manage members']
   member [note: 'Household member - can participate']
+  ai [note: 'AI assistant - household helper with personality']
 }
 
 Table household {

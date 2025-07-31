@@ -131,16 +131,13 @@ export class UserRepositoryImpl implements UserRepository {
     const db = this.databaseService.getConnection();
 
     try {
-      // Find AI user by looking for AI messages in this specific household
-      // Since AI users don't have auth_user_id, we can identify them that way
+      // Find AI user by querying household_member with role='ai'
       const aiUser = await db
         .selectFrom('user')
-        .innerJoin('message', 'user.id', 'message.user_id')
+        .innerJoin('household_member', 'user.id', 'household_member.user_id')
         .selectAll('user')
-        .where('household_id', '=', householdId)
-        .where('message.message_type', '=', 'ai')
-        .where('user.auth_user_id', 'is', null)
-        .distinctOn('user.id')
+        .where('household_member.household_id', '=', householdId)
+        .where('household_member.role', '=', 'ai')
         .executeTakeFirst();
 
       if (!aiUser) {

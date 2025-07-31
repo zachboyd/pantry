@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { AppConfigModule } from './modules/config/config.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { HouseholdModule } from './modules/household/household.module.js';
 import { AppLoggerModule } from './modules/logger/logger.module.js';
 import { MessageModule } from './modules/message/message.module.js';
 import { PowerSyncModule } from './modules/powersync/powersync.module.js';
@@ -21,6 +22,7 @@ import { UserModule } from './modules/user/user.module.js';
     HealthModule,
     DatabaseModule,
     AuthModule,
+    HouseholdModule,
     MessageModule,
     PowerSyncModule,
     UserModule,

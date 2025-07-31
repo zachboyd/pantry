@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Insertable } from 'kysely';
 import { TOKENS } from '../../common/tokens.js';
-import type { Message, TypingIndicator } from '../../generated/database.js';
+import type { Household, Message, TypingIndicator } from '../../generated/database.js';
 import type { DatabaseService } from '../database/database.types.js';
+import type { HouseholdService } from '../household/household.types.js';
 import type {
   MessageService,
   TypingIndicatorService,
@@ -28,6 +29,8 @@ export class PowerSyncOperationServiceImpl
     private readonly messageService: MessageService,
     @Inject(TOKENS.MESSAGE.TYPING_INDICATOR_SERVICE)
     private readonly typingIndicatorService: TypingIndicatorService,
+    @Inject(TOKENS.HOUSEHOLD.SERVICE)
+    private readonly householdService: HouseholdService,
   ) {}
 
   async processOperation(operation: CrudEntry): Promise<void> {
@@ -146,6 +149,16 @@ export class PowerSyncOperationServiceImpl
       await this.typingIndicatorService.save(
         operation.opData as Insertable<TypingIndicator>,
       );
+      return;
+    }
+
+    // Special handling for household table - delegate to HouseholdService
+    if (operation.table === 'household') {
+      const householdData = operation.opData as Insertable<Household>;
+      if (!householdData.created_by) {
+        throw new Error('Household creation requires created_by field');
+      }
+      await this.householdService.createHousehold(householdData, householdData.created_by);
       return;
     }
 

@@ -44,6 +44,12 @@ export const TOKENS = {
     TYPING_INDICATOR_REPOSITORY: 'TYPING_INDICATOR_REPOSITORY',
   },
 
+  // Household related tokens
+  HOUSEHOLD: {
+    SERVICE: 'HOUSEHOLD_SERVICE',
+    REPOSITORY: 'HOUSEHOLD_REPOSITORY',
+  },
+
   // Worker related tokens
   WORKER: {
     SERVICE: 'WORKER_SERVICE',
@@ -63,5 +69,6 @@ export type DatabaseTokens = typeof TOKENS.DATABASE;
 export type AuthTokens = typeof TOKENS.AUTH;
 export type ConfigTokens = typeof TOKENS.CONFIG;
 export type MessageTokens = typeof TOKENS.MESSAGE;
+export type HouseholdTokens = typeof TOKENS.HOUSEHOLD;
 export type WorkerTokens = typeof TOKENS.WORKER;
 export type HealthTokens = typeof TOKENS.HEALTH;

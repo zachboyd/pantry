@@ -4,7 +4,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Create household role enum
   await db.schema
     .createType('household_role')
-    .asEnum(['manager', 'member'])
+    .asEnum(['manager', 'member', 'ai'])
     .execute();
 
   // Create message_type enum
