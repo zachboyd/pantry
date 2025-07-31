@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Insertable } from 'kysely';
+import { TableName } from '../../common/enums.js';
 import { TOKENS } from '../../common/tokens.js';
 import type { Household, Message, TypingIndicator } from '../../generated/database.js';
 import type { DatabaseService } from '../database/database.types.js';
@@ -139,13 +140,13 @@ export class PowerSyncOperationServiceImpl
     }
 
     // Special handling for message table - delegate to MessageService
-    if (operation.table === 'message') {
+    if (operation.table === TableName.MESSAGE) {
       await this.messageService.save(operation.opData as Insertable<Message>);
       return;
     }
 
     // Special handling for typing_indicator table - delegate to TypingIndicatorService
-    if (operation.table === 'typing_indicator') {
+    if (operation.table === TableName.TYPING_INDICATOR) {
       await this.typingIndicatorService.save(
         operation.opData as Insertable<TypingIndicator>,
       );
@@ -153,7 +154,7 @@ export class PowerSyncOperationServiceImpl
     }
 
     // Special handling for household table - delegate to HouseholdService
-    if (operation.table === 'household') {
+    if (operation.table === TableName.HOUSEHOLD) {
       const householdData = operation.opData as Insertable<Household>;
       if (!householdData.created_by) {
         throw new Error('Household creation requires created_by field');

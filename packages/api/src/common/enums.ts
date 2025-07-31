@@ -9,3 +9,9 @@ export enum HouseholdRole {
   MEMBER = 'member',
   AI = 'ai',
 }
+
+export enum TableName {
+  MESSAGE = 'message',
+  TYPING_INDICATOR = 'typing_indicator',
+  HOUSEHOLD = 'household',
+}
