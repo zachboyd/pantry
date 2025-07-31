@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Insertable, Updateable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
+import { HouseholdRole } from '../../common/enums.js';
 import { TOKENS } from '../../common/tokens.js';
 import type { User } from '../../generated/database.js';
 import type { DatabaseService } from '../database/database.types.js';
@@ -137,7 +138,7 @@ export class UserRepositoryImpl implements UserRepository {
         .innerJoin('household_member', 'user.id', 'household_member.user_id')
         .selectAll('user')
         .where('household_member.household_id', '=', householdId)
-        .where('household_member.role', '=', 'ai')
+        .where('household_member.role', '=', HouseholdRole.AI)
         .executeTakeFirst();
 
       if (!aiUser) {

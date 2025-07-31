@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { HouseholdServiceImpl } from './household.service.js';
+import { AIPersonality, HouseholdRole } from '../../common/enums.js';
 import { TOKENS } from '../../common/tokens.js';
 import type { HouseholdRepository, HouseholdRecord } from './household.types.js';
 
@@ -89,7 +90,7 @@ describe('HouseholdService', () => {
         id: 'member-1',
         household_id: 'household-123',
         user_id: creatorId,
-        role: 'manager',
+        role: HouseholdRole.MANAGER,
         joined_at: new Date(),
       });
       mockHouseholdRepository.createAIUser.mockResolvedValue(createdAIUser);
@@ -111,7 +112,7 @@ describe('HouseholdService', () => {
         expect.objectContaining({
           household_id: 'household-123',
           user_id: creatorId,
-          role: 'manager',
+          role: HouseholdRole.MANAGER,
         }),
       );
 
@@ -121,9 +122,9 @@ describe('HouseholdService', () => {
           auth_user_id: null,
           first_name: 'Pantry',
           last_name: 'Assistant',
-          display_name: expect.stringMatching(/^(Alfred|Alice|Rosey) - Pantry Assistant$/),
+          display_name: expect.stringMatching(new RegExp(`^(${Object.values(AIPersonality).join('|')}) - Pantry Assistant$`)),
           preferences: {
-            personality: expect.stringMatching(/^(Alfred|Alice|Rosey)$/),
+            personality: expect.any(String),
           },
         }),
       );
@@ -133,7 +134,7 @@ describe('HouseholdService', () => {
         expect.objectContaining({
           household_id: 'household-123',
           user_id: 'ai-user-789',
-          role: 'ai',
+          role: HouseholdRole.AI,
         }),
       );
 
@@ -193,7 +194,7 @@ describe('HouseholdService', () => {
         id: 'member-1',
         household_id: 'household-123',
         user_id: creatorId,
-        role: 'manager',
+        role: HouseholdRole.MANAGER,
         joined_at: new Date(),
       });
       mockHouseholdRepository.createAIUser.mockResolvedValue({

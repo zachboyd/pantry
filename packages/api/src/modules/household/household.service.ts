@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Insertable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
+import { AIPersonality, HouseholdRole } from '../../common/enums.js';
 import { TOKENS } from '../../common/tokens.js';
 import type { Household } from '../../generated/database.js';
 import type {
@@ -43,7 +44,7 @@ export class HouseholdServiceImpl implements HouseholdService {
         id: uuidv4(),
         household_id: createdHousehold.id,
         user_id: creatorId,
-        role: 'manager',
+        role: HouseholdRole.MANAGER,
       });
 
       this.logger.log(
@@ -51,7 +52,7 @@ export class HouseholdServiceImpl implements HouseholdService {
       );
 
       // 3. Create AI user for the household
-      const personalities = ['Alfred', 'Alice', 'Rosey'];
+      const personalities = Object.values(AIPersonality);
       const personality =
         personalities[Math.floor(Math.random() * personalities.length)];
 
@@ -77,7 +78,7 @@ export class HouseholdServiceImpl implements HouseholdService {
         id: uuidv4(),
         household_id: createdHousehold.id,
         user_id: aiUser.id,
-        role: 'ai', // AI users have special ai role
+        role: HouseholdRole.AI, // AI users have special ai role
       });
 
       this.logger.log(
