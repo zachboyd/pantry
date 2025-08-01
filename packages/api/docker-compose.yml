@@ -16,9 +16,13 @@ services:
     environment:
       # Override database URL to use postgres container
       - DATABASE_URL=postgresql://pantry_app:pantry_pass@pantry-postgres:5432/pantry
+      # Override Redis URL to use redis container
+      - REDIS_URL=redis://pantry-redis:6379
       - TZ=UTC
     depends_on:
       pantry-postgres:
+        condition: service_healthy
+      pantry-redis:
         condition: service_healthy
     networks:
       - pantry-network
@@ -49,9 +53,24 @@ services:
       retries: 5
     networks:
       - pantry-network
+  pantry-redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - pantry_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - pantry-network
 
 volumes:
   pantry_postgres_data:
+  pantry_redis_data:
 
 networks:
   pantry-network:

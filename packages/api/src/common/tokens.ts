@@ -73,6 +73,13 @@ export const TOKENS = {
   PERMISSION: {
     SERVICE: 'PERMISSION_SERVICE',
   },
+
+  // Cache related tokens
+  CACHE: {
+    MANAGER: 'CACHE_MANAGER',
+    HELPER: 'CACHE_HELPER',
+    REDIS_CLIENT: 'REDIS_CLIENT',
+  },
 } as const;
 
 // Type helpers for better type safety
@@ -87,3 +94,4 @@ export type StorageTokens = typeof TOKENS.STORAGE;
 export type WorkerTokens = typeof TOKENS.WORKER;
 export type HealthTokens = typeof TOKENS.HEALTH;
 export type PermissionTokens = typeof TOKENS.PERMISSION;
+export type CacheTokens = typeof TOKENS.CACHE;

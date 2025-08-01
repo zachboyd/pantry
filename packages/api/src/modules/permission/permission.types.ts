@@ -1,6 +1,5 @@
 import { PureAbility } from '@casl/ability';
 import { HouseholdRole } from '../../common/enums.js';
-import { Json } from '../../generated/database.js';
 
 // Define actions that can be performed
 export type Action = 
@@ -53,4 +52,8 @@ export interface PermissionService {
   canCreateHousehold(userId: string): Promise<boolean>;
   canReadHousehold(userId: string, householdId: string): Promise<boolean>;
   canManageHouseholdMember(userId: string, householdId: string): Promise<boolean>;
+
+  // Cache invalidation methods
+  invalidateUserPermissions(userId: string): Promise<void>;
+  invalidateHouseholdPermissions(householdId: string): Promise<void>;
 }

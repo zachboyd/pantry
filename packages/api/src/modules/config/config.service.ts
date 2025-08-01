@@ -31,6 +31,9 @@ export class ConfigServiceImpl implements ConfigService {
       database: {
         url: this.configService.get<string>('DATABASE_URL') || '',
       },
+      redis: {
+        url: this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379',
+      },
       openai: {
         apiKey: this.configService.get<string>('OPENAI_API_KEY'),
       },

@@ -11,6 +11,9 @@ export interface Configuration {
   database: {
     url: string;
   };
+  redis: {
+    url: string;
+  };
   openai: {
     apiKey?: string;
   };

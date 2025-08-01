@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthGuard } from './modules/auth/auth.guard.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { CacheModule } from './modules/cache/cache.module.js';
 import { AppConfigModule } from './modules/config/config.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { AppGraphQLModule } from './modules/graphql/graphql.module.js';
@@ -19,6 +20,7 @@ import { UserModule } from './modules/user/user.module.js';
     EventEmitterModule.forRoot(),
     AppConfigModule,
     AppLoggerModule,
+    CacheModule,
     SwaggerModule,
     AppGraphQLModule,
     HealthModule,
