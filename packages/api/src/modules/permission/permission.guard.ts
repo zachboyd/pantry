@@ -6,9 +6,10 @@ import {
   Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AbilityBuilder, PureAbility } from '@casl/ability';
+import { PureAbility } from '@casl/ability';
 import { unpackRules } from '@casl/ability/extra';
 import { TOKENS } from '../../common/tokens.js';
+import { getRequest } from '../../common/utils/request.util.js';
 import { PermissionService, AppAbility } from './permission.types.js';
 import { PERMISSION_KEY, RequiredPermission } from './permission.decorator.js';
 
@@ -31,7 +32,7 @@ export class PermissionGuard implements CanActivate {
       return true; // No permission required
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = getRequest(context);
     const user = request.user;
     const dbUser = request.dbUser;
 
@@ -50,7 +51,7 @@ export class PermissionGuard implements CanActivate {
           ability = new PureAbility(rules, {
             conditionsMatcher: (conditions) => (object) => {
               if (!conditions) return true;
-              
+
               for (const [key, value] of Object.entries(conditions)) {
                 if (key.includes('.')) {
                   // Handle nested property access like 'household_members.household_id'
@@ -64,7 +65,8 @@ export class PermissionGuard implements CanActivate {
                 } else if (typeof value === 'object' && value !== null) {
                   // Handle special operators like { $exists: true }
                   if ('$exists' in value) {
-                    const exists = object[key] !== undefined && object[key] !== null;
+                    const exists =
+                      object[key] !== undefined && object[key] !== null;
                     if (exists !== value.$exists) return false;
                   }
                 } else {

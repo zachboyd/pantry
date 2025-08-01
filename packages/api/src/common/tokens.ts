@@ -41,7 +41,7 @@ export const TOKENS = {
   HOUSEHOLD: {
     SERVICE: 'HOUSEHOLD_SERVICE',
     REPOSITORY: 'HOUSEHOLD_REPOSITORY',
-    API: 'HOUSEHOLD_API',
+    GUARDED_SERVICE: 'HOUSEHOLD_GUARDED_SERVICE',
   },
 
   // Attachment related tokens

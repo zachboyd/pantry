@@ -48,4 +48,9 @@ export interface SerializedPermissions {
 export interface PermissionService {
   computeUserPermissions(userId: string): Promise<AppAbility>;
   getUserPermissions(userId: string): Promise<AppAbility | null>;
+  
+  // Permission check methods with proper object types
+  canCreateHousehold(userId: string): Promise<boolean>;
+  canReadHousehold(userId: string, householdId: string): Promise<boolean>;
+  canManageHouseholdMember(userId: string, householdId: string): Promise<boolean>;
 }

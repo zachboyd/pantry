@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TOKENS } from '../../common/tokens.js';
 import { UserModule } from '../user/user.module.js';
-import { HouseholdApi } from './api/household.api.js';
+import { PermissionModule } from '../permission/permission.module.js';
 import { HouseholdController } from './api/household.controller.js';
 import { HouseholdResolver } from './api/household.resolver.js';
+import { GuardedHouseholdService } from './api/guarded-household.service.js';
 import { HouseholdRepositoryImpl } from './household.repository.js';
 import { HouseholdServiceImpl } from './household.service.js';
 
 @Module({
-  imports: [UserModule],
+  imports: [UserModule, PermissionModule],
   controllers: [HouseholdController],
   providers: [
     HouseholdResolver,
@@ -21,10 +22,14 @@ import { HouseholdServiceImpl } from './household.service.js';
       useClass: HouseholdServiceImpl,
     },
     {
-      provide: TOKENS.HOUSEHOLD.API,
-      useClass: HouseholdApi,
+      provide: TOKENS.HOUSEHOLD.GUARDED_SERVICE,
+      useClass: GuardedHouseholdService,
     },
   ],
-  exports: [TOKENS.HOUSEHOLD.SERVICE, TOKENS.HOUSEHOLD.REPOSITORY, TOKENS.HOUSEHOLD.API],
+  exports: [
+    TOKENS.HOUSEHOLD.SERVICE,
+    TOKENS.HOUSEHOLD.REPOSITORY,
+    TOKENS.HOUSEHOLD.GUARDED_SERVICE,
+  ],
 })
 export class HouseholdModule {}

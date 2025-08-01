@@ -108,4 +108,34 @@ export class PermissionServiceImpl implements PermissionService {
       return null;
     }
   }
+
+  async canCreateHousehold(userId: string): Promise<boolean> {
+    const ability = await this.getUserPermissions(userId);
+    if (!ability) {
+      // If no cached permissions, compute them
+      const freshAbility = await this.computeUserPermissions(userId);
+      return freshAbility.can('create', 'Household');
+    }
+    return ability.can('create', 'Household');
+  }
+
+  async canReadHousehold(userId: string, householdId: string): Promise<boolean> {
+    const ability = await this.getUserPermissions(userId);
+    if (!ability) {
+      // If no cached permissions, compute them
+      const freshAbility = await this.computeUserPermissions(userId);
+      return freshAbility.can('read', 'Household', { id: householdId } as any);
+    }
+    return ability.can('read', 'Household', { id: householdId } as any);
+  }
+
+  async canManageHouseholdMember(userId: string, householdId: string): Promise<boolean> {
+    const ability = await this.getUserPermissions(userId);
+    if (!ability) {
+      // If no cached permissions, compute them
+      const freshAbility = await this.computeUserPermissions(userId);
+      return freshAbility.can('manage', 'HouseholdMember', { household_id: householdId } as any);
+    }
+    return ability.can('manage', 'HouseholdMember', { household_id: householdId } as any);
+  }
 }
