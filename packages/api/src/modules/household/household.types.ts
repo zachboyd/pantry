@@ -45,12 +45,38 @@ export interface HouseholdRepository {
    */
   getHouseholdsForUser(userId: string): Promise<HouseholdRecord[]>;
 
+
   /**
-   * Create an AI user for a household
-   * @param aiUser - AI user data to create
-   * @returns Promise with the created AI user record
+   * Remove a member from a household
+   * @param householdId - Household ID
+   * @param userId - User ID to remove
+   * @returns Promise with the removed household member record or null if not found
    */
-  createAIUser(aiUser: Insertable<User>): Promise<Selectable<User>>;
+  removeHouseholdMember(householdId: string, userId: string): Promise<HouseholdMemberRecord | null>;
+
+  /**
+   * Get a household member by household and user ID
+   * @param householdId - Household ID
+   * @param userId - User ID
+   * @returns Promise with household member record or null if not found
+   */
+  getHouseholdMember(householdId: string, userId: string): Promise<HouseholdMemberRecord | null>;
+
+  /**
+   * Get all members of a household
+   * @param householdId - Household ID
+   * @returns Promise with array of household member records
+   */
+  getHouseholdMembers(householdId: string): Promise<HouseholdMemberRecord[]>;
+
+  /**
+   * Update a household member's role
+   * @param householdId - Household ID
+   * @param userId - User ID
+   * @param newRole - New role for the member
+   * @returns Promise with updated household member record or null if not found
+   */
+  updateHouseholdMemberRole(householdId: string, userId: string, newRole: string): Promise<HouseholdMemberRecord | null>;
 }
 
 /**
@@ -72,4 +98,34 @@ export interface HouseholdService {
    * @returns Promise with household record
    */
   getHouseholdById(householdId: string, userId: string): Promise<HouseholdRecord>;
+
+  /**
+   * Add a member to a household
+   * @param householdId - Household ID
+   * @param userId - User ID to add
+   * @param role - Role for the new member
+   * @param requesterId - ID of user making the request (for permission checks)
+   * @param skipPermissionCheck - Skip permission validation (for initial household creation)
+   * @returns Promise with the created household member record
+   */
+  addHouseholdMember(householdId: string, userId: string, role: string, requesterId: string, skipPermissionCheck?: boolean): Promise<HouseholdMemberRecord>;
+
+  /**
+   * Remove a member from a household
+   * @param householdId - Household ID
+   * @param userId - User ID to remove
+   * @param requesterId - ID of user making the request (for permission checks)  
+   * @returns Promise with void (throws if not authorized or member not found)
+   */
+  removeHouseholdMember(householdId: string, userId: string, requesterId: string): Promise<void>;
+
+  /**
+   * Change a member's role in a household
+   * @param householdId - Household ID
+   * @param userId - User ID whose role to change
+   * @param newRole - New role for the member
+   * @param requesterId - ID of user making the request (for permission checks)
+   * @returns Promise with updated household member record
+   */
+  changeHouseholdMemberRole(householdId: string, userId: string, newRole: string, requesterId: string): Promise<HouseholdMemberRecord>;
 }

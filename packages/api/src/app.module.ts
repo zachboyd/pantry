@@ -5,6 +5,7 @@ import { AuthGuard } from './modules/auth/auth.guard.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AppConfigModule } from './modules/config/config.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
+import { AppGraphQLModule } from './modules/graphql/graphql.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { HouseholdModule } from './modules/household/household.module.js';
 import { AppLoggerModule } from './modules/logger/logger.module.js';
@@ -19,6 +20,7 @@ import { UserModule } from './modules/user/user.module.js';
     AppConfigModule,
     AppLoggerModule,
     SwaggerModule,
+    AppGraphQLModule,
     HealthModule,
     DatabaseModule,
     AuthModule,

@@ -6,10 +6,22 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
 import { TOKENS } from '../../common/tokens.js';
 import { IS_PUBLIC_KEY } from './auth.decorator.js';
 import type { AuthService } from './auth.types.js';
 import type { UserService } from '../user/user.types.js';
+
+// Helper to get request from either HTTP or GraphQL context
+const getRequest = (ctx: ExecutionContext) => {
+  if (ctx.getType() === 'http') {
+    return ctx.switchToHttp().getRequest();
+  } else {
+    // GraphQL context
+    const gqlContext = GqlExecutionContext.create(ctx);
+    return gqlContext.getContext().req;
+  }
+};
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -29,7 +41,7 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = getRequest(context);
 
     // Check if cookie header exists
     if (!request.headers.cookie) {

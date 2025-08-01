@@ -141,38 +141,101 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
-  async createAIUser(aiUser: Insertable<User>): Promise<Selectable<User>> {
-    this.logger.log(`Creating AI user: ${aiUser.display_name || aiUser.first_name}`);
+
+  async removeHouseholdMember(householdId: string, userId: string): Promise<HouseholdMemberRecord | null> {
+    this.logger.log(`Removing member ${userId} from household ${householdId}`);
 
     const db = this.databaseService.getConnection();
 
     try {
-      const [createdAIUser] = await db
-        .insertInto('user')
-        .values({
-          id: aiUser.id || uuidv4(),
-          auth_user_id: null, // AI users don't have auth
-          email: aiUser.email,
-          first_name: aiUser.first_name,
-          last_name: aiUser.last_name,
-          display_name: aiUser.display_name,
-          avatar_url: aiUser.avatar_url,
-          phone: aiUser.phone,
-          birth_date: aiUser.birth_date,
-          preferences: aiUser.preferences,
-          managed_by: aiUser.managed_by,
-          relationship_to_manager: aiUser.relationship_to_manager,
-          // Let database handle timestamps if not provided
-          ...(aiUser.created_at && { created_at: aiUser.created_at }),
-          ...(aiUser.updated_at && { updated_at: aiUser.updated_at }),
-        })
+      const [removedMember] = await db
+        .deleteFrom('household_member')
+        .where('household_id', '=', householdId)
+        .where('user_id', '=', userId)
         .returningAll()
         .execute();
 
-      this.logger.log(`AI user created successfully: ${createdAIUser.id}`);
-      return createdAIUser as Selectable<User>;
+      if (!removedMember) {
+        this.logger.debug(`No household member found for household ${householdId} and user ${userId}`);
+        return null;
+      }
+
+      this.logger.log(`Household member removed successfully: ${removedMember.id}`);
+      return removedMember as HouseholdMemberRecord;
     } catch (error) {
-      this.logger.error(`Failed to create AI user:`, error);
+      this.logger.error(`Failed to remove household member:`, error);
+      throw error;
+    }
+  }
+
+  async getHouseholdMember(householdId: string, userId: string): Promise<HouseholdMemberRecord | null> {
+    this.logger.log(`Getting household member for household ${householdId} and user ${userId}`);
+
+    const db = this.databaseService.getConnection();
+
+    try {
+      const member = await db
+        .selectFrom('household_member')
+        .selectAll()
+        .where('household_id', '=', householdId)
+        .where('user_id', '=', userId)
+        .executeTakeFirst();
+
+      if (!member) {
+        this.logger.debug(`No household member found for household ${householdId} and user ${userId}`);
+        return null;
+      }
+
+      return member as HouseholdMemberRecord;
+    } catch (error) {
+      this.logger.error(`Failed to get household member:`, error);
+      throw error;
+    }
+  }
+
+  async getHouseholdMembers(householdId: string): Promise<HouseholdMemberRecord[]> {
+    this.logger.log(`Getting all members for household ${householdId}`);
+
+    const db = this.databaseService.getConnection();
+
+    try {
+      const members = await db
+        .selectFrom('household_member')
+        .selectAll()
+        .where('household_id', '=', householdId)
+        .execute();
+
+      this.logger.debug(`Retrieved ${members.length} members for household ${householdId}`);
+      return members as HouseholdMemberRecord[];
+    } catch (error) {
+      this.logger.error(`Failed to get household members:`, error);
+      return [];
+    }
+  }
+
+  async updateHouseholdMemberRole(householdId: string, userId: string, newRole: string): Promise<HouseholdMemberRecord | null> {
+    this.logger.log(`Updating member ${userId} role to ${newRole} in household ${householdId}`);
+
+    const db = this.databaseService.getConnection();
+
+    try {
+      const [updatedMember] = await db
+        .updateTable('household_member')
+        .set({ role: newRole as any })
+        .where('household_id', '=', householdId)
+        .where('user_id', '=', userId)
+        .returningAll()
+        .execute();
+
+      if (!updatedMember) {
+        this.logger.debug(`No household member found to update for household ${householdId} and user ${userId}`);
+        return null;
+      }
+
+      this.logger.log(`Household member role updated successfully: ${updatedMember.id}`);
+      return updatedMember as HouseholdMemberRecord;
+    } catch (error) {
+      this.logger.error(`Failed to update household member role:`, error);
       throw error;
     }
   }

@@ -52,4 +52,6 @@ export interface UserService {
   getUserByAuthId(authUserId: string): Promise<UserRecord | null>;
   getUserById(id: string): Promise<UserRecord | null>;
   updateUser(id: string, userData: Updateable<User>): Promise<UserRecord>;
+  createUser(userData: Insertable<User>): Promise<UserRecord>;
+  createAIUser(userData: Insertable<User>): Promise<UserRecord>;
 }

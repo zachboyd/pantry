@@ -18,6 +18,7 @@ export const EVENTS = {
 
   // Household related events
   HOUSEHOLD: {
+    CREATED: 'household.created',
     MEMBER_ADDED: 'household.member.added',
     MEMBER_REMOVED: 'household.member.removed',
     MEMBER_ROLE_CHANGED: 'household.member.role.changed',

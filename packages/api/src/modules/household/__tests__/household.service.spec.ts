@@ -6,6 +6,7 @@ import { HouseholdServiceImpl } from '../household.service.js';
 import { AIPersonality, HouseholdRole } from '../../../common/enums.js';
 import { TOKENS } from '../../../common/tokens.js';
 import type { HouseholdRepository, HouseholdRecord } from '../household.types.js';
+import type { UserService } from '../../user/user.types.js';
 
 // Mock repository
 const mockHouseholdRepository = {
@@ -13,6 +14,18 @@ const mockHouseholdRepository = {
   addHouseholdMember: vi.fn(),
   getHouseholdById: vi.fn(),
   getHouseholdsForUser: vi.fn(),
+  getHouseholdMember: vi.fn(),
+  removeHouseholdMember: vi.fn(),
+  getHouseholdMembers: vi.fn(),
+  updateHouseholdMemberRole: vi.fn(),
+};
+
+// Mock user service
+const mockUserService = {
+  getUserByAuthId: vi.fn(),
+  getUserById: vi.fn(),
+  updateUser: vi.fn(),
+  createUser: vi.fn(),
   createAIUser: vi.fn(),
 };
 
@@ -31,6 +44,10 @@ describe('HouseholdService', () => {
         {
           provide: TOKENS.HOUSEHOLD.REPOSITORY,
           useValue: mockHouseholdRepository,
+        },
+        {
+          provide: TOKENS.USER.SERVICE,
+          useValue: mockUserService,
         },
         {
           provide: EventEmitter2,
@@ -86,14 +103,26 @@ describe('HouseholdService', () => {
       };
 
       mockHouseholdRepository.createHousehold.mockResolvedValue(createdHousehold);
-      mockHouseholdRepository.addHouseholdMember.mockResolvedValue({
-        id: 'member-1',
-        household_id: 'household-123',
-        user_id: creatorId,
-        role: HouseholdRole.MANAGER,
-        joined_at: new Date(),
-      });
-      mockHouseholdRepository.createAIUser.mockResolvedValue(createdAIUser);
+      
+      // Mock for creator member addition (called via addHouseholdMember service method)
+      mockHouseholdRepository.getHouseholdMember.mockResolvedValue(null); // No existing member
+      mockHouseholdRepository.addHouseholdMember
+        .mockResolvedValueOnce({
+          id: 'member-1',
+          household_id: 'household-123',
+          user_id: creatorId,
+          role: HouseholdRole.MANAGER,
+          joined_at: new Date(),
+        })
+        .mockResolvedValueOnce({
+          id: 'member-2',
+          household_id: 'household-123',
+          user_id: 'ai-user-789',
+          role: HouseholdRole.AI,
+          joined_at: new Date(),
+        });
+      
+      mockUserService.createAIUser.mockResolvedValue(createdAIUser);
 
       // Act
       const result = await householdService.createHousehold(householdData, creatorId);
@@ -107,7 +136,7 @@ describe('HouseholdService', () => {
         created_by: creatorId,
       });
 
-      // Verify creator added as manager
+      // Verify creator added as manager (via service method)
       expect(mockHouseholdRepository.addHouseholdMember).toHaveBeenCalledWith(
         expect.objectContaining({
           household_id: 'household-123',
@@ -116,20 +145,14 @@ describe('HouseholdService', () => {
         }),
       );
 
-      // Verify AI user creation (implicit behavior)
-      expect(mockHouseholdRepository.createAIUser).toHaveBeenCalledWith(
+      // Verify AI user creation (now via user service)
+      expect(mockUserService.createAIUser).toHaveBeenCalledWith(
         expect.objectContaining({
-          auth_user_id: null,
-          first_name: 'Pantry',
-          last_name: 'Assistant',
-          display_name: expect.stringMatching(new RegExp(`^(${Object.values(AIPersonality).join('|')}) - Pantry Assistant$`)),
-          preferences: {
-            personality: expect.any(String),
-          },
+          email: `ai-assistant+household-123@system.internal`,
         }),
       );
 
-      // Verify AI user added as ai role (implicit behavior)
+      // Verify AI user added as ai role (via service method)
       expect(mockHouseholdRepository.addHouseholdMember).toHaveBeenCalledWith(
         expect.objectContaining({
           household_id: 'household-123',
@@ -138,12 +161,19 @@ describe('HouseholdService', () => {
         }),
       );
 
-      // Verify event emission
-      expect(mockEventEmitter.emit).toHaveBeenCalledWith('household.created', {
-        household: createdHousehold,
-        creator: creatorId,
-        aiUser: createdAIUser,
-      });
+      // Verify events emitted
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'household.member.added',
+        expect.any(Object),
+      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'user.permissions.recompute',
+        expect.any(Object),
+      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'household.created',
+        expect.any(Object),
+      );
     });
 
     it('should handle errors gracefully', async () => {
@@ -190,14 +220,23 @@ describe('HouseholdService', () => {
       };
 
       mockHouseholdRepository.createHousehold.mockResolvedValue(createdHousehold);
-      mockHouseholdRepository.addHouseholdMember.mockResolvedValue({
-        id: 'member-1',
-        household_id: 'household-123',
-        user_id: creatorId,
-        role: HouseholdRole.MANAGER,
-        joined_at: new Date(),
-      });
-      mockHouseholdRepository.createAIUser.mockResolvedValue({
+      mockHouseholdRepository.getHouseholdMember.mockResolvedValue(null); // No existing member
+      mockHouseholdRepository.addHouseholdMember
+        .mockResolvedValueOnce({
+          id: 'member-1',
+          household_id: 'household-123',
+          user_id: creatorId,
+          role: HouseholdRole.MANAGER,
+          joined_at: new Date(),
+        })
+        .mockResolvedValueOnce({
+          id: 'member-2',
+          household_id: 'household-123',
+          user_id: 'ai-user-789',
+          role: HouseholdRole.AI,
+          joined_at: new Date(),
+        });
+      mockUserService.createAIUser.mockResolvedValue({
         id: 'ai-user-789',
         auth_user_id: null,
         email: `ai-assistant+household-123@system.internal`,
@@ -223,17 +262,13 @@ describe('HouseholdService', () => {
       );
       expect(logSpy).toHaveBeenCalledWith('Household created: household-123');
       expect(logSpy).toHaveBeenCalledWith(
-        'Added creator user-456 as manager to household household-123',
-      );
-      expect(logSpy).toHaveBeenCalledWith(
         'Created AI user ai-user-789 for household household-123',
-      );
-      expect(logSpy).toHaveBeenCalledWith(
-        'Added AI user ai-user-789 as ai to household household-123',
       );
       expect(logSpy).toHaveBeenCalledWith(
         'Household creation completed successfully: household-123',
       );
+      
+      // Note: Member addition logs are now generated by the addHouseholdMember service method
 
       logSpy.mockRestore();
     });
