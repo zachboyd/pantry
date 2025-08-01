@@ -97,42 +97,6 @@ function generateDefault(defaultValue: string | (() => string)): string {
   return typeof defaultValue === 'function' ? defaultValue() : defaultValue;
 }
 
-// Cache for generated PowerSync keys to ensure they're generated as a pair
-let powerSyncKeys: { privateKey: string; publicKey: string } | null = null;
-
-async function generatePowerSyncKeys(): Promise<{
-  privateKey: string;
-  publicKey: string;
-}> {
-  if (powerSyncKeys) {
-    return powerSyncKeys;
-  }
-
-  console.log('   🔑 Generating RSA key pair for PowerSync...');
-
-  // Generate RSA key pair using jose (same as PowerSync service)
-  const { publicKey, privateKey } = await jose.generateKeyPair('RS256', {
-    modulusLength: 2048,
-    extractable: true,
-  });
-
-  // Export keys as base64-encoded strings
-  const privateKeyBase64 = Buffer.from(
-    await jose.exportPKCS8(privateKey),
-  ).toString('base64');
-
-  const publicKeyBase64 = Buffer.from(
-    await jose.exportSPKI(publicKey),
-  ).toString('base64');
-
-  powerSyncKeys = {
-    privateKey: privateKeyBase64,
-    publicKey: publicKeyBase64,
-  };
-
-  return powerSyncKeys;
-}
-
 function createReadlineInterface() {
   return createInterface({
     input: process.stdin,
@@ -168,18 +132,8 @@ async function promptForEnvVar(envVar: EnvVar): Promise<string> {
     `   Enter value (or press Enter for ${envVar.isSecret ? 'auto-generated secret' : 'default'}): `,
   );
 
-  // Special handling for PowerSync key pairs
   if (envVar.isSecret && !answer) {
-    if (envVar.key === 'POWERSYNC_PRIVATE_KEY') {
-      const keys = await generatePowerSyncKeys();
-      return keys.privateKey;
-    } else if (envVar.key === 'POWERSYNC_PUBLIC_KEY') {
-      const keys = await generatePowerSyncKeys();
-      return keys.publicKey;
-    } else {
-      // Generate regular secret for other variables
-      return randomBytes(32).toString('hex');
-    }
+    return randomBytes(32).toString('hex');
   }
 
   return answer || defaultVal;
@@ -332,8 +286,6 @@ async function generateEnvFile(): Promise<void> {
   console.log('');
   console.log('🔑 Generated secure secrets for:');
   console.log('   - BETTER_AUTH_SECRET');
-  console.log('   - POWERSYNC_PRIVATE_KEY');
-  console.log('   - POWERSYNC_PUBLIC_KEY');
   console.log('');
   console.log('📝 Next steps:');
   console.log('   1. Review the generated .env file');

@@ -10,7 +10,7 @@ import {
   closeMigrationContext,
 } from './migration-context.js';
 
-async function resetDatabase() {
+async function resetDatabase(skipMigrations = false) {
   const app = await createMigrationContext();
 
   try {
@@ -49,27 +49,31 @@ async function resetDatabase() {
 
     console.log('✅ All migrations rolled back successfully');
 
-    // Re-run migrations to latest
-    console.log('🔄 Running migrations to latest...');
-    const { error: migrateError, results: migrateResults } =
-      await migrator.migrateToLatest();
+    if (skipMigrations) {
+      console.log('🎉 Database reset completed (migrations skipped)');
+    } else {
+      // Re-run migrations to latest
+      console.log('🔄 Running migrations to latest...');
+      const { error: migrateError, results: migrateResults } =
+        await migrator.migrateToLatest();
 
-    migrateResults?.forEach((result) => {
-      if (result.status === 'Success') {
-        console.log(
-          `✅ Migration "${result.migrationName}" executed successfully`,
-        );
-      } else if (result.status === 'Error') {
-        console.error(`❌ Migration "${result.migrationName}" failed`);
+      migrateResults?.forEach((result) => {
+        if (result.status === 'Success') {
+          console.log(
+            `✅ Migration "${result.migrationName}" executed successfully`,
+          );
+        } else if (result.status === 'Error') {
+          console.error(`❌ Migration "${result.migrationName}" failed`);
+        }
+      });
+
+      if (migrateError) {
+        console.error('❌ Migration failed:', migrateError);
+        throw migrateError;
       }
-    });
 
-    if (migrateError) {
-      console.error('❌ Migration failed:', migrateError);
-      throw migrateError;
+      console.log('🎉 Database reset completed successfully');
     }
-
-    console.log('🎉 Database reset completed successfully');
   } catch (error) {
     console.error('❌ Database reset failed');
     console.error(error);
@@ -79,4 +83,11 @@ async function resetDatabase() {
   }
 }
 
-resetDatabase().catch(console.error);
+async function main() {
+  const args = process.argv.slice(2);
+  const skipMigrations = args.includes('--no-migrate');
+  
+  await resetDatabase(skipMigrations);
+}
+
+main().catch(console.error);

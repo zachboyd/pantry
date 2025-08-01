@@ -39,27 +39,16 @@ export class SwaggerService {
     );
 
     // Add authentication schemes
-    swaggerConfig
-      .addCookieAuth('session', {
-        type: 'apiKey',
-        in: 'cookie',
-        name: 'pantry.session_token',
-        description: 'Session cookie from Better Auth',
-      })
-      .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'PowerSync JWT token for data synchronization',
-        },
-        'powersync-jwt',
-      );
+    swaggerConfig.addCookieAuth('session', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'pantry.session_token',
+      description: 'Session cookie from Better Auth',
+    });
 
     // Add tags for implemented modules only
     swaggerConfig
       .addTag('health', 'API health and status monitoring')
-      .addTag('powersync', 'Real-time data synchronization')
       .addTag('auth', 'Authentication and user management');
 
     const document = SwaggerModule.createDocument(app, swaggerConfig.build());

@@ -9,7 +9,6 @@ import { HealthModule } from './modules/health/health.module.js';
 import { HouseholdModule } from './modules/household/household.module.js';
 import { AppLoggerModule } from './modules/logger/logger.module.js';
 import { MessageModule } from './modules/message/message.module.js';
-import { PowerSyncModule } from './modules/powersync/powersync.module.js';
 import { SwaggerModule } from './modules/swagger/swagger.module.js';
 import { UserModule } from './modules/user/user.module.js';
 
@@ -24,7 +23,6 @@ import { UserModule } from './modules/user/user.module.js';
     AuthModule,
     HouseholdModule,
     MessageModule,
-    PowerSyncModule,
     UserModule,
   ],
   providers: [

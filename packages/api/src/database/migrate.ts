@@ -1,11 +1,16 @@
 #!/usr/bin/env tsx
 import * as path from 'path';
 import { promises as fs } from 'fs';
-import { Migrator, FileMigrationProvider } from 'kysely';
+import { Migrator, FileMigrationProvider, Kysely } from 'kysely';
 import { createDatabase } from './config.js';
+import { createMigrationContext } from './migration-context.js';
+import { DB } from 'generated/database.js';
+import { TOKENS } from 'common/tokens.js';
 
 async function migrateToLatest() {
-  const db = createDatabase();
+  const app = await createMigrationContext();
+
+  const db = app.get<Kysely<DB>>(TOKENS.DATABASE.CONNECTION);
 
   const migrator = new Migrator({
     db,
@@ -39,7 +44,9 @@ async function migrateToLatest() {
 }
 
 async function migrateDown() {
-  const db = createDatabase();
+  const app = await createMigrationContext();
+
+  const db = app.get<Kysely<DB>>(TOKENS.DATABASE.CONNECTION);
 
   const migrator = new Migrator({
     db,

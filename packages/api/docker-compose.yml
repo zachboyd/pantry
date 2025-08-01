@@ -50,58 +50,8 @@ services:
     networks:
       - pantry-network
 
-  pantry-mongo:
-    image: mongo:7.0
-    command: --replSet rs0 --bind_ip_all --quiet
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - pantry_mongo_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - pantry-network
-
-  pantry-mongo-rs-init:
-    image: mongo:7.0
-    depends_on:
-      - pantry-mongo
-    restart: on-failure
-    entrypoint:
-      - bash
-      - -c
-      - 'mongosh --host pantry-mongo:27017 --eval ''try{rs.status().ok && quit(0)} catch {} rs.initiate({_id: "rs0", version: 1, members: [{ _id: 0, host : "pantry-mongo:27017" }]})'''
-    networks:
-      - pantry-network
-
-  pantry-powersync:
-    image: journeyapps/powersync-service:latest
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config/powersync.yaml:/config/powersync.yaml:ro
-    environment:
-      - POWERSYNC_CONFIG_PATH=/config/powersync.yaml
-      - NODE_OPTIONS=--max-old-space-size=2048
-    command: ["start", "-r", "unified"]
-    depends_on:
-      pantry-postgres:
-        condition: service_healthy
-      pantry-mongo:
-        condition: service_healthy
-      pantry-mongo-rs-init:
-        condition: service_completed_successfully
-    networks:
-      - pantry-network
-
 volumes:
   pantry_postgres_data:
-  pantry_mongo_data:
 
 networks:
   pantry-network:

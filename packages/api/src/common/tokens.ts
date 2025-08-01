@@ -23,13 +23,6 @@ export const TOKENS = {
     SERVICE: 'CONFIG_SERVICE',
   },
 
-  // PowerSync related tokens
-  POWERSYNC: {
-    SERVICE: 'POWERSYNC_SERVICE',
-    AUTH_SERVICE: 'POWERSYNC_AUTH_SERVICE',
-    OPERATION_SERVICE: 'POWERSYNC_OPERATION_SERVICE',
-  },
-
   // User related tokens
   USER: {
     SERVICE: 'USER_SERVICE',

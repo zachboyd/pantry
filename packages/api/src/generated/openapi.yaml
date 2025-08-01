@@ -61,80 +61,6 @@ paths:
         - session: []
       summary: Get household by ID
       tags: *ref_0
-  /api/powersync/auth:
-    post:
-      operationId: PowerSyncController_authenticateForPowerSync
-      parameters: []
-      responses:
-        '200':
-          description: PowerSync authentication token
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                  expires_at:
-                    type: number
-        '401':
-          description: Unauthorized - User not found
-      security:
-        - session: []
-      summary: Authenticate user for PowerSync
-      tags: &ref_1
-        - powersync
-  /api/powersync/jwks:
-    get:
-      operationId: PowerSyncController_getJwks
-      parameters: []
-      responses:
-        '200':
-          description: JWKS endpoint for PowerSync token verification
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  keys:
-                    type: array
-                    items:
-                      type: object
-      summary: Get JSON Web Key Set for PowerSync
-      tags: *ref_1
-  /api/powersync/write:
-    post:
-      operationId: PowerSyncController_processWriteOperations
-      parameters: []
-      responses:
-        '200':
-          description: Write operations processed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        operation_id:
-                          type: number
-                        message:
-                          type: string
-                        code:
-                          type: string
-        '400':
-          description: Bad Request - Invalid operations array
-        '401':
-          description: Unauthorized - User not found
-      security:
-        - session: []
-      summary: Process PowerSync write operations
-      tags: *ref_1
   /api/auth/sign-in/email:
     post:
       tags:
@@ -383,8 +309,6 @@ info:
 tags:
   - name: health
     description: API health and status monitoring
-  - name: powersync
-    description: Real-time data synchronization
   - name: auth
     description: Authentication and user management
 servers:
@@ -397,9 +321,4 @@ components:
       in: cookie
       name: pantry.session_token
       description: Session cookie from Better Auth
-    powersync-jwt:
-      scheme: bearer
-      bearerFormat: JWT
-      type: http
-      description: PowerSync JWT token for data synchronization
   schemas: {}
