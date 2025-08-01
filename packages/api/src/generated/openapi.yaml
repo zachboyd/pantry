@@ -36,6 +36,8 @@ paths:
                     type: string
         '401':
           description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
       security:
         - session: []
       summary: Create a new household
@@ -55,11 +57,83 @@ paths:
           description: Household retrieved successfully
         '401':
           description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
         '404':
           description: Household not found
       security:
         - session: []
       summary: Get household by ID
+      tags: *ref_0
+  /api/household/{id}/members:
+    post:
+      operationId: HouseholdController_addHouseholdMember
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Member added successfully
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+      security:
+        - session: []
+      summary: Add a member to household
+      tags: *ref_0
+  /api/household/{id}/members/{userId}:
+    delete:
+      operationId: HouseholdController_removeHouseholdMember
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: userId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed successfully
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+      security:
+        - session: []
+      summary: Remove a member from household
+      tags: *ref_0
+  /api/household/{id}/members/{userId}/role:
+    put:
+      operationId: HouseholdController_changeHouseholdMemberRole
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: userId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Member role changed successfully
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+      security:
+        - session: []
+      summary: Change a member's role in household
       tags: *ref_0
   /api/auth/sign-in/email:
     post:

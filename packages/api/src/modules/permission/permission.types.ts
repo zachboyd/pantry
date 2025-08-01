@@ -1,4 +1,4 @@
-import { PureAbility } from '@casl/ability';
+import { MongoAbility, ForcedSubject } from '@casl/ability';
 import { HouseholdRole } from '../../common/enums.js';
 
 // Define actions that can be performed
@@ -16,11 +16,10 @@ export type Subject =
   | 'HouseholdMember'
   | 'Message'
   | 'Pantry'
-  | 'Attachment'
   | 'all'; // all means all subjects
 
-// CASL Ability type
-export type AppAbility = PureAbility<[Action, Subject]>;
+// CASL Ability type with MongoDB support - using flexible conditions
+export type AppAbility = MongoAbility<[Action, Subject | ForcedSubject<Subject>], Record<string, unknown>>;
 
 // User context for ability creation
 export interface UserContext {

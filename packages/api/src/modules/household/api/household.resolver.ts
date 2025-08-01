@@ -7,8 +7,6 @@ import type { UserRecord } from '../../user/user.types.js';
 import {
   GuardedHouseholdService,
   CreateHouseholdInput,
-  AddHouseholdMemberInput,
-  ChangeHouseholdMemberRoleInput,
 } from './guarded-household.service.js';
 
 // GraphQL Types
@@ -61,7 +59,16 @@ export class CreateHouseholdInputGql implements CreateHouseholdInput {
 }
 
 @InputType()
-export class AddHouseholdMemberInputGql implements AddHouseholdMemberInput {
+export class GetHouseholdInputGql {
+  @Field()
+  id: string;
+}
+
+@InputType()
+export class AddHouseholdMemberInputGql {
+  @Field()
+  householdId: string;
+
   @Field()
   userId: string;
 
@@ -70,9 +77,19 @@ export class AddHouseholdMemberInputGql implements AddHouseholdMemberInput {
 }
 
 @InputType()
-export class ChangeHouseholdMemberRoleInputGql
-  implements ChangeHouseholdMemberRoleInput
-{
+export class RemoveHouseholdMemberInputGql {
+  @Field()
+  householdId: string;
+
+  @Field()
+  userId: string;
+}
+
+@InputType()
+export class ChangeHouseholdMemberRoleInputGql {
+  @Field()
+  householdId: string;
+
   @Field()
   userId: string;
 
@@ -101,35 +118,33 @@ export class HouseholdResolver {
 
   @Query(() => Household)
   async household(
-    @Args('id') id: string,
+    @Args('input') input: GetHouseholdInputGql,
     @User() user: UserRecord | null,
   ): Promise<Household> {
-    const result = await this.guardedHouseholdService.getHousehold(id, user);
+    const result = await this.guardedHouseholdService.getHousehold(input.id, user);
     return result.household;
   }
 
   @Mutation(() => HouseholdMember)
   async addHouseholdMember(
-    @Args('householdId') householdId: string,
     @Args('input') input: AddHouseholdMemberInputGql,
     @User() user: UserRecord | null,
   ): Promise<HouseholdMember> {
     return this.guardedHouseholdService.addHouseholdMember(
-      householdId,
-      input,
+      input.householdId,
+      { userId: input.userId, role: input.role },
       user,
     );
   }
 
   @Mutation(() => Boolean)
   async removeHouseholdMember(
-    @Args('householdId') householdId: string,
-    @Args('userId') userId: string,
+    @Args('input') input: RemoveHouseholdMemberInputGql,
     @User() user: UserRecord | null,
   ): Promise<boolean> {
     await this.guardedHouseholdService.removeHouseholdMember(
-      householdId,
-      { userId },
+      input.householdId,
+      { userId: input.userId },
       user,
     );
     return true;
@@ -137,13 +152,12 @@ export class HouseholdResolver {
 
   @Mutation(() => HouseholdMember)
   async changeHouseholdMemberRole(
-    @Args('householdId') householdId: string,
     @Args('input') input: ChangeHouseholdMemberRoleInputGql,
     @User() user: UserRecord | null,
   ): Promise<HouseholdMember> {
     return this.guardedHouseholdService.changeHouseholdMemberRole(
-      householdId,
-      input,
+      input.householdId,
+      { userId: input.userId, newRole: input.newRole },
       user,
     );
   }

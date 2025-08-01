@@ -1,4 +1,4 @@
-import { AbilityBuilder, PureAbility } from '@casl/ability';
+import { AbilityBuilder, createMongoAbility } from '@casl/ability';
 import { packRules } from '@casl/ability/extra';
 import { HouseholdRole } from '../../common/enums.js';
 import type { AppAbility, UserContext } from '../../modules/permission/permission.types.js';
@@ -99,102 +99,125 @@ export class PermissionFixtures {
   }
 
   /**
-   * Creates a basic ability for a member role
+   * Creates a basic ability for a member role using MongoDB expressions
    */
-  static createMemberAbility(): AppAbility {
-    const { can, build } = new AbilityBuilder<AppAbility>(PureAbility);
+  static createMemberAbility(
+    userId: string = 'test-user-id',
+    householdIds: string[] = ['test-household-id']
+  ): AppAbility {
+    const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
     
-    // Members can read their own user profile
-    can('read', 'User');
+    // Members can read their own user profile and users in their households
+    can('read', 'User', {
+      $or: [
+        { id: userId },
+        { 'household_members.household_id': { $in: householdIds } }
+      ]
+    });
     
-    // Members can read household info they belong to
-    can('read', 'Household');
+    // Members can read households they belong to
+    can('read', 'Household', { id: { $in: householdIds } });
     
     // Members can create and read messages in their households
-    can('create', 'Message');
-    can('read', 'Message');
+    can(['create', 'read'], 'Message', { household_id: { $in: householdIds } });
+    
+    // Members can update/delete their own messages only
+    can(['update', 'delete'], 'Message', {
+      $and: [
+        { household_id: { $in: householdIds } },
+        { user_id: userId }
+      ]
+    });
     
     // Members can read household members
-    can('read', 'HouseholdMember');
+    can('read', 'HouseholdMember', { household_id: { $in: householdIds } });
 
-    return build({
-      conditionsMatcher: (conditions) => (object) => {
-        if (!conditions) return true;
-        for (const [key, value] of Object.entries(conditions)) {
-          if (object[key] !== value) return false;
-        }
-        return true;
-      },
-    });
+    return build();
   }
 
   /**
-   * Creates a manager ability with full household permissions
+   * Creates a manager ability with full household permissions using MongoDB expressions
    */
-  static createManagerAbility(): AppAbility {
-    const { can, build } = new AbilityBuilder<AppAbility>(PureAbility);
+  static createManagerAbility(
+    userId: string = 'test-manager-id',
+    householdIds: string[] = ['test-household-id']
+  ): AppAbility {
+    const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
     
-    // Managers have all member permissions plus management capabilities
-    can('manage', 'Household');
-    can('read', 'User');
-    can('manage', 'Message');
-    can('manage', 'HouseholdMember');
-    can('read', 'Pantry');
-    can('manage', 'Attachment');
-
-    return build({
-      conditionsMatcher: (conditions) => (object) => {
-        if (!conditions) return true;
-        for (const [key, value] of Object.entries(conditions)) {
-          if (object[key] !== value) return false;
-        }
-        return true;
-      },
+    // Base user permissions (own profile)
+    can(['read', 'update'], 'User', { id: userId });
+    
+    // Manager can read/update users in managed households
+    can(['read', 'update'], 'User', {
+      $or: [
+        { id: userId },
+        { 'household_members.household_id': { $in: householdIds } },
+        { managed_by: userId }
+      ]
     });
+    
+    // Managers can manage their households
+    can('manage', 'Household', { id: { $in: householdIds } });
+    
+    // Managers can manage household members (but not demote other managers)
+    can('manage', 'HouseholdMember', { 
+      household_id: { $in: householdIds },
+      role: { $ne: HouseholdRole.MANAGER }
+    });
+    
+    // Managers can manage all messages in their households
+    can('manage', 'Message', { household_id: { $in: householdIds } });
+    
+    // Managers can manage pantries
+    can('manage', 'Pantry', { household_id: { $in: householdIds } });
+
+    return build();
   }
 
   /**
-   * Creates an AI ability with limited permissions
+   * Creates an AI ability with limited permissions using MongoDB expressions
    */
-  static createAIAbility(): AppAbility {
-    const { can, build } = new AbilityBuilder<AppAbility>(PureAbility);
+  static createAIAbility(
+    userId: string = 'test-ai-user-id',
+    householdIds: string[] = ['test-household-id']
+  ): AppAbility {
+    const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
+    
+    // AI can read its own profile and users in its households
+    can('read', 'User', {
+      $or: [
+        { id: userId },
+        { 'household_members.household_id': { $in: householdIds } }
+      ]
+    });
     
     // AI can read household info
-    can('read', 'Household');
+    can('read', 'Household', { id: { $in: householdIds } });
+    can('read', 'HouseholdMember', { household_id: { $in: householdIds } });
     
-    // AI can create messages but cannot manage other users' messages
-    can('create', 'Message');
-    can('read', 'Message');
+    // AI can create and read messages but not update/delete
+    can(['create', 'read'], 'Message', { household_id: { $in: householdIds } });
+    
+    // AI can read pantries
+    can('read', 'Pantry', { household_id: { $in: householdIds } });
+    
+    // AI restrictions - cannot modify user profiles or household structure
+    cannot('update', 'User', { id: { $ne: userId } });
+    cannot(['create', 'update', 'delete'], 'HouseholdMember');
 
-    return build({
-      conditionsMatcher: (conditions) => (object) => {
-        if (!conditions) return true;
-        for (const [key, value] of Object.entries(conditions)) {
-          if (object[key] !== value) return false;
-        }
-        return true;
-      },
-    });
+    return build();
   }
 
   /**
    * Creates an ability with no permissions (user with no household memberships)
    */
-  static createNoPermissionsAbility(): AppAbility {
-    const { can, build } = new AbilityBuilder<AppAbility>(PureAbility);
+  static createNoPermissionsAbility(userId: string = 'test-user-id'): AppAbility {
+    const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
     
     // Only own profile access
-    can('read', 'User');
+    can(['read', 'update'], 'User', { id: userId });
 
-    return build({
-      conditionsMatcher: (conditions) => (object) => {
-        if (!conditions) return true;
-        for (const [key, value] of Object.entries(conditions)) {
-          if (object[key] !== value) return false;
-        }
-        return true;
-      },
-    });
+    return build();
   }
 
   /**

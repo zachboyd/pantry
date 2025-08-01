@@ -1,0 +1,62 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Household {
+  id: String!
+  name: String!
+  description: String
+  created_by: String!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type HouseholdMember {
+  id: String!
+  household_id: String!
+  user_id: String!
+  role: String!
+  joined_at: DateTime!
+}
+
+type Query {
+  household(input: GetHouseholdInputGql!): Household!
+}
+
+input GetHouseholdInputGql {
+  id: String!
+}
+
+type Mutation {
+  createHousehold(input: CreateHouseholdInputGql!): Household!
+  addHouseholdMember(input: AddHouseholdMemberInputGql!): HouseholdMember!
+  removeHouseholdMember(input: RemoveHouseholdMemberInputGql!): Boolean!
+  changeHouseholdMemberRole(input: ChangeHouseholdMemberRoleInputGql!): HouseholdMember!
+}
+
+input CreateHouseholdInputGql {
+  name: String!
+  description: String
+}
+
+input AddHouseholdMemberInputGql {
+  householdId: String!
+  userId: String!
+  role: String!
+}
+
+input RemoveHouseholdMemberInputGql {
+  householdId: String!
+  userId: String!
+}
+
+input ChangeHouseholdMemberRoleInputGql {
+  householdId: String!
+  userId: String!
+  newRole: String!
+}

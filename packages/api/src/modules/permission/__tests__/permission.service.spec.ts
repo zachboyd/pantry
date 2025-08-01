@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AbilityBuilder, PureAbility } from '@casl/ability';
+import { AbilityBuilder, PureAbility, subject } from '@casl/ability';
 import { packRules } from '@casl/ability/extra';
 import { PermissionServiceImpl } from '../permission.service.js';
 import { TOKENS } from '../../../common/tokens.js';
@@ -156,6 +156,235 @@ describe('PermissionService', () => {
       expect(ability.can('read', 'User')).toBe(true);
       expect(ability.can('read', 'Household')).toBe(false);
       expect(ability.can('create', 'Message')).toBe(false);
+    });
+
+    it('should prevent cross-household access - Manager in Household A cannot access Household B', async () => {
+      const userId = 'test-manager-user';
+      const ownHouseholdId = 'household-a';
+      const otherHouseholdId = 'household-b';
+
+      // User is manager of household-a only
+      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
+        userId,
+        HouseholdRole.MANAGER,
+        ownHouseholdId
+      );
+
+      mockDb.mockBuilder.mockExecute(householdMembers);
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const ability = await service.computeUserPermissions(userId);
+
+      // Should be able to access own household
+      expect(ability.can('read', subject('Household', { id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('manage', subject('Household', { id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('read', subject('Message', { household_id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('manage', subject('Message', { household_id: ownHouseholdId }))).toBe(true);
+
+      // Should NOT be able to access other household
+      expect(ability.can('read', subject('Household', { id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('manage', subject('Household', { id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('read', subject('Message', { household_id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('manage', subject('Message', { household_id: otherHouseholdId }))).toBe(false);
+    });
+
+    it('should prevent cross-household access - Member in Household A cannot access Household B', async () => {
+      const userId = 'test-member-user';
+      const ownHouseholdId = 'household-a';
+      const otherHouseholdId = 'household-b';
+
+      // User is member of household-a only
+      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
+        userId,
+        HouseholdRole.MEMBER,
+        ownHouseholdId
+      );
+
+      mockDb.mockBuilder.mockExecute(householdMembers);
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const ability = await service.computeUserPermissions(userId);
+
+      // Should be able to access own household (read-only)
+      expect(ability.can('read', subject('Household', { id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('read', subject('Message', { household_id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('create', subject('Message', { household_id: ownHouseholdId }))).toBe(true);
+
+      // Should NOT be able to access other household
+      expect(ability.can('read', subject('Household', { id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('read', subject('Message', { household_id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('create', subject('Message', { household_id: otherHouseholdId }))).toBe(false);
+    });
+
+    it('should prevent cross-household access - AI in Household A cannot access Household B', async () => {
+      const userId = 'test-ai-user';
+      const ownHouseholdId = 'household-a';
+      const otherHouseholdId = 'household-b';
+
+      // User is AI in household-a only
+      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
+        userId,
+        HouseholdRole.AI,
+        ownHouseholdId
+      );
+
+      mockDb.mockBuilder.mockExecute(householdMembers);
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const ability = await service.computeUserPermissions(userId);
+
+      // Should be able to access own household (read and create messages)
+      expect(ability.can('read', subject('Household', { id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('read', subject('Message', { household_id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('create', subject('Message', { household_id: ownHouseholdId }))).toBe(true);
+
+      // Should NOT be able to access other household
+      expect(ability.can('read', subject('Household', { id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('read', subject('Message', { household_id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('create', subject('Message', { household_id: otherHouseholdId }))).toBe(false);
+
+      // AI restrictions should still apply
+      expect(ability.can('update', subject('User', { id: 'other-user-id' }))).toBe(false);
+      expect(ability.can('create', 'HouseholdMember')).toBe(false);
+    });
+
+    it('should validate MongoDB $in conditions work correctly for multi-household users', async () => {
+      const userId = 'test-multi-household-user';
+      const householdA = 'household-a';
+      const householdB = 'household-b';
+      const householdC = 'household-c'; // Not member of this one
+
+      // User is manager of household-a and member of household-b
+      const householdMembers = [
+        {
+          household_id: householdA,
+          role: HouseholdRole.MANAGER,
+          user_id: userId,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        {
+          household_id: householdB,
+          role: HouseholdRole.MEMBER,  
+          user_id: userId,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }
+      ];
+
+      mockDb.mockBuilder.mockExecute(householdMembers);
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const ability = await service.computeUserPermissions(userId);
+
+      // Should have manager access to household-a
+      expect(ability.can('manage', subject('Household', { id: householdA }))).toBe(true);
+      expect(ability.can('manage', subject('Message', { household_id: householdA }))).toBe(true);
+
+      // Should have member access to household-b  
+      expect(ability.can('read', subject('Household', { id: householdB }))).toBe(true);
+      expect(ability.can('create', subject('Message', { household_id: householdB }))).toBe(true);
+      expect(ability.can('manage', subject('Message', { household_id: householdB }))).toBe(false);
+
+      // Should NOT have access to household-c
+      expect(ability.can('read', subject('Household', { id: householdC }))).toBe(false);
+      expect(ability.can('read', subject('Message', { household_id: householdC }))).toBe(false);
+      expect(ability.can('create', subject('Message', { household_id: householdC }))).toBe(false);
+    });
+
+    it('should prevent User A from reading User B in different household', async () => {
+      const userA = 'user-a-id';
+      const userB = 'user-b-id';
+      const householdA = 'household-a';
+      const householdB = 'household-b';
+
+      // User A is manager of household-a only
+      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
+        userA,
+        HouseholdRole.MANAGER,
+        householdA
+      );
+
+      mockDb.mockBuilder.mockExecute(householdMembers);
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const ability = await service.computeUserPermissions(userA);
+
+      // Should be able to read own profile always
+      expect(ability.can('read', subject('User', { id: userA }))).toBe(true);
+      expect(ability.can('update', subject('User', { id: userA }))).toBe(true);
+
+      // Note: Complex nested MongoDB queries might not work as expected in CASL tests
+      // The key security test is that User B (different household) cannot be accessed
+      // Household-specific user queries would be validated at the service layer
+
+      // Should NOT be able to read User B who is in a different household
+      expect(ability.can('read', subject('User', { id: userB }))).toBe(false);
+      expect(ability.can('update', subject('User', { id: userB }))).toBe(false);
+      
+      // Should NOT be able to read users from other households
+      expect(ability.can('read', subject('User', { 
+        'household_members.household_id': householdB 
+      }))).toBe(false);
+    });
+
+    it('should validate Pantry cross-household restrictions', async () => {
+      const userId = 'test-member-user';
+      const ownHouseholdId = 'household-a';
+      const otherHouseholdId = 'household-b';
+
+      // User is member of household-a only
+      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
+        userId,
+        HouseholdRole.MEMBER,
+        ownHouseholdId
+      );
+
+      mockDb.mockBuilder.mockExecute(householdMembers);
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const ability = await service.computeUserPermissions(userId);
+
+      // Should be able to access pantries in own household
+      expect(ability.can('read', subject('Pantry', { household_id: ownHouseholdId }))).toBe(true);
+
+      // Should NOT be able to access pantries in other households
+      expect(ability.can('read', subject('Pantry', { household_id: otherHouseholdId }))).toBe(false);
+    });
+
+    it('should validate HouseholdMember management permissions across households', async () => {
+      const userId = 'test-manager-user';
+      const ownHouseholdId = 'household-a';
+      const otherHouseholdId = 'household-b';
+
+      // User is manager of household-a only
+      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
+        userId,
+        HouseholdRole.MANAGER,
+        ownHouseholdId
+      );
+
+      mockDb.mockBuilder.mockExecute(householdMembers);
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const ability = await service.computeUserPermissions(userId);
+
+      // Should be able to read and manage HouseholdMembers in own household
+      expect(ability.can('read', subject('HouseholdMember', { household_id: ownHouseholdId }))).toBe(true);
+      expect(ability.can('create', subject('HouseholdMember', { 
+        household_id: ownHouseholdId,
+        role: HouseholdRole.MEMBER 
+      }))).toBe(true);
+
+      // Should NOT be able to manage other managers (business rule)
+      expect(ability.can('update', subject('HouseholdMember', { 
+        household_id: ownHouseholdId,
+        role: HouseholdRole.MANAGER 
+      }))).toBe(false);
+
+      // Should NOT be able to access HouseholdMembers in other households
+      expect(ability.can('read', subject('HouseholdMember', { household_id: otherHouseholdId }))).toBe(false);
+      expect(ability.can('create', subject('HouseholdMember', { household_id: otherHouseholdId }))).toBe(false);
     });
   });
 

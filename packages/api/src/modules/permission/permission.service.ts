@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Kysely } from 'kysely';
-import { PureAbility } from '@casl/ability';
+import { createMongoAbility } from '@casl/ability';
 import { packRules, unpackRules } from '@casl/ability/extra';
 import type { Cache } from 'cache-manager';
 import { DB, Json } from '../../generated/database.js';
@@ -80,36 +80,8 @@ export class PermissionServiceImpl implements PermissionService {
       const packedRules = JSON.parse(user.permissions as string);
       const rules = unpackRules(packedRules);
 
-      // Create ability from unpacked rules
-      return new PureAbility(rules, {
-        conditionsMatcher: (conditions) => (object) => {
-          if (!conditions) return true;
-
-          for (const [key, value] of Object.entries(conditions)) {
-            if (key.includes('.')) {
-              // Handle nested property access like 'household_members.household_id'
-              const keys = key.split('.');
-              let current = object;
-              for (const k of keys) {
-                if (current?.[k] === undefined) return false;
-                current = current[k];
-              }
-              if (current !== value) return false;
-            } else if (typeof value === 'object' && value !== null) {
-              // Handle special operators like { $exists: true }
-              if ('$exists' in value) {
-                const exists =
-                  object[key] !== undefined && object[key] !== null;
-                if (exists !== value.$exists) return false;
-              }
-            } else {
-              // Simple property match
-              if (object[key] !== value) return false;
-            }
-          }
-          return true;
-        },
-      });
+      // Create ability from unpacked rules using createMongoAbility
+      return createMongoAbility(rules as any) as AppAbility;
     } catch {
       return null;
     }
