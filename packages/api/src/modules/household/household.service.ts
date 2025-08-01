@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Insertable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
@@ -99,6 +99,28 @@ export class HouseholdServiceImpl implements HouseholdService {
       return createdHousehold;
     } catch (error) {
       this.logger.error(`Failed to create household:`, error);
+      throw error;
+    }
+  }
+
+  async getHouseholdById(householdId: string, userId: string): Promise<HouseholdRecord> {
+    this.logger.log(`Getting household ${householdId} for user ${userId}`);
+
+    try {
+      const household = await this.householdRepository.getHouseholdByIdForUser(householdId, userId);
+
+      if (!household) {
+        this.logger.warn(`Household ${householdId} not found or user ${userId} does not have access`);
+        throw new NotFoundException('Household not found');
+      }
+
+      this.logger.log(`Successfully retrieved household ${householdId} for user ${userId}`);
+      return household;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(`Failed to get household ${householdId} for user ${userId}:`, error);
       throw error;
     }
   }

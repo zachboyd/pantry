@@ -10,13 +10,13 @@ paths:
       summary: Get API health status
       tags:
         - health
-  /api/attachments/upload-url:
+  /api/household:
     post:
-      operationId: AttachmentController_createUploadUrl
+      operationId: HouseholdController_createHousehold
       parameters: []
       responses:
-        '200':
-          description: Presigned upload URL generated
+        '201':
+          description: Household created successfully
           content:
             application/json:
               schema:
@@ -24,46 +24,26 @@ paths:
                 properties:
                   id:
                     type: string
-                  upload_url:
+                  name:
                     type: string
-                  s3_key:
+                  description:
                     type: string
-                  expires_at:
-                    type: number
+                  created_by:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
         '401':
           description: Unauthorized - User not found
-        '403':
-          description: Forbidden - Access denied to household
       security:
         - session: []
-      summary: Generate presigned URL for attachment upload
+      summary: Create a new household
       tags: &ref_0
-        - attachments
-  /api/attachments/{id}/uploaded:
-    post:
-      operationId: AttachmentController_confirmUpload
-      parameters:
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Upload confirmed successfully
-        '401':
-          description: Unauthorized - User not found
-        '403':
-          description: Forbidden - Access denied to household
-        '404':
-          description: Not Found - Attachment not found
-      security:
-        - session: []
-      summary: Confirm successful attachment upload
-      tags: *ref_0
-  /api/attachments/{id}/download-url:
+        - household
+  /api/household/{id}:
     get:
-      operationId: AttachmentController_createDownloadUrl
+      operationId: HouseholdController_getHousehold
       parameters:
         - name: id
           required: true
@@ -72,47 +52,14 @@ paths:
             type: string
       responses:
         '200':
-          description: Presigned download URL generated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  download_url:
-                    type: string
-                  expires_at:
-                    type: number
+          description: Household retrieved successfully
         '401':
           description: Unauthorized - User not found
-        '403':
-          description: Forbidden - Access denied to household
         '404':
-          description: Not Found - Attachment not found
+          description: Household not found
       security:
         - session: []
-      summary: Generate presigned URL for attachment download
-      tags: *ref_0
-  /api/attachments/{id}:
-    delete:
-      operationId: AttachmentController_deleteAttachment
-      parameters:
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Attachment deleted successfully
-        '401':
-          description: Unauthorized - User not found
-        '403':
-          description: Forbidden - Access denied to household
-        '404':
-          description: Not Found - Attachment not found
-      security:
-        - session: []
-      summary: Delete attachment and associated file
+      summary: Get household by ID
       tags: *ref_0
   /api/powersync/auth:
     post:

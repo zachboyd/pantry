@@ -31,6 +31,14 @@ export interface HouseholdRepository {
   getHouseholdById(householdId: string): Promise<HouseholdRecord | null>;
 
   /**
+   * Get household by ID if user has access
+   * @param householdId - Household ID
+   * @param userId - User ID
+   * @returns Promise with household record or null
+   */
+  getHouseholdByIdForUser(householdId: string, userId: string): Promise<HouseholdRecord | null>;
+
+  /**
    * Get households for a user
    * @param userId - User ID
    * @returns Promise with array of household records
@@ -56,4 +64,12 @@ export interface HouseholdService {
    * @returns Promise with the created household
    */
   createHousehold(householdData: Insertable<Household>, creatorId: string): Promise<HouseholdRecord>;
+
+  /**
+   * Get household by ID with access control
+   * @param householdId - Household ID
+   * @param userId - User ID requesting access
+   * @returns Promise with household record
+   */
+  getHouseholdById(householdId: string, userId: string): Promise<HouseholdRecord>;
 }

@@ -94,6 +94,32 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
+  async getHouseholdByIdForUser(householdId: string, userId: string): Promise<HouseholdRecord | null> {
+    this.logger.log(`Getting household ${householdId} for user ${userId}`);
+
+    const db = this.databaseService.getConnection();
+
+    try {
+      const household = await db
+        .selectFrom('household')
+        .innerJoin('household_member', 'household.id', 'household_member.household_id')
+        .selectAll('household')
+        .where('household.id', '=', householdId)
+        .where('household_member.user_id', '=', userId)
+        .executeTakeFirst();
+
+      if (!household) {
+        this.logger.debug(`No household found for ID ${householdId} and user ${userId}`);
+        return null;
+      }
+
+      return household as HouseholdRecord;
+    } catch (error) {
+      this.logger.error(`Failed to get household ${householdId} for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
   async getHouseholdsForUser(userId: string): Promise<HouseholdRecord[]> {
     this.logger.log(`Getting households for user: ${userId}`);
 

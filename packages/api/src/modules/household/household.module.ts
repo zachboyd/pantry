@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TOKENS } from '../../common/tokens.js';
+import { HouseholdController } from './household.controller.js';
 import { HouseholdRepositoryImpl } from './household.repository.js';
 import { HouseholdServiceImpl } from './household.service.js';
 
 @Module({
+  controllers: [HouseholdController],
   providers: [
     {
       provide: TOKENS.HOUSEHOLD.REPOSITORY,
