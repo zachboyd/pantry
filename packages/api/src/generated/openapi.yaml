@@ -10,6 +10,110 @@ paths:
       summary: Get API health status
       tags:
         - health
+  /api/attachments/upload-url:
+    post:
+      operationId: AttachmentController_createUploadUrl
+      parameters: []
+      responses:
+        '200':
+          description: Presigned upload URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  upload_url:
+                    type: string
+                  s3_key:
+                    type: string
+                  expires_at:
+                    type: number
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Access denied to household
+      security:
+        - session: []
+      summary: Generate presigned URL for attachment upload
+      tags: &ref_0
+        - attachments
+  /api/attachments/{id}/uploaded:
+    post:
+      operationId: AttachmentController_confirmUpload
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Upload confirmed successfully
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Access denied to household
+        '404':
+          description: Not Found - Attachment not found
+      security:
+        - session: []
+      summary: Confirm successful attachment upload
+      tags: *ref_0
+  /api/attachments/{id}/download-url:
+    get:
+      operationId: AttachmentController_createDownloadUrl
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Presigned download URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  download_url:
+                    type: string
+                  expires_at:
+                    type: number
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Access denied to household
+        '404':
+          description: Not Found - Attachment not found
+      security:
+        - session: []
+      summary: Generate presigned URL for attachment download
+      tags: *ref_0
+  /api/attachments/{id}:
+    delete:
+      operationId: AttachmentController_deleteAttachment
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Attachment deleted successfully
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Access denied to household
+        '404':
+          description: Not Found - Attachment not found
+      security:
+        - session: []
+      summary: Delete attachment and associated file
+      tags: *ref_0
   /api/powersync/auth:
     post:
       operationId: PowerSyncController_authenticateForPowerSync
@@ -31,7 +135,7 @@ paths:
       security:
         - session: []
       summary: Authenticate user for PowerSync
-      tags: &ref_0
+      tags: &ref_1
         - powersync
   /api/powersync/jwks:
     get:
@@ -50,7 +154,7 @@ paths:
                     items:
                       type: object
       summary: Get JSON Web Key Set for PowerSync
-      tags: *ref_0
+      tags: *ref_1
   /api/powersync/write:
     post:
       operationId: PowerSyncController_processWriteOperations
@@ -83,7 +187,7 @@ paths:
       security:
         - session: []
       summary: Process PowerSync write operations
-      tags: *ref_0
+      tags: *ref_1
   /api/auth/sign-in/email:
     post:
       tags:

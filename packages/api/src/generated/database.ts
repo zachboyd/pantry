@@ -29,6 +29,20 @@ export type MessageType = "ai" | "location" | "system" | "task_created" | "text"
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface Attachments {
+  created_at: Generated<Timestamp>;
+  filename: string | null;
+  household_id: string;
+  id: string;
+  local_uri: string | null;
+  media_type: string | null;
+  size: number | null;
+  state: number | null;
+  timestamp: number | null;
+  updated_at: Generated<Timestamp>;
+  user_id: string | null;
+}
+
 export interface AuthAccount {
   accessToken: string | null;
   accessTokenExpiresAt: Timestamp | null;
@@ -172,6 +186,7 @@ export interface User {
 }
 
 export interface DB {
+  attachments: Attachments;
   auth_account: AuthAccount;
   auth_session: AuthSession;
   auth_user: AuthUser;

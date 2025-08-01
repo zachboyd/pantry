@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { AttachmentModule } from './modules/attachment/attachment.module.js';
 import { AuthGuard } from './modules/auth/auth.guard.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AppConfigModule } from './modules/config/config.module.js';
@@ -22,6 +23,7 @@ import { UserModule } from './modules/user/user.module.js';
     HealthModule,
     DatabaseModule,
     AuthModule,
+    AttachmentModule,
     HouseholdModule,
     MessageModule,
     PowerSyncModule,

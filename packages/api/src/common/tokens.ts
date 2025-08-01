@@ -50,6 +50,19 @@ export const TOKENS = {
     REPOSITORY: 'HOUSEHOLD_REPOSITORY',
   },
 
+  // Attachment related tokens
+  ATTACHMENT: {
+    SERVICE: 'ATTACHMENT_SERVICE',
+    REPOSITORY: 'ATTACHMENT_REPOSITORY',
+  },
+
+  // Storage related tokens
+  STORAGE: {
+    SERVICE: 'STORAGE_SERVICE',
+    FACTORY: 'STORAGE_FACTORY',
+    S3_IMPL: 'STORAGE_S3_IMPLEMENTATION',
+  },
+
   // Worker related tokens
   WORKER: {
     SERVICE: 'WORKER_SERVICE',
@@ -70,5 +83,7 @@ export type AuthTokens = typeof TOKENS.AUTH;
 export type ConfigTokens = typeof TOKENS.CONFIG;
 export type MessageTokens = typeof TOKENS.MESSAGE;
 export type HouseholdTokens = typeof TOKENS.HOUSEHOLD;
+export type AttachmentTokens = typeof TOKENS.ATTACHMENT;
+export type StorageTokens = typeof TOKENS.STORAGE;
 export type WorkerTokens = typeof TOKENS.WORKER;
 export type HealthTokens = typeof TOKENS.HEALTH;

@@ -15,7 +15,7 @@ import type {
   WriteBatchRequest,
   WriteBatchResponse,
   JwksResponse,
-} from './powersync.types.js';
+} from '../powersync.types.js';
 
 describe('PowerSyncController', () => {
   let powerSyncController: PowerSyncController;

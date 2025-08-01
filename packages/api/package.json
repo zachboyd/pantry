@@ -32,6 +32,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.858.0",
+    "@aws-sdk/s3-request-presigner": "^3.858.0",
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "@hatchet-dev/pickaxe": "^0.1.9",
     "@hatchet-dev/typescript-sdk": "^1.9.0",
