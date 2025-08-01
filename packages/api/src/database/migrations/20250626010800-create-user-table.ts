@@ -19,6 +19,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('phone', 'varchar(20)')
     .addColumn('birth_date', 'date')
     .addColumn('preferences', 'jsonb')
+    .addColumn('permissions', 'jsonb')
     .addColumn('managed_by', 'uuid', (col) => col.references('user.id'))
     .addColumn('relationship_to_manager', 'varchar(50)')
     .addColumn('created_at', 'timestamptz', (col) =>

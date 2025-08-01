@@ -67,6 +67,11 @@ export const TOKENS = {
   HEALTH: {
     SERVICE: 'HEALTH_SERVICE',
   },
+
+  // Permission related tokens
+  PERMISSION: {
+    SERVICE: 'PERMISSION_SERVICE',
+  },
 } as const;
 
 // Type helpers for better type safety
@@ -80,3 +85,4 @@ export type AttachmentTokens = typeof TOKENS.ATTACHMENT;
 export type StorageTokens = typeof TOKENS.STORAGE;
 export type WorkerTokens = typeof TOKENS.WORKER;
 export type HealthTokens = typeof TOKENS.HEALTH;
+export type PermissionTokens = typeof TOKENS.PERMISSION;

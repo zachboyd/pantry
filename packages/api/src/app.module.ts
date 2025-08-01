@@ -9,6 +9,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { HouseholdModule } from './modules/household/household.module.js';
 import { AppLoggerModule } from './modules/logger/logger.module.js';
 import { MessageModule } from './modules/message/message.module.js';
+import { PermissionModule } from './modules/permission/permission.module.js';
 import { SwaggerModule } from './modules/swagger/swagger.module.js';
 import { UserModule } from './modules/user/user.module.js';
 
@@ -21,6 +22,7 @@ import { UserModule } from './modules/user/user.module.js';
     HealthModule,
     DatabaseModule,
     AuthModule,
+    PermissionModule,
     HouseholdModule,
     MessageModule,
     UserModule,

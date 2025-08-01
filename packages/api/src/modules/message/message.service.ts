@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Insertable } from 'kysely';
 import { TOKENS } from '../../common/tokens.js';
+import { EVENTS } from '../../common/events.js';
 import type { Message } from '../../generated/database.js';
 import { MessageSavedEvent } from './events/message-saved.event.js';
 import type { MessageRepository, MessageService } from './message.types.js';
@@ -28,7 +29,7 @@ export class MessageServiceImpl implements MessageService {
 
       // Emit event for downstream processing (AI, notifications, etc.)
       this.eventEmitter.emit(
-        'message.saved',
+        EVENTS.MESSAGE.SAVED,
         new MessageSavedEvent(savedMessage),
       );
 
