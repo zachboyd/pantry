@@ -2,17 +2,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { MessageServiceImpl } from './message.service.js';
-import { TOKENS } from '../../common/tokens.js';
-import { DatabaseFixtures } from '../../test/fixtures/database-fixtures.js';
+import { MessageServiceImpl } from '../message.service.js';
+import { TOKENS } from '../../../common/tokens.js';
+import { DatabaseFixtures } from '../../../test/fixtures/database-fixtures.js';
 import {
   EventEmitterMock,
   type EventEmitter2Mock,
-} from '../../test/mocks/event-emitter.mock.js';
+} from '../../../test/mocks/event-emitter.mock.js';
 import {
   MessageRepositoryMock,
   type MessageRepositoryMockType,
-} from '../../test/mocks/message-repository.mock.js';
+} from '../../../test/mocks/message-repository.mock.js';
 
 describe('MessageService', () => {
   let messageService: MessageServiceImpl;

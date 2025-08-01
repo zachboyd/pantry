@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
-import { TypingIndicatorServiceImpl } from './typing-indicator.service.js';
-import { TOKENS } from '../../common/tokens.js';
+import { TypingIndicatorServiceImpl } from '../typing-indicator.service.js';
+import { TOKENS } from '../../../common/tokens.js';
 import {
   TypingIndicatorRepositoryMock,
   type TypingIndicatorRepositoryMockType,
-} from '../../test/mocks/typing-indicator-repository.mock.js';
-import { DatabaseFixtures } from '../../test/fixtures/database-fixtures.js';
+} from '../../../test/mocks/typing-indicator-repository.mock.js';
+import { DatabaseFixtures } from '../../../test/fixtures/database-fixtures.js';
 
 describe('TypingIndicatorService', () => {
   let typingIndicatorService: TypingIndicatorServiceImpl;

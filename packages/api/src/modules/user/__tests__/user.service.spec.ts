@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
-import { UserServiceImpl } from './user.service.js';
-import { TOKENS } from '../../common/tokens.js';
-import type { User } from '../../generated/database.js';
+import { UserServiceImpl } from '../user.service.js';
+import { TOKENS } from '../../../common/tokens.js';
+import type { User } from '../../../generated/database.js';
 import type { Updateable } from 'kysely';
 import {
   UserRepositoryMock,
   type UserRepositoryMockType,
-} from '../../test/mocks/user-repository.mock.js';
-import { DatabaseFixtures } from '../../test/fixtures/database-fixtures.js';
+} from '../../../test/mocks/user-repository.mock.js';
+import { DatabaseFixtures } from '../../../test/fixtures/database-fixtures.js';
 
 describe('UserService', () => {
   let userService: UserServiceImpl;

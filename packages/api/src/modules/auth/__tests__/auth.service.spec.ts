@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { AuthServiceImpl } from './auth.service.js';
-import { TOKENS } from '../../common/tokens.js';
-import type { AuthFactory } from './auth.factory.js';
+import { AuthServiceImpl } from '../auth.service.js';
+import { TOKENS } from '../../../common/tokens.js';
+import type { AuthFactory } from '../auth.factory.js';
 
 describe('AuthService', () => {
   let authService: AuthServiceImpl;

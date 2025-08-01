@@ -6,9 +6,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { UpdateType, CrudEntry } from '@powersync/common';
-import { PowerSyncController } from './powersync.controller.js';
-import { TOKENS } from '../../common/tokens.js';
-import { DatabaseFixtures } from '../../test/fixtures/database-fixtures.js';
+import { PowerSyncController } from '../powersync.controller.js';
+import { TOKENS } from '../../../common/tokens.js';
+import { DatabaseFixtures } from '../../../test/fixtures/database-fixtures.js';
 import type {
   PowerSyncAuthService,
   PowerSyncOperationService,

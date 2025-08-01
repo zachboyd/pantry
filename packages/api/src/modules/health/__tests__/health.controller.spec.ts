@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TOKENS } from '../../common/tokens.js';
-import { HealthController } from './health.controller.js';
-import type { HealthResponse } from './health.types.js';
+import { TOKENS } from '../../../common/tokens.js';
+import { HealthController } from '../health.controller.js';
+import type { HealthResponse } from '../health.types.js';
 
 describe('HealthController', () => {
   let healthController: HealthController;
