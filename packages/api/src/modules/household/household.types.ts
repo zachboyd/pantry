@@ -1,5 +1,5 @@
 import type { Insertable, Selectable } from 'kysely';
-import type { Household, HouseholdMember, User } from '../../generated/database.js';
+import type { Household, HouseholdMember } from '../../generated/database.js';
 
 // Runtime types for Household queries - what Kysely actually returns
 export type HouseholdRecord = Selectable<Household>;

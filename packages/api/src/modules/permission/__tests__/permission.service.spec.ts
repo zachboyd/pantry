@@ -1,11 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AbilityBuilder, PureAbility, subject } from '@casl/ability';
-import { packRules } from '@casl/ability/extra';
+import { subject } from '@casl/ability';
 import { PermissionServiceImpl } from '../permission.service.js';
 import { TOKENS } from '../../../common/tokens.js';
 import { HouseholdRole } from '../../../common/enums.js';
-import { AppAbility } from '../permission.types.js';
 import { DatabaseMock } from '../../../test/utils/database-mock.js';
 import { CacheManagerMock } from '../../../test/mocks/cache-manager.mock.js';
 import { CacheHelperMock } from '../../../test/mocks/cache-helper.mock.js';
@@ -419,8 +417,6 @@ describe('PermissionService', () => {
 
       // Use fixture to create a member ability and pack it
       const testAbility = PermissionFixtures.createMemberAbility();
-      const packedRules = PermissionFixtures.createPackedRules(testAbility);
-
       // Use fixture for user permission record
       const userPermissionRecord = PermissionFixtures.createUserPermissionRecord(
         userId,

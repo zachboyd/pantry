@@ -8,7 +8,7 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Insertable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
-import { AIPersonality, HouseholdRole } from '../../common/enums.js';
+import { HouseholdRole } from '../../common/enums.js';
 import { TOKENS } from '../../common/tokens.js';
 import { EVENTS } from '../../common/events.js';
 import { RecomputeUserPermissionsEvent } from '../permission/events/permission-events.js';
@@ -187,7 +187,7 @@ export class HouseholdServiceImpl implements HouseholdService {
         id: uuidv4(),
         household_id: householdId,
         user_id: userId,
-        role: role as any,
+        role: role as HouseholdRole,
       });
 
       this.logger.log(

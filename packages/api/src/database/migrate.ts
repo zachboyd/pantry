@@ -2,7 +2,6 @@
 import * as path from 'path';
 import { promises as fs } from 'fs';
 import { Migrator, FileMigrationProvider, Kysely } from 'kysely';
-import { createDatabase } from './config.js';
 import { createMigrationContext } from './migration-context.js';
 import { DB } from 'generated/database.js';
 import { TOKENS } from 'common/tokens.js';

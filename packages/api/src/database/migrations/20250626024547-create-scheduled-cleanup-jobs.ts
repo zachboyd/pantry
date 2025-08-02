@@ -1,6 +1,6 @@
 import { Kysely, sql } from 'kysely';
 
-export async function up(db: Kysely<any>): Promise<void> {
+export async function up(db: Kysely<unknown>): Promise<void> {
   // Schedule cleanup of expired typing indicators (every 10 minutes)
   await sql`
     SELECT cron.schedule(
@@ -21,7 +21,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   `.execute(db);
 }
 
-export async function down(db: Kysely<any>): Promise<void> {
+export async function down(db: Kysely<unknown>): Promise<void> {
   // Remove scheduled jobs
   await sql`SELECT cron.unschedule('cleanup-expired-typing-indicators')`.execute(
     db,

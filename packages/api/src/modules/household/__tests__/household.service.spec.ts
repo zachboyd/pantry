@@ -3,10 +3,9 @@ import { Test } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { HouseholdServiceImpl } from '../household.service.js';
-import { AIPersonality, HouseholdRole } from '../../../common/enums.js';
+import { HouseholdRole } from '../../../common/enums.js';
 import { TOKENS } from '../../../common/tokens.js';
-import type { HouseholdRepository, HouseholdRecord } from '../household.types.js';
-import type { UserService } from '../../user/user.types.js';
+import type { HouseholdRecord } from '../household.types.js';
 
 // Mock repository
 const mockHouseholdRepository = {

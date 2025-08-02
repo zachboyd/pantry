@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { Insertable, Selectable } from 'kysely';
+import type { Insertable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
 import { TOKENS } from '../../common/tokens.js';
-import type { Household, HouseholdMember, User } from '../../generated/database.js';
+import type { Household, HouseholdMember, HouseholdRole } from '../../generated/database.js';
 import type { DatabaseService } from '../database/database.types.js';
 import type { HouseholdRepository, HouseholdRecord, HouseholdMemberRecord } from './household.types.js';
 
@@ -221,7 +221,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     try {
       const [updatedMember] = await db
         .updateTable('household_member')
-        .set({ role: newRole as any })
+        .set({ role: newRole as HouseholdRole })
         .where('household_id', '=', householdId)
         .where('user_id', '=', userId)
         .returningAll()

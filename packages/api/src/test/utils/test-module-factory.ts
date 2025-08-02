@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ModuleMetadata } from '@nestjs/common';
+import { ModuleMetadata, Provider } from '@nestjs/common';
 
 /**
  * Factory for creating NestJS test modules with consistent configuration
@@ -16,12 +16,12 @@ export class TestModuleFactory {
    * Creates a test module with service mocking helper
    * Useful for unit testing services with mocked dependencies
    */
-  static async createWithMocks<T = any>(
-    serviceClass: new (...args: any[]) => T,
-    mocks: Record<string, any> = {},
-    additionalProviders: any[] = [],
+  static async createWithMocks<T = unknown>(
+    serviceClass: new (...args: unknown[]) => T,
+    mocks: Record<string, unknown> = {},
+    additionalProviders: Provider[] = [],
   ): Promise<{ module: TestingModule; service: T }> {
-    const providers = [serviceClass, ...additionalProviders];
+    const providers: Provider[] = [serviceClass, ...additionalProviders];
 
     // Add mocked providers
     Object.entries(mocks).forEach(([token, mockValue]) => {
@@ -43,9 +43,9 @@ export class TestModuleFactory {
   /**
    * Creates a test module for controller testing with mocked services
    */
-  static async createControllerModule<T = any>(
-    controllerClass: new (...args: any[]) => T,
-    serviceMocks: Record<string, any> = {},
+  static async createControllerModule<T = unknown>(
+    controllerClass: new (...args: unknown[]) => T,
+    serviceMocks: Record<string, unknown> = {},
   ): Promise<{ module: TestingModule; controller: T }> {
     const providers = Object.entries(serviceMocks).map(
       ([token, mockValue]) => ({

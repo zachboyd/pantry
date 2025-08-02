@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Insertable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
 import { TOKENS } from '../../common/tokens.js';
-import type { Message } from '../../generated/database.js';
+import type { Message, Json } from '../../generated/database.js';
 import type { DatabaseService } from '../database/database.types.js';
 import type { MessageRepository } from './message.types.js';
 
@@ -31,7 +31,7 @@ export class MessageRepositoryImpl implements MessageRepository {
           household_id: message.household_id,
           message_type: message.message_type,
           user_id: message.user_id,
-          ...(message.metadata && { metadata: message.metadata as any }),
+          ...(message.metadata && { metadata: message.metadata as Json }),
           // Preserve client timestamps if provided (important for offline writes)
           ...(message.created_at && { created_at: message.created_at }),
           ...(message.updated_at && { updated_at: message.updated_at }),
@@ -40,7 +40,7 @@ export class MessageRepositoryImpl implements MessageRepository {
           oc.column('id').doUpdateSet({
             content: message.content,
             message_type: message.message_type,
-            ...(message.metadata && { metadata: message.metadata as any }),
+            ...(message.metadata && { metadata: message.metadata as Json }),
             // Update timestamp on conflict (server wins for modifications)
             ...(message.updated_at && { updated_at: message.updated_at }),
           }),

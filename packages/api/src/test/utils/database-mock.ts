@@ -24,7 +24,7 @@ export class KyselyMockBuilder {
   /**
    * Sets up a mock for array-returning queries (execute)
    */
-  mockExecute(result: any[]) {
+  mockExecute(result: unknown[]) {
     this.executeMock.mockResolvedValue(result);
     return this;
   }
@@ -32,7 +32,7 @@ export class KyselyMockBuilder {
   /**
    * Sets up a mock for single-result queries (executeTakeFirst)
    */
-  mockExecuteTakeFirst(result: any) {
+  mockExecuteTakeFirst(result: unknown) {
     this.executeTakeFirstMock.mockResolvedValue(result);
     return this;
   }
@@ -40,7 +40,7 @@ export class KyselyMockBuilder {
   /**
    * Sets up a mock for required single-result queries (executeTakeFirstOrThrow)
    */
-  mockExecuteTakeFirstOrThrow(result: any) {
+  mockExecuteTakeFirstOrThrow(result: unknown) {
     this.executeTakeFirstOrThrowMock.mockResolvedValue(result);
     return this;
   }

@@ -1,6 +1,6 @@
 import { Kysely, sql } from 'kysely';
 
-export async function up(db: Kysely<any>): Promise<void> {
+export async function up(db: Kysely<unknown>): Promise<void> {
   // Create Better Auth user table
   await db.schema
     .createTable('auth_user')
@@ -74,7 +74,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 }
 
-export async function down(db: Kysely<any>): Promise<void> {
+export async function down(db: Kysely<unknown>): Promise<void> {
   // Drop Better Auth tables in reverse order (due to foreign key constraints)
   await db.schema.dropTable('auth_verification').ifExists().execute();
   await db.schema.dropTable('auth_account').ifExists().execute();

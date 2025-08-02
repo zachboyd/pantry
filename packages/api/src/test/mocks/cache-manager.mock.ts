@@ -31,7 +31,7 @@ export class CacheManagerMock {
       reset: vi.fn(),
 
       // Wrap method - calls function directly by default for testing
-      wrap: vi.fn(async (key: string, fn: () => any, ttl?: number) => {
+      wrap: vi.fn(async <T>(key: string, fn: () => T, _ttl?: number) => {
         return fn();
       }),
 
@@ -51,7 +51,7 @@ export class CacheManagerMock {
    * Creates a cache mock that actually stores values for testing cache behavior
    */
   static createMemoryCacheMock(): CacheManagerMockType {
-    const storage = new Map<string, { value: any; expires?: number }>();
+    const storage = new Map<string, { value: unknown; expires?: number }>();
 
     const mockCache = {
       get: vi.fn(async (key: string) => {
@@ -64,7 +64,7 @@ export class CacheManagerMock {
         return item.value;
       }),
 
-      set: vi.fn(async (key: string, value: any, ttl?: number) => {
+      set: vi.fn(async (key: string, value: unknown, ttl?: number) => {
         const expires = ttl ? Date.now() + ttl : undefined;
         storage.set(key, { value, expires });
       }),
@@ -77,7 +77,7 @@ export class CacheManagerMock {
         storage.clear();
       }),
 
-      wrap: vi.fn(async (key: string, fn: () => any, ttl?: number) => {
+      wrap: vi.fn(async <T>(key: string, fn: () => T, ttl?: number) => {
         const cached = await mockCache.get(key);
         if (cached !== undefined) {
           return cached;
@@ -93,7 +93,7 @@ export class CacheManagerMock {
         return results;
       }),
 
-      mset: vi.fn(async (keyValuePairs: Array<[string, any]>, ttl?: number) => {
+      mset: vi.fn(async (keyValuePairs: Array<[string, unknown]>, ttl?: number) => {
         await Promise.all(
           keyValuePairs.map(([key, value]) => mockCache.set(key, value, ttl))
         );

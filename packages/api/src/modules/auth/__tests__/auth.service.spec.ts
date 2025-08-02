@@ -7,7 +7,11 @@ import type { AuthFactory } from '../auth.factory.js';
 describe('AuthService', () => {
   let authService: AuthServiceImpl;
   let mockAuthFactory: AuthFactory;
-  let mockAuthInstance: any;
+  let mockAuthInstance: {
+    api: {
+      getSession: ReturnType<typeof vi.fn>;
+    };
+  };
 
   beforeEach(async () => {
     // Create mock auth instance
@@ -20,7 +24,7 @@ describe('AuthService', () => {
     // Create mock auth factory
     mockAuthFactory = {
       createAuthInstance: vi.fn().mockReturnValue(mockAuthInstance),
-    } as any;
+    } as unknown as AuthFactory;
 
     // Create test module
     const module = await Test.createTestingModule({

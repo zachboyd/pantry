@@ -47,8 +47,8 @@ export class AbilityFactory {
   }
 
   private static defineConsolidatedPermissions(
-    can: (action: Action | Action[], subject: Subject | Subject[], conditions?: any) => void,
-    cannot: (action: Action | Action[], subject: Subject | Subject[], conditions?: any) => void,
+    can: (action: Action | Action[], subject: Subject | Subject[], conditions?: Record<string, unknown>) => void,
+    cannot: (action: Action | Action[], subject: Subject | Subject[], conditions?: Record<string, unknown>) => void,
     userId: string,
     allHouseholdIds: string[],
     managerHouseholdIds: string[],

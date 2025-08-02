@@ -81,6 +81,8 @@ export class PermissionServiceImpl implements PermissionService {
       const rules = unpackRules(packedRules);
 
       // Create ability from unpacked rules using createMongoAbility
+      // Type assertion needed because rules from serialized storage lose their original types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return createMongoAbility(rules as any) as AppAbility;
     } catch {
       return null;

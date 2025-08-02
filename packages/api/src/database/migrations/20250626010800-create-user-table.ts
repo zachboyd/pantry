@@ -1,6 +1,6 @@
 import { Kysely, sql } from 'kysely';
 
-export async function up(db: Kysely<any>): Promise<void> {
+export async function up(db: Kysely<unknown>): Promise<void> {
   // Drop old user table if it exists (from old migration)
   await db.schema.dropTable('user').ifExists().execute();
 
@@ -51,7 +51,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 }
 
-export async function down(db: Kysely<any>): Promise<void> {
+export async function down(db: Kysely<unknown>): Promise<void> {
   // Drop user table
   await db.schema.dropTable('user').ifExists().execute();
 }

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, PutObjectCommandInput, GetObjectCommandInput } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
@@ -38,7 +38,7 @@ export class S3StorageServiceImpl implements FileStorageService {
   ): Promise<string> {
     const { expiresIn = 900, metadata } = options; // Default 15 minutes
 
-    const commandOptions: any = {
+    const commandOptions: PutObjectCommandInput = {
       Bucket: this.bucketName,
       Key: key,
       ContentType: contentType,
@@ -73,7 +73,7 @@ export class S3StorageServiceImpl implements FileStorageService {
       responseContentDisposition 
     } = options; // Default 1 hour
 
-    const commandOptions: any = {
+    const commandOptions: GetObjectCommandInput = {
       Bucket: this.bucketName,
       Key: key,
     };

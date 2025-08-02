@@ -1,6 +1,6 @@
 import { Kysely, sql } from 'kysely';
 
-export async function up(db: Kysely<any>): Promise<void> {
+export async function up(db: Kysely<unknown>): Promise<void> {
   // Create household role enum
   await db.schema
     .createType('household_role')
@@ -182,7 +182,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 }
 
-export async function down(db: Kysely<any>): Promise<void> {
+export async function down(db: Kysely<unknown>): Promise<void> {
   // Drop tables in reverse dependency order
   await db.schema.dropTable('typing_indicator').ifExists().execute();
   await db.schema.dropTable('message_read').ifExists().execute();
