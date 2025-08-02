@@ -1,30 +1,28 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { AuthServiceImpl } from '../auth.service.js';
 import { TOKENS } from '../../../common/tokens.js';
 import type { AuthFactory } from '../auth.factory.js';
+import {
+  AuthFactoryMock,
+  type AuthFactoryMockType,
+} from '../../../test/mocks/auth-factory.mock.js';
+import {
+  BetterAuthInstanceMock,
+  type BetterAuthInstanceMockType,
+} from '../../../test/mocks/better-auth-instance.mock.js';
 
 describe('AuthService', () => {
   let authService: AuthServiceImpl;
-  let mockAuthFactory: AuthFactory;
-  let mockAuthInstance: {
-    api: {
-      getSession: ReturnType<typeof vi.fn>;
-    };
-  };
+  let mockAuthFactory: AuthFactoryMockType;
+  let mockAuthInstance: BetterAuthInstanceMockType;
 
   beforeEach(async () => {
-    // Create mock auth instance
-    mockAuthInstance = {
-      api: {
-        getSession: vi.fn(),
-      },
-    };
+    // Create mock auth instance using reusable mock factory
+    mockAuthInstance = BetterAuthInstanceMock.createBetterAuthInstanceMock();
 
-    // Create mock auth factory
-    mockAuthFactory = {
-      createAuthInstance: vi.fn().mockReturnValue(mockAuthInstance),
-    } as unknown as AuthFactory;
+    // Create mock auth factory using reusable mock factory
+    mockAuthFactory = AuthFactoryMock.createAuthFactoryMock(mockAuthInstance);
 
     // Create test module
     const module = await Test.createTestingModule({
@@ -32,7 +30,7 @@ describe('AuthService', () => {
         AuthServiceImpl,
         {
           provide: TOKENS.AUTH.FACTORY,
-          useValue: mockAuthFactory,
+          useValue: mockAuthFactory as unknown as AuthFactory,
         },
       ],
     }).compile();
