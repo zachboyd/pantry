@@ -86,7 +86,7 @@ async function resetDatabase(skipMigrations = false) {
 async function main() {
   const args = process.argv.slice(2);
   const skipMigrations = args.includes('--no-migrate');
-  
+
   await resetDatabase(skipMigrations);
 }
 

@@ -21,7 +21,9 @@ export interface BetterAuthSession {
 }
 
 export interface AuthService {
-  verifySession(headers: Headers | Record<string, string>): Promise<BetterAuthSession | null>;
+  verifySession(
+    headers: Headers | Record<string, string>,
+  ): Promise<BetterAuthSession | null>;
 }
 
 export interface AuthSyncService {

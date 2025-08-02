@@ -121,7 +121,10 @@ export class HouseholdResolver {
     @Args('input') input: GetHouseholdInputGql,
     @User() user: UserRecord | null,
   ): Promise<Household> {
-    const result = await this.guardedHouseholdService.getHousehold(input.id, user);
+    const result = await this.guardedHouseholdService.getHousehold(
+      input.id,
+      user,
+    );
     return result.household;
   }
 

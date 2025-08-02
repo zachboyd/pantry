@@ -2,9 +2,17 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Insertable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
 import { TOKENS } from '../../common/tokens.js';
-import type { Household, HouseholdMember, HouseholdRole } from '../../generated/database.js';
+import type {
+  Household,
+  HouseholdMember,
+  HouseholdRole,
+} from '../../generated/database.js';
 import type { DatabaseService } from '../database/database.types.js';
-import type { HouseholdRepository, HouseholdRecord, HouseholdMemberRecord } from './household.types.js';
+import type {
+  HouseholdRepository,
+  HouseholdRecord,
+  HouseholdMemberRecord,
+} from './household.types.js';
 
 @Injectable()
 export class HouseholdRepositoryImpl implements HouseholdRepository {
@@ -15,7 +23,9 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  async createHousehold(household: Insertable<Household>): Promise<HouseholdRecord> {
+  async createHousehold(
+    household: Insertable<Household>,
+  ): Promise<HouseholdRecord> {
     this.logger.log(`Creating household: ${household.name}`);
 
     const db = this.databaseService.getConnection();
@@ -43,8 +53,12 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
-  async addHouseholdMember(member: Insertable<HouseholdMember>): Promise<HouseholdMemberRecord> {
-    this.logger.log(`Adding member ${member.user_id} to household ${member.household_id} with role ${member.role}`);
+  async addHouseholdMember(
+    member: Insertable<HouseholdMember>,
+  ): Promise<HouseholdMemberRecord> {
+    this.logger.log(
+      `Adding member ${member.user_id} to household ${member.household_id} with role ${member.role}`,
+    );
 
     const db = this.databaseService.getConnection();
 
@@ -62,7 +76,9 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
         .returningAll()
         .execute();
 
-      this.logger.log(`Household member created successfully: ${createdMember.id}`);
+      this.logger.log(
+        `Household member created successfully: ${createdMember.id}`,
+      );
       return createdMember as HouseholdMemberRecord;
     } catch (error) {
       this.logger.error(`Failed to add household member:`, error);
@@ -94,7 +110,10 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
-  async getHouseholdByIdForUser(householdId: string, userId: string): Promise<HouseholdRecord | null> {
+  async getHouseholdByIdForUser(
+    householdId: string,
+    userId: string,
+  ): Promise<HouseholdRecord | null> {
     this.logger.log(`Getting household ${householdId} for user ${userId}`);
 
     const db = this.databaseService.getConnection();
@@ -102,20 +121,29 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     try {
       const household = await db
         .selectFrom('household')
-        .innerJoin('household_member', 'household.id', 'household_member.household_id')
+        .innerJoin(
+          'household_member',
+          'household.id',
+          'household_member.household_id',
+        )
         .selectAll('household')
         .where('household.id', '=', householdId)
         .where('household_member.user_id', '=', userId)
         .executeTakeFirst();
 
       if (!household) {
-        this.logger.debug(`No household found for ID ${householdId} and user ${userId}`);
+        this.logger.debug(
+          `No household found for ID ${householdId} and user ${userId}`,
+        );
         return null;
       }
 
       return household as HouseholdRecord;
     } catch (error) {
-      this.logger.error(`Failed to get household ${householdId} for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to get household ${householdId} for user ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -128,12 +156,18 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     try {
       const households = await db
         .selectFrom('household')
-        .innerJoin('household_member', 'household.id', 'household_member.household_id')
+        .innerJoin(
+          'household_member',
+          'household.id',
+          'household_member.household_id',
+        )
         .selectAll('household')
         .where('household_member.user_id', '=', userId)
         .execute();
 
-      this.logger.debug(`Retrieved ${households.length} households for user ${userId}`);
+      this.logger.debug(
+        `Retrieved ${households.length} households for user ${userId}`,
+      );
       return households as HouseholdRecord[];
     } catch (error) {
       this.logger.error(`Failed to get households for user ${userId}:`, error);
@@ -141,8 +175,10 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
-
-  async removeHouseholdMember(householdId: string, userId: string): Promise<HouseholdMemberRecord | null> {
+  async removeHouseholdMember(
+    householdId: string,
+    userId: string,
+  ): Promise<HouseholdMemberRecord | null> {
     this.logger.log(`Removing member ${userId} from household ${householdId}`);
 
     const db = this.databaseService.getConnection();
@@ -156,11 +192,15 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
         .execute();
 
       if (!removedMember) {
-        this.logger.debug(`No household member found for household ${householdId} and user ${userId}`);
+        this.logger.debug(
+          `No household member found for household ${householdId} and user ${userId}`,
+        );
         return null;
       }
 
-      this.logger.log(`Household member removed successfully: ${removedMember.id}`);
+      this.logger.log(
+        `Household member removed successfully: ${removedMember.id}`,
+      );
       return removedMember as HouseholdMemberRecord;
     } catch (error) {
       this.logger.error(`Failed to remove household member:`, error);
@@ -168,8 +208,13 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
-  async getHouseholdMember(householdId: string, userId: string): Promise<HouseholdMemberRecord | null> {
-    this.logger.log(`Getting household member for household ${householdId} and user ${userId}`);
+  async getHouseholdMember(
+    householdId: string,
+    userId: string,
+  ): Promise<HouseholdMemberRecord | null> {
+    this.logger.log(
+      `Getting household member for household ${householdId} and user ${userId}`,
+    );
 
     const db = this.databaseService.getConnection();
 
@@ -182,7 +227,9 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
         .executeTakeFirst();
 
       if (!member) {
-        this.logger.debug(`No household member found for household ${householdId} and user ${userId}`);
+        this.logger.debug(
+          `No household member found for household ${householdId} and user ${userId}`,
+        );
         return null;
       }
 
@@ -193,7 +240,9 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
-  async getHouseholdMembers(householdId: string): Promise<HouseholdMemberRecord[]> {
+  async getHouseholdMembers(
+    householdId: string,
+  ): Promise<HouseholdMemberRecord[]> {
     this.logger.log(`Getting all members for household ${householdId}`);
 
     const db = this.databaseService.getConnection();
@@ -205,7 +254,9 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
         .where('household_id', '=', householdId)
         .execute();
 
-      this.logger.debug(`Retrieved ${members.length} members for household ${householdId}`);
+      this.logger.debug(
+        `Retrieved ${members.length} members for household ${householdId}`,
+      );
       return members as HouseholdMemberRecord[];
     } catch (error) {
       this.logger.error(`Failed to get household members:`, error);
@@ -213,8 +264,14 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
     }
   }
 
-  async updateHouseholdMemberRole(householdId: string, userId: string, newRole: string): Promise<HouseholdMemberRecord | null> {
-    this.logger.log(`Updating member ${userId} role to ${newRole} in household ${householdId}`);
+  async updateHouseholdMemberRole(
+    householdId: string,
+    userId: string,
+    newRole: string,
+  ): Promise<HouseholdMemberRecord | null> {
+    this.logger.log(
+      `Updating member ${userId} role to ${newRole} in household ${householdId}`,
+    );
 
     const db = this.databaseService.getConnection();
 
@@ -228,11 +285,15 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
         .execute();
 
       if (!updatedMember) {
-        this.logger.debug(`No household member found to update for household ${householdId} and user ${userId}`);
+        this.logger.debug(
+          `No household member found to update for household ${householdId} and user ${userId}`,
+        );
         return null;
       }
 
-      this.logger.log(`Household member role updated successfully: ${updatedMember.id}`);
+      this.logger.log(
+        `Household member role updated successfully: ${updatedMember.id}`,
+      );
       return updatedMember as HouseholdMemberRecord;
     } catch (error) {
       this.logger.error(`Failed to update household member role:`, error);

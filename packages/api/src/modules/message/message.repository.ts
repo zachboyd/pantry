@@ -56,7 +56,10 @@ export class MessageRepositoryImpl implements MessageRepository {
     }
   }
 
-  async getRecentMessages(householdId: string, limit: number): Promise<Message[]> {
+  async getRecentMessages(
+    householdId: string,
+    limit: number,
+  ): Promise<Message[]> {
     this.logger.debug(
       `Getting recent messages for household ${householdId}, limit: ${limit}`,
     );

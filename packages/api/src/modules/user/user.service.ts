@@ -69,7 +69,9 @@ export class UserServiceImpl implements UserService {
   }
 
   async createUser(userData: Insertable<User>): Promise<UserRecord> {
-    this.logger.log(`Creating user: ${userData.display_name || userData.first_name}`);
+    this.logger.log(
+      `Creating user: ${userData.display_name || userData.first_name}`,
+    );
 
     try {
       const user = await this.userRepository.createUser(userData);
@@ -82,12 +84,15 @@ export class UserServiceImpl implements UserService {
   }
 
   async createAIUser(userData: Insertable<User>): Promise<UserRecord> {
-    this.logger.log(`Creating AI user: ${userData.display_name || userData.first_name}`);
+    this.logger.log(
+      `Creating AI user: ${userData.display_name || userData.first_name}`,
+    );
 
     try {
       // Generate random personality if not provided
       const personalities = Object.values(AIPersonality);
-      const personality = personalities[Math.floor(Math.random() * personalities.length)];
+      const personality =
+        personalities[Math.floor(Math.random() * personalities.length)];
 
       const aiUserData: Insertable<User> = {
         id: userData.id || uuidv4(),
@@ -95,7 +100,8 @@ export class UserServiceImpl implements UserService {
         email: userData.email,
         first_name: userData.first_name || 'Pantry',
         last_name: userData.last_name || 'Assistant',
-        display_name: userData.display_name || `${personality} - Pantry Assistant`,
+        display_name:
+          userData.display_name || `${personality} - Pantry Assistant`,
         avatar_url: userData.avatar_url || '/avatars/default-ai-assistant.png',
         phone: userData.phone,
         birth_date: userData.birth_date,

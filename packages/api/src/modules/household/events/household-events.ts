@@ -1,4 +1,7 @@
-import type { HouseholdRecord, HouseholdMemberRecord } from '../household.types.js';
+import type {
+  HouseholdRecord,
+  HouseholdMemberRecord,
+} from '../household.types.js';
 import type { UserRecord } from '../../user/user.types.js';
 
 export class HouseholdCreatedEvent {

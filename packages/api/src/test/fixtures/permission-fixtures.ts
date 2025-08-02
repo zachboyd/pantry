@@ -1,7 +1,10 @@
 import { AbilityBuilder, createMongoAbility } from '@casl/ability';
 import { packRules } from '@casl/ability/extra';
 import { HouseholdRole } from '../../common/enums.js';
-import type { AppAbility, UserContext } from '../../modules/permission/permission.types.js';
+import type {
+  AppAbility,
+  UserContext,
+} from '../../modules/permission/permission.types.js';
 
 /**
  * Test fixtures for permission-related data
@@ -10,9 +13,7 @@ export class PermissionFixtures {
   /**
    * Creates a test user context for permission testing
    */
-  static createUserContext(
-    overrides: Partial<UserContext> = {}
-  ): UserContext {
+  static createUserContext(overrides: Partial<UserContext> = {}): UserContext {
     return {
       userId: 'test-user-id',
       households: [
@@ -30,7 +31,7 @@ export class PermissionFixtures {
    */
   static createManagerUserContext(
     userId: string = 'test-manager-id',
-    householdId: string = 'test-household-id'
+    householdId: string = 'test-household-id',
   ): UserContext {
     return {
       userId,
@@ -48,7 +49,7 @@ export class PermissionFixtures {
    */
   static createAIUserContext(
     userId: string = 'test-ai-user-id',
-    householdId: string = 'test-household-id'
+    householdId: string = 'test-household-id',
   ): UserContext {
     return {
       userId,
@@ -65,7 +66,7 @@ export class PermissionFixtures {
    * Creates a user context with multiple household roles
    */
   static createMultiHouseholdUserContext(
-    userId: string = 'test-user-id'
+    userId: string = 'test-user-id',
   ): UserContext {
     return {
       userId,
@@ -90,7 +91,7 @@ export class PermissionFixtures {
    * Creates a user context with no household memberships
    */
   static createNoHouseholdUserContext(
-    userId: string = 'test-user-id'
+    userId: string = 'test-user-id',
   ): UserContext {
     return {
       userId,
@@ -103,32 +104,29 @@ export class PermissionFixtures {
    */
   static createMemberAbility(
     userId: string = 'test-user-id',
-    householdIds: string[] = ['test-household-id']
+    householdIds: string[] = ['test-household-id'],
   ): AppAbility {
     const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
-    
+
     // Members can read their own user profile and users in their households
     can('read', 'User', {
       $or: [
         { id: userId },
-        { 'household_members.household_id': { $in: householdIds } }
-      ]
+        { 'household_members.household_id': { $in: householdIds } },
+      ],
     });
-    
+
     // Members can read households they belong to
     can('read', 'Household', { id: { $in: householdIds } });
-    
+
     // Members can create and read messages in their households
     can(['create', 'read'], 'Message', { household_id: { $in: householdIds } });
-    
+
     // Members can update/delete their own messages only
     can(['update', 'delete'], 'Message', {
-      $and: [
-        { household_id: { $in: householdIds } },
-        { user_id: userId }
-      ]
+      $and: [{ household_id: { $in: householdIds } }, { user_id: userId }],
     });
-    
+
     // Members can read household members
     can('read', 'HouseholdMember', { household_id: { $in: householdIds } });
 
@@ -140,34 +138,34 @@ export class PermissionFixtures {
    */
   static createManagerAbility(
     userId: string = 'test-manager-id',
-    householdIds: string[] = ['test-household-id']
+    householdIds: string[] = ['test-household-id'],
   ): AppAbility {
     const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
-    
+
     // Base user permissions (own profile)
     can(['read', 'update'], 'User', { id: userId });
-    
+
     // Manager can read/update users in managed households
     can(['read', 'update'], 'User', {
       $or: [
         { id: userId },
         { 'household_members.household_id': { $in: householdIds } },
-        { managed_by: userId }
-      ]
+        { managed_by: userId },
+      ],
     });
-    
+
     // Managers can manage their households
     can('manage', 'Household', { id: { $in: householdIds } });
-    
+
     // Managers can manage household members (but not demote other managers)
-    can('manage', 'HouseholdMember', { 
+    can('manage', 'HouseholdMember', {
       household_id: { $in: householdIds },
-      role: { $ne: HouseholdRole.MANAGER }
+      role: { $ne: HouseholdRole.MANAGER },
     });
-    
+
     // Managers can manage all messages in their households
     can('manage', 'Message', { household_id: { $in: householdIds } });
-    
+
     // Managers can manage pantries
     can('manage', 'Pantry', { household_id: { $in: householdIds } });
 
@@ -179,28 +177,30 @@ export class PermissionFixtures {
    */
   static createAIAbility(
     userId: string = 'test-ai-user-id',
-    householdIds: string[] = ['test-household-id']
+    householdIds: string[] = ['test-household-id'],
   ): AppAbility {
-    const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
-    
+    const { can, cannot, build } = new AbilityBuilder<AppAbility>(
+      createMongoAbility,
+    );
+
     // AI can read its own profile and users in its households
     can('read', 'User', {
       $or: [
         { id: userId },
-        { 'household_members.household_id': { $in: householdIds } }
-      ]
+        { 'household_members.household_id': { $in: householdIds } },
+      ],
     });
-    
+
     // AI can read household info
     can('read', 'Household', { id: { $in: householdIds } });
     can('read', 'HouseholdMember', { household_id: { $in: householdIds } });
-    
+
     // AI can create and read messages but not update/delete
     can(['create', 'read'], 'Message', { household_id: { $in: householdIds } });
-    
+
     // AI can read pantries
     can('read', 'Pantry', { household_id: { $in: householdIds } });
-    
+
     // AI restrictions - cannot modify user profiles or household structure
     cannot('update', 'User', { id: { $ne: userId } });
     cannot(['create', 'update', 'delete'], 'HouseholdMember');
@@ -211,9 +211,11 @@ export class PermissionFixtures {
   /**
    * Creates an ability with no permissions (user with no household memberships)
    */
-  static createNoPermissionsAbility(userId: string = 'test-user-id'): AppAbility {
+  static createNoPermissionsAbility(
+    userId: string = 'test-user-id',
+  ): AppAbility {
     const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
-    
+
     // Only own profile access
     can(['read', 'update'], 'User', { id: userId });
 
@@ -234,7 +236,7 @@ export class PermissionFixtures {
   static createHouseholdMemberRecords(
     userId: string = 'test-user-id',
     role: HouseholdRole = HouseholdRole.MEMBER,
-    householdId: string = 'test-household-id'
+    householdId: string = 'test-household-id',
   ) {
     return [
       {
@@ -250,9 +252,7 @@ export class PermissionFixtures {
   /**
    * Creates multiple household member records for testing
    */
-  static createMultipleHouseholdMemberRecords(
-    userId: string = 'test-user-id'
-  ) {
+  static createMultipleHouseholdMemberRecords(userId: string = 'test-user-id') {
     return [
       {
         household_id: 'household-1',
@@ -276,7 +276,7 @@ export class PermissionFixtures {
    */
   static createUserPermissionRecord(
     userId: string = 'test-user-id',
-    ability: AppAbility = PermissionFixtures.createMemberAbility()
+    ability: AppAbility = PermissionFixtures.createMemberAbility(),
   ) {
     return {
       id: userId,

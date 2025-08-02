@@ -138,7 +138,6 @@ export class DatabaseFixtures {
     };
   }
 
-
   /**
    * Creates an AI message fixture
    */

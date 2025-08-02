@@ -89,18 +89,24 @@ export class CacheManagerMock {
 
       // Multi-key operations
       mget: vi.fn(async (keys: string[]) => {
-        const results = await Promise.all(keys.map(key => mockCache.get(key)));
+        const results = await Promise.all(
+          keys.map((key) => mockCache.get(key)),
+        );
         return results;
       }),
 
-      mset: vi.fn(async (keyValuePairs: Array<[string, unknown]>, ttl?: number) => {
-        await Promise.all(
-          keyValuePairs.map(([key, value]) => mockCache.set(key, value, ttl))
-        );
-      }),
+      mset: vi.fn(
+        async (keyValuePairs: Array<[string, unknown]>, ttl?: number) => {
+          await Promise.all(
+            keyValuePairs.map(([key, value]) => mockCache.set(key, value, ttl)),
+          );
+        },
+      ),
 
       mdel: vi.fn(async (keys: string[]) => {
-        const results = await Promise.all(keys.map(key => mockCache.del(key)));
+        const results = await Promise.all(
+          keys.map((key) => mockCache.del(key)),
+        );
         return results;
       }),
 
@@ -113,7 +119,9 @@ export class CacheManagerMock {
   /**
    * Creates a cache mock that always throws errors for testing error scenarios
    */
-  static createErrorCacheMock(error: Error = new Error('Cache error')): CacheManagerMockType {
+  static createErrorCacheMock(
+    error: Error = new Error('Cache error'),
+  ): CacheManagerMockType {
     const mockCache = {
       get: vi.fn().mockRejectedValue(error),
       set: vi.fn().mockRejectedValue(error),

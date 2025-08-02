@@ -16,14 +16,11 @@ export interface FileStorageService {
     contentType: string,
     options?: UploadOptions,
   ): Promise<string>;
-  
-  generateDownloadUrl(
-    key: string,
-    options?: DownloadOptions,
-  ): Promise<string>;
-  
+
+  generateDownloadUrl(key: string, options?: DownloadOptions): Promise<string>;
+
   deleteFile(key: string): Promise<void>;
-  
+
   generateFileKey(namespace: string, filename: string): string;
 }
 

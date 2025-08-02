@@ -1,5 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { S3Client, DeleteObjectCommand, PutObjectCommandInput, GetObjectCommandInput } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  DeleteObjectCommand,
+  PutObjectCommandInput,
+  GetObjectCommandInput,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
@@ -22,12 +27,12 @@ export class S3StorageServiceImpl implements FileStorageService {
     private readonly configService: ConfigService,
   ) {
     const { aws } = this.configService.config;
-    
+
     // Use AWS SDK default credential chain (supports SSO, profiles, env vars, IAM roles, etc.)
     this.s3Client = new S3Client({
       region: aws.region,
     });
-    
+
     this.bucketName = aws.s3BucketName;
   }
 
@@ -67,10 +72,10 @@ export class S3StorageServiceImpl implements FileStorageService {
     key: string,
     options: DownloadOptions = {},
   ): Promise<string> {
-    const { 
+    const {
       expiresIn = 3600,
       responseContentType,
-      responseContentDisposition 
+      responseContentDisposition,
     } = options; // Default 1 hour
 
     const commandOptions: GetObjectCommandInput = {
@@ -96,7 +101,10 @@ export class S3StorageServiceImpl implements FileStorageService {
       this.logger.debug(`Generated download URL for key: ${key}`);
       return signedUrl;
     } catch (error) {
-      this.logger.error(`Failed to generate download URL for key: ${key}`, error);
+      this.logger.error(
+        `Failed to generate download URL for key: ${key}`,
+        error,
+      );
       throw new Error('Failed to generate download URL');
     }
   }
@@ -119,10 +127,10 @@ export class S3StorageServiceImpl implements FileStorageService {
   generateFileKey(namespace: string, filename: string): string {
     // Generate random prefix to prevent enumeration attacks
     const randomPrefix = randomBytes(16).toString('hex');
-    
+
     // Sanitize filename to prevent path traversal
     const sanitizedFilename = this.sanitizeFilename(filename);
-    
+
     return `${namespace}/${randomPrefix}/${sanitizedFilename}`;
   }
 

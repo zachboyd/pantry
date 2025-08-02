@@ -18,9 +18,14 @@ export class PermissionEventHandler {
   async handleRecomputeUserPermissions(event: RecomputeUserPermissionsEvent) {
     try {
       await this.permissionService.computeUserPermissions(event.userId);
-      this.logger.log(`Recomputed permissions for user ${event.userId}${event.reason ? ` (${event.reason})` : ''}`);
+      this.logger.log(
+        `Recomputed permissions for user ${event.userId}${event.reason ? ` (${event.reason})` : ''}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to recompute permissions for user ${event.userId}:`, error);
+      this.logger.error(
+        `Failed to recompute permissions for user ${event.userId}:`,
+        error,
+      );
     }
   }
 }

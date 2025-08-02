@@ -7,7 +7,9 @@ export class MockFactory {
   /**
    * Creates a mock service with common methods
    */
-  static createServiceMock(methods: string[] = []): Record<string, ReturnType<typeof vi.fn>> {
+  static createServiceMock(
+    methods: string[] = [],
+  ): Record<string, ReturnType<typeof vi.fn>> {
     const mock: Record<string, ReturnType<typeof vi.fn>> = {};
 
     methods.forEach((method) => {

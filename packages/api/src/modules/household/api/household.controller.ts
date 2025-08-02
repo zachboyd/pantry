@@ -17,8 +17,11 @@ import {
 import { TOKENS } from '../../../common/tokens.js';
 import { User } from '../../auth/auth.decorator.js';
 import type { UserRecord } from '../../user/user.types.js';
-import type { HouseholdRecord, HouseholdMemberRecord } from '../household.types.js';
-import { 
+import type {
+  HouseholdRecord,
+  HouseholdMemberRecord,
+} from '../household.types.js';
+import {
   GuardedHouseholdService,
   CreateHouseholdInput,
   AddHouseholdMemberInput,
@@ -51,12 +54,18 @@ export class HouseholdController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   async createHousehold(
     @Body() input: CreateHouseholdInput,
     @User() user: UserRecord | null,
   ): Promise<HouseholdRecord> {
-    const result = await this.guardedHouseholdService.createHousehold(input, user);
+    const result = await this.guardedHouseholdService.createHousehold(
+      input,
+      user,
+    );
     return result.household;
   }
 
@@ -68,13 +77,19 @@ export class HouseholdController {
     description: 'Household retrieved successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   @ApiResponse({ status: 404, description: 'Household not found' })
   async getHousehold(
     @Param('id') householdId: string,
     @User() user: UserRecord | null,
   ): Promise<HouseholdRecord> {
-    const result = await this.guardedHouseholdService.getHousehold(householdId, user);
+    const result = await this.guardedHouseholdService.getHousehold(
+      householdId,
+      user,
+    );
     return result.household;
   }
 
@@ -86,13 +101,20 @@ export class HouseholdController {
     description: 'Member added successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   async addHouseholdMember(
     @Param('id') householdId: string,
     @Body() input: AddHouseholdMemberInput,
     @User() user: UserRecord | null,
   ): Promise<HouseholdMemberRecord> {
-    return this.guardedHouseholdService.addHouseholdMember(householdId, input, user);
+    return this.guardedHouseholdService.addHouseholdMember(
+      householdId,
+      input,
+      user,
+    );
   }
 
   @Delete(':id/members/:userId')
@@ -103,30 +125,44 @@ export class HouseholdController {
     description: 'Member removed successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   async removeHouseholdMember(
     @Param('id') householdId: string,
     @Param('userId') userId: string,
     @User() user: UserRecord | null,
   ): Promise<void> {
-    return this.guardedHouseholdService.removeHouseholdMember(householdId, { userId }, user);
+    return this.guardedHouseholdService.removeHouseholdMember(
+      householdId,
+      { userId },
+      user,
+    );
   }
 
   @Put(':id/members/:userId/role')
-  @ApiOperation({ summary: 'Change a member\'s role in household' })
+  @ApiOperation({ summary: "Change a member's role in household" })
   @ApiSecurity('session')
   @ApiResponse({
     status: 200,
     description: 'Member role changed successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
   async changeHouseholdMemberRole(
     @Param('id') householdId: string,
     @Param('userId') userId: string,
     @Body() body: { newRole: string },
     @User() user: UserRecord | null,
   ): Promise<HouseholdMemberRecord> {
-    return this.guardedHouseholdService.changeHouseholdMemberRole(householdId, { userId, newRole: body.newRole }, user);
+    return this.guardedHouseholdService.changeHouseholdMemberRole(
+      householdId,
+      { userId, newRole: body.newRole },
+      user,
+    );
   }
 }

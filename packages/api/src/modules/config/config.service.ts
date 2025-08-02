@@ -32,16 +32,24 @@ export class ConfigServiceImpl implements ConfigService {
         url: this.configService.get<string>('DATABASE_URL') || '',
       },
       redis: {
-        url: this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379',
+        url:
+          this.configService.get<string>('REDIS_URL') ||
+          'redis://localhost:6379',
       },
       openai: {
         apiKey: this.configService.get<string>('OPENAI_API_KEY'),
       },
       aws: {
         accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
-        region: this.configService.get<string>('AWS_S3_REGION') || this.configService.get<string>('AWS_REGION') || '',
-        s3BucketName: this.configService.get<string>('AWS_S3_BUCKET_NAME') || '',
+        secretAccessKey: this.configService.get<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
+        region:
+          this.configService.get<string>('AWS_S3_REGION') ||
+          this.configService.get<string>('AWS_REGION') ||
+          '',
+        s3BucketName:
+          this.configService.get<string>('AWS_S3_BUCKET_NAME') || '',
       },
     };
   }

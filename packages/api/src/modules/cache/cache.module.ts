@@ -14,7 +14,7 @@ import type { ConfigService } from '../config/config.types.js';
       useFactory: (configService: ConfigService) => {
         const logger = new Logger('CacheModule');
         const redisUrl = configService.config.redis.url;
-        
+
         // Create Keyv with Redis store
         const keyv = new Keyv({
           store: new KeyvRedis(redisUrl),

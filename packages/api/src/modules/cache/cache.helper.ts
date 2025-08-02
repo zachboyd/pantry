@@ -6,17 +6,17 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class CacheHelper {
   private readonly config = {
-    permissions: { 
-      ttl: 300000,    // 5 minutes
-      prefix: 'permissions' 
+    permissions: {
+      ttl: 300000, // 5 minutes
+      prefix: 'permissions',
     },
-    users: { 
-      ttl: 600000,    // 10 minutes
-      prefix: 'users' 
+    users: {
+      ttl: 600000, // 10 minutes
+      prefix: 'users',
     },
-    households: { 
-      ttl: 1800000,   // 30 minutes
-      prefix: 'households' 
+    households: {
+      ttl: 1800000, // 30 minutes
+      prefix: 'households',
     },
   } as const;
 
@@ -45,7 +45,10 @@ export class CacheHelper {
    * @param identifier Unique identifier
    * @returns Object with cache key and TTL
    */
-  getCacheConfig(type: keyof typeof this.config, identifier: string): { key: string; ttl: number } {
+  getCacheConfig(
+    type: keyof typeof this.config,
+    identifier: string,
+  ): { key: string; ttl: number } {
     return {
       key: `${this.config[type].prefix}:${identifier}`,
       ttl: this.config[type].ttl,

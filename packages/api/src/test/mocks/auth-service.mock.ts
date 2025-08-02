@@ -1,5 +1,8 @@
 import { vi } from 'vitest';
-import type { AuthService, BetterAuthSession } from '../../modules/auth/auth.types.js';
+import type {
+  AuthService,
+  BetterAuthSession,
+} from '../../modules/auth/auth.types.js';
 
 // Define the mock type for AuthService following codebase patterns
 export type AuthServiceMockType = {
@@ -28,7 +31,7 @@ export class AuthServiceMock {
    * Returns a valid session with user data
    */
   static createAuthenticatedServiceMock(
-    customSession?: Partial<BetterAuthSession>
+    customSession?: Partial<BetterAuthSession>,
   ): AuthServiceMockType {
     const defaultSession: BetterAuthSession = {
       user: {
@@ -51,7 +54,7 @@ export class AuthServiceMock {
 
     const mockService = this.createAuthServiceMock();
     mockService.verifySession.mockResolvedValue(defaultSession);
-    
+
     return mockService;
   }
 
@@ -62,7 +65,7 @@ export class AuthServiceMock {
   static createUnauthenticatedServiceMock(): AuthServiceMockType {
     const mockService = this.createAuthServiceMock();
     mockService.verifySession.mockResolvedValue(null);
-    
+
     return mockService;
   }
 
@@ -72,10 +75,10 @@ export class AuthServiceMock {
    */
   static createFailingServiceMock(error?: Error): AuthServiceMockType {
     const defaultError = error || new Error('Authentication failed');
-    
+
     const mockService = this.createAuthServiceMock();
     mockService.verifySession.mockRejectedValue(defaultError);
-    
+
     return mockService;
   }
 
@@ -84,12 +87,12 @@ export class AuthServiceMock {
    * Includes type assertion for use in NestJS test modules
    */
   static createTypedAuthServiceMock(
-    customSession?: Partial<BetterAuthSession>
+    customSession?: Partial<BetterAuthSession>,
   ): AuthService {
-    const mockService = customSession 
+    const mockService = customSession
       ? this.createAuthenticatedServiceMock(customSession)
       : this.createAuthServiceMock();
-    
+
     return mockService as unknown as AuthService;
   }
 }

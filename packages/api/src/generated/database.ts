@@ -3,15 +3,20 @@
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from "kysely";
+import type { ColumnType } from 'kysely';
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
-export type HouseholdRole = "ai" | "manager" | "member";
+export type HouseholdRole = 'ai' | 'manager' | 'member';
 
-export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+export type Int8 = ColumnType<
+  string,
+  bigint | number | string,
+  bigint | number | string
+>;
 
 export type Json = JsonValue;
 
@@ -25,7 +30,12 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type MessageType = "ai" | "location" | "system" | "task_created" | "text";
+export type MessageType =
+  | 'ai'
+  | 'location'
+  | 'system'
+  | 'task_created'
+  | 'text';
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -177,8 +187,8 @@ export interface DB {
   auth_session: AuthSession;
   auth_user: AuthUser;
   auth_verification: AuthVerification;
-  "cron.job": CronJob;
-  "cron.job_run_details": CronJobRunDetails;
+  'cron.job': CronJob;
+  'cron.job_run_details': CronJobRunDetails;
   household: Household;
   household_member: HouseholdMember;
   message: Message;

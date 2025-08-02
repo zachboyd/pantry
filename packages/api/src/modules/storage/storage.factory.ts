@@ -1,7 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TOKENS } from '../../common/tokens.js';
 import type { ConfigService } from '../config/config.types.js';
-import type { FileStorageService, FileStorageFactory, StorageBackend } from './storage.types.js';
+import type {
+  FileStorageService,
+  FileStorageFactory,
+  StorageBackend,
+} from './storage.types.js';
 import { S3StorageServiceImpl } from './implementations/s3-storage.service.js';
 
 @Injectable()
@@ -20,13 +24,13 @@ export class FileStorageFactoryImpl implements FileStorageFactory {
       case 's3':
         this.logger.debug('Creating S3 storage service');
         return new S3StorageServiceImpl(this.configService);
-      
+
       case 'gcs':
         throw new Error('Google Cloud Storage not yet implemented');
-      
+
       case 'azure':
         throw new Error('Azure Blob Storage not yet implemented');
-      
+
       default:
         throw new Error(`Unsupported storage backend: ${backend}`);
     }

@@ -94,13 +94,12 @@ export class PermissionServiceImpl implements PermissionService {
    * Uses cache.wrap() for automatic cache management
    */
   private async getOrComputeUserAbility(userId: string): Promise<AppAbility> {
-    const { key, ttl } = this.cacheHelper.getCacheConfig('permissions', `user:${userId}`);
-
-    return this.cache.wrap(
-      key,
-      () => this.computeUserPermissions(userId),
-      ttl
+    const { key, ttl } = this.cacheHelper.getCacheConfig(
+      'permissions',
+      `user:${userId}`,
     );
+
+    return this.cache.wrap(key, () => this.computeUserPermissions(userId), ttl);
   }
 
   async canCreateHousehold(userId: string): Promise<boolean> {
@@ -108,7 +107,10 @@ export class PermissionServiceImpl implements PermissionService {
     return ability.can('create', 'Household');
   }
 
-  async canReadHousehold(userId: string, _householdId: string): Promise<boolean> {
+  async canReadHousehold(
+    userId: string,
+    _householdId: string,
+  ): Promise<boolean> {
     const ability = await this.getOrComputeUserAbility(userId);
     // For CASL, we need to check if the user can read Household resources
     // The conditions are already built into the ability rules during creation
@@ -116,7 +118,10 @@ export class PermissionServiceImpl implements PermissionService {
     return ability.can('read', 'Household');
   }
 
-  async canManageHouseholdMember(userId: string, _householdId: string): Promise<boolean> {
+  async canManageHouseholdMember(
+    userId: string,
+    _householdId: string,
+  ): Promise<boolean> {
     const ability = await this.getOrComputeUserAbility(userId);
     // Check if user can manage HouseholdMember resources
     // The household-specific conditions are built into the ability rules
@@ -127,7 +132,10 @@ export class PermissionServiceImpl implements PermissionService {
    * Invalidate user permissions cache when household membership changes
    */
   async invalidateUserPermissions(userId: string): Promise<void> {
-    const { key } = this.cacheHelper.getCacheConfig('permissions', `user:${userId}`);
+    const { key } = this.cacheHelper.getCacheConfig(
+      'permissions',
+      `user:${userId}`,
+    );
     await this.cache.del(key);
   }
 

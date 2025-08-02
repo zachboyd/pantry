@@ -32,7 +32,7 @@ export class BetterAuthInstanceMock {
    */
   static createAuthenticatedInstanceMock(): BetterAuthInstanceMockType {
     const mockInstance = this.createBetterAuthInstanceMock();
-    
+
     // Default to successful session
     mockInstance.api.getSession.mockResolvedValue({
       user: {
@@ -60,7 +60,7 @@ export class BetterAuthInstanceMock {
    */
   static createUnauthenticatedInstanceMock(): BetterAuthInstanceMockType {
     const mockInstance = this.createBetterAuthInstanceMock();
-    
+
     // Default to failed session (returns null or throws)
     mockInstance.api.getSession.mockResolvedValue(null);
 

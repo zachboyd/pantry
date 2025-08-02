@@ -32,9 +32,9 @@ export class CacheHelperMock {
       getTtl: vi.fn((type: string) => {
         // Default TTLs match real implementation
         const ttls = {
-          permissions: 300000,  // 5 minutes
-          users: 600000,        // 10 minutes
-          households: 1800000,  // 30 minutes
+          permissions: 300000, // 5 minutes
+          users: 600000, // 10 minutes
+          households: 1800000, // 30 minutes
         };
         return ttls[type as keyof typeof ttls] || 300000; // Default to 5 minutes
       }),
@@ -60,7 +60,11 @@ export class CacheHelperMock {
     ttls?: Record<string, number>;
     types?: string[];
   }): CacheHelperMockType {
-    const { prefixes = {}, ttls = {}, types = ['permissions', 'users', 'households'] } = config;
+    const {
+      prefixes = {},
+      ttls = {},
+      types = ['permissions', 'users', 'households'],
+    } = config;
 
     const defaultPrefixes = {
       permissions: 'permissions',
@@ -102,7 +106,9 @@ export class CacheHelperMock {
   /**
    * Creates a CacheHelper mock that throws errors for testing error scenarios
    */
-  static createErrorCacheHelperMock(error: Error = new Error('CacheHelper error')): CacheHelperMockType {
+  static createErrorCacheHelperMock(
+    error: Error = new Error('CacheHelper error'),
+  ): CacheHelperMockType {
     const mockCacheHelper = {
       buildKey: vi.fn().mockImplementation(() => {
         throw error;
@@ -139,9 +145,12 @@ export class CacheHelperMock {
     behaviors: {
       buildKey?: (type: string, identifier: string) => string;
       getTtl?: (type: string) => number;
-      getCacheConfig?: (type: string, identifier: string) => { key: string; ttl: number };
+      getCacheConfig?: (
+        type: string,
+        identifier: string,
+      ) => { key: string; ttl: number };
       getCacheTypes?: () => string[];
-    }
+    },
   ) {
     if (behaviors.buildKey) {
       mock.buildKey.mockImplementation(behaviors.buildKey);

@@ -49,7 +49,8 @@ export class TypingIndicatorRepositoryImpl
           oc.columns(['household_id', 'user_id']).doUpdateSet({
             is_typing: typingIndicator.is_typing,
             // Always update last_typing_at to current timestamp for fresh data
-            last_typing_at: typingIndicator.last_typing_at || new Date().toISOString(),
+            last_typing_at:
+              typingIndicator.last_typing_at || new Date().toISOString(),
             ...(typingIndicator.expires_at && {
               expires_at: typingIndicator.expires_at,
             }),
