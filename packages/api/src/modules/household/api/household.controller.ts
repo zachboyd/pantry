@@ -15,7 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { TOKENS } from '../../../common/tokens.js';
-import { User } from '../../auth/auth.decorator.js';
+import { CurrentUser } from '../../auth/auth.decorator.js';
 import type { UserRecord } from '../../user/user.types.js';
 import type {
   HouseholdRecord,
@@ -60,7 +60,7 @@ export class HouseholdController {
   })
   async createHousehold(
     @Body() input: CreateHouseholdInput,
-    @User() user: UserRecord | null,
+    @CurrentUser() user: UserRecord | null,
   ): Promise<HouseholdRecord> {
     const result = await this.guardedHouseholdService.createHousehold(
       input,
@@ -84,7 +84,7 @@ export class HouseholdController {
   @ApiResponse({ status: 404, description: 'Household not found' })
   async getHousehold(
     @Param('id') householdId: string,
-    @User() user: UserRecord | null,
+    @CurrentUser() user: UserRecord | null,
   ): Promise<HouseholdRecord> {
     const result = await this.guardedHouseholdService.getHousehold(
       householdId,
@@ -108,7 +108,7 @@ export class HouseholdController {
   async addHouseholdMember(
     @Param('id') householdId: string,
     @Body() input: AddHouseholdMemberInput,
-    @User() user: UserRecord | null,
+    @CurrentUser() user: UserRecord | null,
   ): Promise<HouseholdMemberRecord> {
     return this.guardedHouseholdService.addHouseholdMember(
       householdId,
@@ -132,7 +132,7 @@ export class HouseholdController {
   async removeHouseholdMember(
     @Param('id') householdId: string,
     @Param('userId') userId: string,
-    @User() user: UserRecord | null,
+    @CurrentUser() user: UserRecord | null,
   ): Promise<void> {
     return this.guardedHouseholdService.removeHouseholdMember(
       householdId,
@@ -157,7 +157,7 @@ export class HouseholdController {
     @Param('id') householdId: string,
     @Param('userId') userId: string,
     @Body() body: { newRole: string },
-    @User() user: UserRecord | null,
+    @CurrentUser() user: UserRecord | null,
   ): Promise<HouseholdMemberRecord> {
     return this.guardedHouseholdService.changeHouseholdMemberRole(
       householdId,

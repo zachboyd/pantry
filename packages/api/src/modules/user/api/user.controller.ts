@@ -11,7 +11,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { TOKENS } from '../../../common/tokens.js';
-import { User } from '../../auth/auth.decorator.js';
+import { CurrentUser } from '../../auth/auth.decorator.js';
 import type { UserRecord } from '../user.types.js';
 import { GuardedUserService } from './guarded-user.service.js';
 
@@ -49,7 +49,7 @@ export class UserController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
-  async getCurrentUser(@User() user: UserRecord | null): Promise<UserRecord> {
+  async getCurrentUser(@CurrentUser() user: UserRecord | null): Promise<UserRecord> {
     const result = await this.guardedUserService.getCurrentUser(user);
     return result.user;
   }
@@ -87,7 +87,7 @@ export class UserController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async getUser(
     @Param('id') userId: string,
-    @User() user: UserRecord | null,
+    @CurrentUser() user: UserRecord | null,
   ): Promise<UserRecord> {
     const result = await this.guardedUserService.getUser(userId, user);
     return result.user;

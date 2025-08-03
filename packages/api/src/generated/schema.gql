@@ -2,7 +2,7 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type UserGql {
+type User {
   id: String!
   auth_user_id: String
   email: String
@@ -41,43 +41,43 @@ type HouseholdMember {
 }
 
 type Query {
-  user(input: GetUserInputGql!): UserGql!
-  currentUser: UserGql!
-  household(input: GetHouseholdInputGql!): Household!
+  user(input: GetUserInput!): User!
+  currentUser: User!
+  household(input: GetHouseholdInput!): Household!
 }
 
-input GetUserInputGql {
+input GetUserInput {
   id: String!
 }
 
-input GetHouseholdInputGql {
+input GetHouseholdInput {
   id: String!
 }
 
 type Mutation {
-  createHousehold(input: CreateHouseholdInputGql!): Household!
-  addHouseholdMember(input: AddHouseholdMemberInputGql!): HouseholdMember!
-  removeHouseholdMember(input: RemoveHouseholdMemberInputGql!): Boolean!
-  changeHouseholdMemberRole(input: ChangeHouseholdMemberRoleInputGql!): HouseholdMember!
+  createHousehold(input: CreateHouseholdInput!): Household!
+  addHouseholdMember(input: AddHouseholdMemberInput!): HouseholdMember!
+  removeHouseholdMember(input: RemoveHouseholdMemberInput!): Boolean!
+  changeHouseholdMemberRole(input: ChangeHouseholdMemberRoleInput!): HouseholdMember!
 }
 
-input CreateHouseholdInputGql {
+input CreateHouseholdInput {
   name: String!
   description: String
 }
 
-input AddHouseholdMemberInputGql {
+input AddHouseholdMemberInput {
   householdId: String!
   userId: String!
   role: String!
 }
 
-input RemoveHouseholdMemberInputGql {
+input RemoveHouseholdMemberInput {
   householdId: String!
   userId: String!
 }
 
-input ChangeHouseholdMemberRoleInputGql {
+input ChangeHouseholdMemberRoleInput {
   householdId: String!
   userId: String!
   newRole: String!

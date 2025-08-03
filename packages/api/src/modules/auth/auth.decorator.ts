@@ -17,7 +17,7 @@ export const AuthUser = createParamDecorator(
 );
 
 // Decorator for database user (business user)
-export const User = createParamDecorator(
+export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext) => {
     const request = getRequest(ctx);
     return request.dbUser;

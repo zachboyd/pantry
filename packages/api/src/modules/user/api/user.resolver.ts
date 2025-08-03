@@ -1,14 +1,14 @@
 import { Resolver, Query, Args } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { ObjectType, Field, InputType } from '@nestjs/graphql';
-import { User } from '../../auth/auth.decorator.js';
+import { CurrentUser } from '../../auth/auth.decorator.js';
 import { TOKENS } from '../../../common/tokens.js';
 import type { UserRecord } from '../user.types.js';
 import { GuardedUserService } from './guarded-user.service.js';
 
 // GraphQL Types
 @ObjectType()
-export class UserGql {
+export class User {
   @Field()
   id: string;
 
@@ -50,29 +50,29 @@ export class UserGql {
 }
 
 @InputType()
-export class GetUserInputGql {
+export class GetUserInput {
   @Field()
   id: string;
 }
 
-@Resolver(() => UserGql)
+@Resolver(() => User)
 export class UserResolver {
   constructor(
     @Inject(TOKENS.USER.GUARDED_SERVICE)
     private readonly guardedUserService: GuardedUserService,
   ) {}
 
-  @Query(() => UserGql)
+  @Query(() => User)
   async user(
-    @Args('input') input: GetUserInputGql,
-    @User() user: UserRecord | null,
-  ): Promise<UserGql> {
+    @Args('input') input: GetUserInput,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<User> {
     const result = await this.guardedUserService.getUser(input.id, user);
     return result.user;
   }
 
-  @Query(() => UserGql)
-  async currentUser(@User() user: UserRecord | null): Promise<UserGql> {
+  @Query(() => User)
+  async currentUser(@CurrentUser() user: UserRecord | null): Promise<User> {
     const result = await this.guardedUserService.getCurrentUser(user);
     return result.user;
   }
