@@ -28,7 +28,12 @@
     "test": "vitest run",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:integration": "NODE_ENV=test vitest run --reporter=verbose src/modules/**/api/__tests__/*.integration.spec.ts",
+    "test:integration:watch": "NODE_ENV=test vitest src/modules/**/api/__tests__/*.integration.spec.ts",
+    "test:unit": "vitest run --exclude src/modules/**/api/__tests__/*.integration.spec.ts",
+    "test:docker": "NODE_ENV=test vitest run",
+    "test:docker:watch": "NODE_ENV=test vitest"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.858.0",

@@ -1,0 +1,48 @@
+services:
+  pantry-test-postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+    environment:
+      - POSTGRES_DB=pantry_test
+      - POSTGRES_USER=pantry_test
+      - POSTGRES_PASSWORD=pantry_test_pass
+      - TZ=UTC
+      - PGTZ=UTC
+    command: |
+      postgres
+      -c shared_preload_libraries=pg_cron
+      -c cron.database_name=pantry_test
+      -c wal_level=logical
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pantry_test -d pantry_test"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+    networks:
+      - pantry-test-network
+    # Use tmpfs for faster test database (data in memory)
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  pantry-test-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Use different port to avoid conflicts
+    command: redis-server --appendonly no --save ""  # Disable persistence for tests
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+    networks:
+      - pantry-test-network
+    # Use tmpfs for faster test redis (data in memory)
+    tmpfs:
+      - /data
+
+networks:
+  pantry-test-network:
+    driver: bridge

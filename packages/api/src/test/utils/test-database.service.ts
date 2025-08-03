@@ -12,6 +12,7 @@ import * as path from 'path';
 import type { DB } from '../../generated/database.js';
 import type { DatabaseService } from '../../modules/database/database.types.js';
 import { TestMigrationProvider } from './test-migration-provider.js';
+import { DockerTestManager } from './docker-test-manager.js';
 
 @Injectable()
 export class TestDatabaseService implements DatabaseService {
@@ -20,9 +21,18 @@ export class TestDatabaseService implements DatabaseService {
 
   getConnection(): Kysely<DB> {
     if (!this.db) {
+      // Use Docker test database URL if available, otherwise fall back to env
+      const databaseUrl = process.env.NODE_ENV === 'test' 
+        ? DockerTestManager.getTestDatabaseUrl()
+        : process.env.DATABASE_URL;
+
       const dialect = new PostgresDialect({
         pool: new Pool({
-          connectionString: process.env.DATABASE_URL,
+          connectionString: databaseUrl,
+          // Optimize for test performance
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 2000,
         }),
       });
 
@@ -30,7 +40,7 @@ export class TestDatabaseService implements DatabaseService {
         dialect,
       });
 
-      this.logger.log('📊 Test database connection established');
+      this.logger.log(`📊 Test database connection established: ${databaseUrl?.split('@')[1] || 'unknown'}`);
     }
 
     return this.db;

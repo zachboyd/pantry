@@ -12,6 +12,9 @@ export default defineConfig({
     // Use Node.js environment (perfect for NestJS)
     environment: 'node',
     
+    // Global setup and teardown for Docker services
+    globalSetup: ['./src/test/setup/global-setup.ts'],
+    
     // Test file patterns
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
@@ -56,6 +59,11 @@ export default defineConfig({
     // Global test setup
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    
+    // Environment setup
+    env: {
+      NODE_ENV: 'test',
+    },
     
     // Test timeout (30 seconds for integration tests)
     testTimeout: 30000,
