@@ -3,7 +3,10 @@ import { Test } from '@nestjs/testing';
 import { AuthSyncServiceImpl } from '../auth-sync.service.js';
 import { TOKENS } from '../../../common/tokens.js';
 import type { BetterAuthUser } from '../auth.types.js';
-import { DatabaseMock, type KyselyMock } from '../../../test/utils/database-mock.js';
+import {
+  DatabaseMock,
+  type KyselyMock,
+} from '../../../test/utils/database-mock.js';
 
 describe('AuthSyncService', () => {
   let authSyncService: AuthSyncServiceImpl;
@@ -146,7 +149,9 @@ describe('AuthSyncService', () => {
       mockDb.mockBuilder.mockError(new Error('DB Error'));
 
       // Act & Assert - should not throw
-      await expect(authSyncService.createBusinessUser(authUser)).resolves.toBeUndefined();
+      await expect(
+        authSyncService.createBusinessUser(authUser),
+      ).resolves.toBeUndefined();
     });
   });
 });

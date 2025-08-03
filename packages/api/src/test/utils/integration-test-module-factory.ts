@@ -5,7 +5,6 @@ import {
   ExpressAdapter,
 } from '@nestjs/platform-express';
 import request from 'supertest';
-import { randomUUID } from 'crypto';
 import { toNodeHandler } from 'better-auth/node';
 import express from 'express';
 import { AppModule } from '../../app.module.js';
@@ -26,7 +25,7 @@ export class IntegrationTestModuleFactory {
    */
   static async createApp(): Promise<{
     app: INestApplication;
-    request: request.SuperTest<request.Test>;
+    request: ReturnType<typeof request>;
     db: Kysely<DB>;
     testDbService: TestDatabaseService;
   }> {
@@ -44,7 +43,9 @@ export class IntegrationTestModuleFactory {
       .overrideProvider(TOKENS.DATABASE.SERVICE)
       .useValue(testDbService)
       .overrideProvider(TOKENS.DATABASE.CONNECTION)
-      .useFactory(() => testDbService.getConnection())
+      .useFactory({
+        factory: () => testDbService.getConnection(),
+      })
       .compile();
 
     // Create NestJS app with Express adapter (same as main.ts)
@@ -120,7 +121,7 @@ export class IntegrationTestModuleFactory {
 
     for (const table of tables) {
       try {
-        await db.deleteFrom(table as any).execute();
+        await db.deleteFrom(table as keyof DB).execute();
       } catch (error) {
         // Table might not exist in test database, continue
         console.warn(`Failed to clean table ${table}:`, error);
@@ -132,7 +133,7 @@ export class IntegrationTestModuleFactory {
    * Helper to execute GraphQL queries via HTTP
    */
   static async executeGraphQL(
-    request: request.SuperTest<request.Test>,
+    request: ReturnType<typeof import('supertest')>,
     query: string,
     variables?: Record<string, unknown>,
     headers?: Record<string, string>,
@@ -153,7 +154,7 @@ export class IntegrationTestModuleFactory {
    * Helper to sign up a test user using real better-auth API
    */
   static async signUpTestUser(
-    request: request.SuperTest<request.Test>,
+    request: ReturnType<typeof import('supertest')>,
     userOverrides: Record<string, unknown> = {},
     db?: Kysely<DB>,
   ): Promise<{
@@ -186,9 +187,11 @@ export class IntegrationTestModuleFactory {
     const userData = signUpResponse.body;
     let sessionToken = '';
 
-    const setCookieHeader = signUpResponse.headers['set-cookie'];
+    const setCookieHeader = signUpResponse.headers['set-cookie'] as unknown as
+      | string[]
+      | undefined;
 
-    if (setCookieHeader) {
+    if (setCookieHeader && Array.isArray(setCookieHeader)) {
       const sessionCookie = setCookieHeader.find((cookie: string) =>
         cookie.includes('pantry.session_token='),
       );
@@ -219,21 +222,26 @@ export class IntegrationTestModuleFactory {
     if (db) {
       try {
         // Wait a bit for the auth-sync service to create the business user
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         const businessUser = await db
           .selectFrom('user')
           .select('id')
           .where('auth_user_id', '=', authUserId)
           .executeTakeFirst();
-        
+
         if (businessUser) {
           businessUserId = businessUser.id;
         } else {
-          console.warn(`No business user found for auth user ${authUserId}. Auth-sync might have failed.`);
+          console.warn(
+            `No business user found for auth user ${authUserId}. Auth-sync might have failed.`,
+          );
         }
       } catch (error) {
-        console.warn(`Error looking up business user for auth user ${authUserId}:`, error);
+        console.warn(
+          `Error looking up business user for auth user ${authUserId}:`,
+          error,
+        );
       }
     }
 

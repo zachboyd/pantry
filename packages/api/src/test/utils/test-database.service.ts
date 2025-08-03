@@ -1,12 +1,5 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
-import {
-  Migrator,
-  Kysely,
-  PostgresDialect,
-} from 'kysely';
+import { Injectable, Logger } from '@nestjs/common';
+import { Migrator, Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import * as path from 'path';
 import type { DB } from '../../generated/database.js';
@@ -22,9 +15,10 @@ export class TestDatabaseService implements DatabaseService {
   getConnection(): Kysely<DB> {
     if (!this.db) {
       // Use Docker test database URL if available, otherwise fall back to env
-      const databaseUrl = process.env.NODE_ENV === 'test' 
-        ? DockerTestManager.getTestDatabaseUrl()
-        : process.env.DATABASE_URL;
+      const databaseUrl =
+        process.env.NODE_ENV === 'test'
+          ? DockerTestManager.getTestDatabaseUrl()
+          : process.env.DATABASE_URL;
 
       const dialect = new PostgresDialect({
         pool: new Pool({
@@ -40,7 +34,9 @@ export class TestDatabaseService implements DatabaseService {
         dialect,
       });
 
-      this.logger.log(`📊 Test database connection established: ${databaseUrl?.split('@')[1] || 'unknown'}`);
+      this.logger.log(
+        `📊 Test database connection established: ${databaseUrl?.split('@')[1] || 'unknown'}`,
+      );
     }
 
     return this.db;
@@ -51,7 +47,7 @@ export class TestDatabaseService implements DatabaseService {
       const migrator = new Migrator({
         db: this.getConnection(),
         provider: new TestMigrationProvider(
-          path.join(process.cwd(), 'src/database/migrations')
+          path.join(process.cwd(), 'src/database/migrations'),
         ),
       });
 
@@ -60,7 +56,9 @@ export class TestDatabaseService implements DatabaseService {
       if (results) {
         results.forEach((result) => {
           if (result.status === 'Success') {
-            this.logger.log(`✅ Migration "${result.migrationName}" executed successfully`);
+            this.logger.log(
+              `✅ Migration "${result.migrationName}" executed successfully`,
+            );
           } else {
             this.logger.error(`❌ Migration "${result.migrationName}" failed`);
           }

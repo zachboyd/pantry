@@ -698,7 +698,10 @@ describe('PermissionService', () => {
       mockDb.mockBuilder.mockExecute(householdMembers);
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
-      const result = await service.canManageHouseholdMember(userId, householdId);
+      const result = await service.canManageHouseholdMember(
+        userId,
+        householdId,
+      );
 
       expect(result).toBe(true);
       expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
@@ -806,7 +809,10 @@ describe('PermissionService', () => {
       mockDb.mockBuilder.mockExecute(householdMembers);
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
-      const result = await service.canManageHouseholdMember(userId, householdId);
+      const result = await service.canManageHouseholdMember(
+        userId,
+        householdId,
+      );
 
       expect(result).toBe(true);
     });
@@ -824,7 +830,10 @@ describe('PermissionService', () => {
       mockDb.mockBuilder.mockExecute(householdMembers);
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
-      const result = await service.canManageHouseholdMember(userId, householdId);
+      const result = await service.canManageHouseholdMember(
+        userId,
+        householdId,
+      );
 
       expect(result).toBe(false);
     });
@@ -842,7 +851,10 @@ describe('PermissionService', () => {
       mockDb.mockBuilder.mockExecute(householdMembers);
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
-      const result = await service.canManageHouseholdMember(userId, householdId);
+      const result = await service.canManageHouseholdMember(
+        userId,
+        householdId,
+      );
 
       expect(result).toBe(false);
     });
@@ -855,7 +867,10 @@ describe('PermissionService', () => {
       mockDb.mockBuilder.mockExecute([]);
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
-      const result = await service.canManageHouseholdMember(userId, householdId);
+      const result = await service.canManageHouseholdMember(
+        userId,
+        householdId,
+      );
 
       expect(result).toBe(false);
     });

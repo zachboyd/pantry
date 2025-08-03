@@ -1,4 +1,4 @@
-import * as request from 'supertest';
+// No need to import - we'll use ReturnType
 
 /**
  * Utility functions for GraphQL integration testing
@@ -109,7 +109,7 @@ export class GraphQLTestUtils {
    * Execute a GraphQL query and return the parsed response
    */
   static async executeQuery(
-    request: request.SuperTest<request.Test>,
+    request: ReturnType<typeof import('supertest')>,
     query: string,
     variables?: Record<string, unknown>,
     headers?: Record<string, string>,
@@ -135,7 +135,7 @@ export class GraphQLTestUtils {
    * Execute a GraphQL query with authentication
    */
   static async executeAuthenticatedQuery(
-    request: request.SuperTest<request.Test>,
+    request: ReturnType<typeof import('supertest')>,
     query: string,
     sessionToken: string,
     variables?: Record<string, unknown>,
@@ -148,31 +148,43 @@ export class GraphQLTestUtils {
   /**
    * Assert that a GraphQL response has no errors
    */
-  static assertNoErrors(response: { errors?: any[] }) {
+  static assertNoErrors(response: { errors?: unknown[] }) {
     if (response.errors) {
-      throw new Error(`GraphQL errors: ${JSON.stringify(response.errors, null, 2)}`);
+      throw new Error(
+        `GraphQL errors: ${JSON.stringify(response.errors, null, 2)}`,
+      );
     }
   }
 
   /**
    * Assert that a GraphQL response has specific errors
    */
-  static assertHasErrors(response: { errors?: any[] }, expectedErrorCount = 1) {
+  static assertHasErrors(
+    response: { errors?: unknown[] },
+    expectedErrorCount = 1,
+  ) {
     if (!response.errors || response.errors.length !== expectedErrorCount) {
-      throw new Error(`Expected ${expectedErrorCount} GraphQL errors, got: ${JSON.stringify(response.errors, null, 2)}`);
+      throw new Error(
+        `Expected ${expectedErrorCount} GraphQL errors, got: ${JSON.stringify(response.errors, null, 2)}`,
+      );
     }
   }
 
   /**
    * Assert that a GraphQL response has an error with specific message
    */
-  static assertErrorMessage(response: { errors?: any[] }, expectedMessage: string) {
+  static assertErrorMessage(
+    response: { errors?: Array<{ message: string }> },
+    expectedMessage: string,
+  ) {
     this.assertHasErrors(response);
     const hasExpectedMessage = response.errors!.some((error) =>
-      error.message.includes(expectedMessage)
+      error.message.includes(expectedMessage),
     );
     if (!hasExpectedMessage) {
-      throw new Error(`Expected error message "${expectedMessage}", got: ${JSON.stringify(response.errors, null, 2)}`);
+      throw new Error(
+        `Expected error message "${expectedMessage}", got: ${JSON.stringify(response.errors, null, 2)}`,
+      );
     }
   }
 
@@ -208,7 +220,7 @@ export class GraphQLTestUtils {
   static createAddHouseholdMemberInput(
     householdId: string,
     userId: string,
-    role: string
+    role: string,
   ) {
     return {
       input: {
@@ -237,7 +249,7 @@ export class GraphQLTestUtils {
   static createChangeHouseholdMemberRoleInput(
     householdId: string,
     userId: string,
-    newRole: string
+    newRole: string,
   ) {
     return {
       input: {

@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { UnauthorizedException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { UserResolver, GetUserInput } from '../user.resolver.js';
 import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';

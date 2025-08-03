@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Inject,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -49,7 +44,9 @@ export class UserController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
-  async getCurrentUser(@CurrentUser() user: UserRecord | null): Promise<UserRecord> {
+  async getCurrentUser(
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<UserRecord> {
     const result = await this.guardedUserService.getCurrentUser(user);
     return result.user;
   }
