@@ -9,7 +9,7 @@ import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
 import { requestContextMiddleware } from './common/middleware/request-context.middleware.js';
 import { TOKENS } from './common/tokens.js';
-import { createAuth } from './modules/auth/auth.config.js';
+import type { AuthFactory } from './modules/auth/auth.factory.js';
 import type { ConfigService } from './modules/config/config.types.js';
 import { SwaggerService } from './modules/swagger/swagger.service.js';
 
@@ -31,6 +31,9 @@ async function bootstrap() {
   const configService = app.get<ConfigService>(TOKENS.CONFIG.SERVICE);
   const config = configService.config;
 
+  // Get AuthFactory to create auth instance with sync callback
+  const authFactory = app.get<AuthFactory>(TOKENS.AUTH.FACTORY);
+
   // Use Pino logger
   app.useLogger(app.get(Logger));
   const logger = app.get(Logger);
@@ -44,8 +47,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Mount better-auth handler on Express server
-  server.all('/api/auth/*', toNodeHandler(createAuth()));
+  // Mount better-auth handler on Express server with sync callback
+  server.all('/api/auth/*', toNodeHandler(authFactory.createAuthInstance()));
   server.use(express.json());
 
   // Apply request context middleware to NestJS app

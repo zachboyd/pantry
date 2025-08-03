@@ -10,7 +10,9 @@ export type KyselyMock = Kysely<DB> & {
   selectAll: ReturnType<typeof vi.fn>;
   where: ReturnType<typeof vi.fn>;
   set: ReturnType<typeof vi.fn>;
+  returning: ReturnType<typeof vi.fn>;
   returningAll: ReturnType<typeof vi.fn>;
+  executeTakeFirstOrThrow: ReturnType<typeof vi.fn>;
 };
 
 /**
