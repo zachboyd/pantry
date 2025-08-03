@@ -27,6 +27,7 @@ export const TOKENS = {
   USER: {
     SERVICE: 'USER_SERVICE',
     REPOSITORY: 'USER_REPOSITORY',
+    GUARDED_SERVICE: 'USER_GUARDED_SERVICE',
   },
 
   // Message related tokens

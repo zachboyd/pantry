@@ -10,6 +10,120 @@ paths:
       summary: Get API health status
       tags:
         - health
+  /api/user/current:
+    get:
+      operationId: UserController_getCurrentUser
+      parameters: []
+      responses:
+        '200':
+          description: Current user retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  auth_user_id:
+                    type: string
+                    nullable: true
+                  email:
+                    type: string
+                    nullable: true
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  display_name:
+                    type: string
+                    nullable: true
+                  avatar_url:
+                    type: string
+                    nullable: true
+                  phone:
+                    type: string
+                    nullable: true
+                  birth_date:
+                    type: string
+                    nullable: true
+                  managed_by:
+                    type: string
+                    nullable: true
+                  relationship_to_manager:
+                    type: string
+                    nullable: true
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '401':
+          description: Unauthorized - User not found
+      security:
+        - session: []
+      summary: Get current user profile
+      tags: &ref_0
+        - user
+  /api/user/{id}:
+    get:
+      operationId: UserController_getUser
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  auth_user_id:
+                    type: string
+                    nullable: true
+                  email:
+                    type: string
+                    nullable: true
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  display_name:
+                    type: string
+                    nullable: true
+                  avatar_url:
+                    type: string
+                    nullable: true
+                  phone:
+                    type: string
+                    nullable: true
+                  birth_date:
+                    type: string
+                    nullable: true
+                  managed_by:
+                    type: string
+                    nullable: true
+                  relationship_to_manager:
+                    type: string
+                    nullable: true
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+        '404':
+          description: User not found
+      security:
+        - session: []
+      summary: Get user by ID
+      tags: *ref_0
   /api/household:
     post:
       operationId: HouseholdController_createHousehold
@@ -41,7 +155,7 @@ paths:
       security:
         - session: []
       summary: Create a new household
-      tags: &ref_0
+      tags: &ref_1
         - household
   /api/household/{id}:
     get:
@@ -64,7 +178,7 @@ paths:
       security:
         - session: []
       summary: Get household by ID
-      tags: *ref_0
+      tags: *ref_1
   /api/household/{id}/members:
     post:
       operationId: HouseholdController_addHouseholdMember
@@ -84,7 +198,7 @@ paths:
       security:
         - session: []
       summary: Add a member to household
-      tags: *ref_0
+      tags: *ref_1
   /api/household/{id}/members/{userId}:
     delete:
       operationId: HouseholdController_removeHouseholdMember
@@ -109,7 +223,7 @@ paths:
       security:
         - session: []
       summary: Remove a member from household
-      tags: *ref_0
+      tags: *ref_1
   /api/household/{id}/members/{userId}/role:
     put:
       operationId: HouseholdController_changeHouseholdMemberRole
@@ -134,7 +248,7 @@ paths:
       security:
         - session: []
       summary: Change a member's role in household
-      tags: *ref_0
+      tags: *ref_1
   /api/auth/sign-in/email:
     post:
       tags:

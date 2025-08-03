@@ -2,11 +2,18 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Household {
+type UserGql {
   id: String!
-  name: String!
-  description: String
-  created_by: String!
+  auth_user_id: String
+  email: String
+  first_name: String!
+  last_name: String!
+  display_name: String
+  avatar_url: String
+  phone: String
+  birth_date: DateTime
+  managed_by: String
+  relationship_to_manager: String
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -15,6 +22,15 @@ type Household {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type Household {
+  id: String!
+  name: String!
+  description: String
+  created_by: String!
+  created_at: DateTime!
+  updated_at: DateTime!
+}
 
 type HouseholdMember {
   id: String!
@@ -25,7 +41,13 @@ type HouseholdMember {
 }
 
 type Query {
+  user(input: GetUserInputGql!): UserGql!
+  currentUser: UserGql!
   household(input: GetHouseholdInputGql!): Household!
+}
+
+input GetUserInputGql {
+  id: String!
 }
 
 input GetHouseholdInputGql {

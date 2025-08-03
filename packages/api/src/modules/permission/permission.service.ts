@@ -128,6 +128,22 @@ export class PermissionServiceImpl implements PermissionService {
     return ability.can('manage', 'HouseholdMember');
   }
 
+  async canViewUser(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    // Users can always view their own profile
+    if (currentUserId === targetUserId) {
+      return true;
+    }
+
+    const ability = await this.getOrComputeUserAbility(currentUserId);
+    // Check if user can read User resources
+    // This will check if they have permission to view other users
+    // (e.g., through household memberships or management roles)
+    return ability.can('read', 'User');
+  }
+
   /**
    * Invalidate user permissions cache when household membership changes
    */
