@@ -77,7 +77,9 @@ export class GuardedUserService {
    */
   async getCurrentUser(currentUser: UserRecord | null): Promise<GetUserResponse> {
     if (!currentUser) {
-      throw new UnauthorizedException('User must be authenticated');
+      // If we reach here with null currentUser, it means the auth session was valid 
+      // but the business user doesn't exist in the database (orphaned session)
+      throw new NotFoundException('Current user not found');
     }
 
     // Refresh user data from database to ensure it's current

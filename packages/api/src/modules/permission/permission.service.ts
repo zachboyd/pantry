@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Kysely } from 'kysely';
-import { createMongoAbility } from '@casl/ability';
+import { createMongoAbility, subject } from '@casl/ability';
 import { packRules, unpackRules } from '@casl/ability/extra';
 import type { Cache } from 'cache-manager';
 import { DB, Json } from '../../generated/database.js';
@@ -138,10 +138,10 @@ export class PermissionServiceImpl implements PermissionService {
     }
 
     const ability = await this.getOrComputeUserAbility(currentUserId);
-    // Check if user can read User resources
-    // This will check if they have permission to view other users
-    // (e.g., through household memberships or management roles)
-    return ability.can('read', 'User');
+    // Check if user can read the specific target User by creating a mock subject
+    // This checks conditions like household membership
+    const targetUser = { id: targetUserId };
+    return ability.can('read', subject('User', targetUser));
   }
 
   async canListHouseholds(_userId: string): Promise<boolean> {

@@ -1,7 +1,13 @@
 import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
+import swc from 'unplugin-swc';
 
 export default defineConfig({
+  plugins: [
+    swc.vite({
+      tsconfigFile: './tsconfig.json'
+    })
+  ],
   test: {
     // Use Node.js environment (perfect for NestJS)
     environment: 'node',
@@ -49,6 +55,7 @@ export default defineConfig({
     
     // Global test setup
     globals: true,
+    setupFiles: ['./src/test/setup.ts'],
     
     // Test timeout (30 seconds for integration tests)
     testTimeout: 30000,
@@ -68,10 +75,5 @@ export default defineConfig({
       '@modules': resolve(__dirname, './src/modules'),
       '@generated': resolve(__dirname, './src/generated')
     }
-  },
-  
-  // Enable TypeScript support
-  esbuild: {
-    target: 'node18'
   }
 });

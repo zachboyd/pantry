@@ -1,0 +1,368 @@
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import type { INestApplication } from '@nestjs/common';
+import type * as request from 'supertest';
+import type { Kysely } from 'kysely';
+import type { DB } from '../../../../generated/database.js';
+import { IntegrationTestModuleFactory } from '../../../../test/utils/integration-test-module-factory.js';
+import { TestDatabaseService } from '../../../../test/utils/test-database.service.js';
+import { GraphQLTestUtils } from '../../../../test/utils/graphql-test-utils.js';
+import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
+
+describe('User Resolver Integration Tests', () => {
+  let app: INestApplication;
+  let testRequest: request.SuperTest<request.Test>;
+  let db: Kysely<DB>;
+  let testDbService: TestDatabaseService;
+
+  beforeAll(async () => {
+    // Create integration test app once for all tests
+    const testApp = await IntegrationTestModuleFactory.createApp();
+    app = testApp.app;
+    testRequest = testApp.request;
+    db = testApp.db;
+    testDbService = testApp.testDbService;
+  });
+
+  afterAll(async () => {
+    // Cleanup after all tests
+    await IntegrationTestModuleFactory.closeApp(app, testDbService);
+  });
+
+  beforeEach(async () => {
+    // Clean database before each test for isolation
+    try {
+      await IntegrationTestModuleFactory.cleanDatabase(db);
+    } catch (error) {
+      // If database tables don't exist, skip cleanup
+      console.warn('Database cleanup skipped:', error);
+    }
+  });
+
+  describe('user query', () => {
+    it('should return user when found and accessible', async () => {
+      // Arrange - Sign up test user using real auth
+      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {
+        first_name: 'Integration',
+        last_name: 'Test',
+        display_name: 'Integration Test',
+      }, db);
+
+      // Act - Execute GraphQL query
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_USER,
+        sessionToken,
+        GraphQLTestUtils.createGetUserInput(userId),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+      
+      const userData = response.data.user;
+      expect(userData).toMatchObject({
+        id: userId,
+        first_name: 'Integration',
+        last_name: 'Test',
+        display_name: 'Integration Test',
+      });
+      expect(userData.created_at).toBeDefined();
+      expect(userData.updated_at).toBeDefined();
+    });
+
+    it('should allow user to view their own profile', async () => {
+      // Arrange
+      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {
+        first_name: 'Self',
+        last_name: 'Viewer',
+        display_name: 'Self Viewer',
+      }, db);
+
+      // Act - User viewing their own profile
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_USER,
+        sessionToken,
+        GraphQLTestUtils.createGetUserInput(userId),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+      expect(response.data.user.first_name).toBe('Self');
+      expect(response.data.user.last_name).toBe('Viewer');
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      // Arrange - Sign up a user but use their ID without authentication
+      const { userId } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {
+        first_name: 'Unauthorized',
+        last_name: 'User',
+      }, db);
+
+      // Act - Try to access user without authentication
+      const response = await GraphQLTestUtils.executeQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_USER,
+        GraphQLTestUtils.createGetUserInput(userId),
+      );
+
+      // Assert
+      expect(response.status).toBe(200); // GraphQL always returns 200
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Authentication required');
+    });
+
+    it('should return 403 when user not found (security: no information leakage)', async () => {
+      // Arrange
+      const { sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+      const nonExistentUserId = '00000000-0000-4000-8000-000000000000'; // Valid UUID format
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_USER,
+        sessionToken,
+        GraphQLTestUtils.createGetUserInput(nonExistentUserId),
+      );
+
+      // Assert - Should return permission error, not "not found" to avoid information leakage
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'permission');
+    });
+
+    it('should return 403 when user lacks permission to view other user', async () => {
+      // Arrange - Create two users
+      const { sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {
+        first_name: 'Viewer',
+        last_name: 'User',
+      }, db);
+
+      const { userId: otherUserId } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {
+        first_name: 'Other',
+        last_name: 'User',
+      }, db);
+
+      // Act - Try to view other user without permission
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_USER,
+        sessionToken,
+        GraphQLTestUtils.createGetUserInput(otherUserId),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'permission');
+    });
+
+    it('should handle malformed user ID gracefully', async () => {
+      // Arrange
+      const { sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+
+      // Act - Try with empty user ID
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_USER,
+        sessionToken,
+        GraphQLTestUtils.createGetUserInput(''),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+    });
+  });
+
+  describe('currentUser query', () => {
+    it('should return current authenticated user', async () => {
+      // Arrange
+      const { userId, sessionToken, email } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {
+        first_name: 'Current',
+        last_name: 'User',
+      }, db);
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+      
+      const userData = response.data.currentUser;
+      expect(userData).toMatchObject({
+        id: userId,
+        first_name: 'Current',
+        last_name: 'User',
+        email: email,
+        display_name: 'Current User',
+      });
+      expect(userData.created_at).toBeDefined();
+      expect(userData.updated_at).toBeDefined();
+    });
+
+    it('should return fresh user data from database', async () => {
+      // Arrange - Create user and get session
+      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {
+        first_name: 'Original',
+        last_name: 'Name',
+      }, db);
+
+      // Update user in database directly (simulating external update)
+      await db
+        .updateTable('user')
+        .set({
+          first_name: 'Updated',
+          last_name: 'Name',
+          updated_at: new Date(),
+        })
+        .where('id', '=', userId)
+        .execute();
+
+      // Act - Get current user should return updated data
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+      expect(response.data.currentUser.first_name).toBe('Updated');
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      // Act - Try to get current user without authentication
+      const response = await GraphQLTestUtils.executeQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Authentication required');
+    });
+
+    it('should return 404 when authenticated user not found in database', async () => {
+      // Arrange - Create session but remove user from database
+      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+
+      // Remove user from database (orphaned session)
+      await db.deleteFrom('user').where('id', '=', userId).execute();
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Current user not found');
+    });
+
+    it('should handle invalid session token', async () => {
+      // Act - Try with invalid session token
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        'invalid-session-token',
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Invalid token');
+    });
+
+    it('should handle expired session token', async () => {
+      // Arrange - Create user but create expired session manually
+      const { authUserId } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+      
+      // Create expired session
+      const expiredSessionToken = 'expired-session-' + Date.now();
+      await db
+        .insertInto('auth_session')
+        .values({
+          id: 'expired-session-' + Date.now(),
+          userId: authUserId,
+          token: expiredSessionToken,
+          expiresAt: new Date(Date.now() - 1000), // Expired 1 second ago
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .execute();
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        expiredSessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Invalid token');
+    });
+  });
+
+  describe('GraphQL schema validation', () => {
+    it('should reject invalid query structure', async () => {
+      // Arrange
+      const { sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+      const invalidQuery = `
+        query InvalidQuery {
+          user {
+            nonExistentField
+          }
+        }
+      `;
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        invalidQuery,
+        sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(400); // GraphQL validation error
+      expect(response.body.errors).toBeDefined();
+    });
+
+    it('should enforce required arguments', async () => {
+      // Arrange
+      const { sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+      const queryWithoutRequiredArgs = `
+        query MissingArgs {
+          user {
+            id
+            first_name
+          }
+        }
+      `;
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        queryWithoutRequiredArgs,
+        sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(400);
+      expect(response.body.errors).toBeDefined();
+    });
+  });
+});
