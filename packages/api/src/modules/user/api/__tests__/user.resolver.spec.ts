@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UnauthorizedException, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { UserResolver, User, GetUserInput } from '../user.resolver.js';
-import { GuardedUserService } from '../guarded-user.service.js';
+import { UserResolver, GetUserInput } from '../user.resolver.js';
 import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
-import type { UserRecord } from '../../user.types.js';
 
 describe('UserResolver', () => {
   let userResolver: UserResolver;

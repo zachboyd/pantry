@@ -15,15 +15,13 @@ import {
   RemoveHouseholdMemberInput,
   ChangeHouseholdMemberRoleInput,
 } from '../household.resolver.js';
-import { GuardedHouseholdService } from '../guarded-household.service.js';
 import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
-import type { UserRecord } from '../../../user/user.types.js';
 import type {
   HouseholdRecord,
   HouseholdMemberRecord,
 } from '../../household.types.js';
-import type { Selectable, Insertable } from 'kysely';
+import type { Selectable } from 'kysely';
 import type {
   Household as HouseholdDB,
   HouseholdMember as HouseholdMemberDB,
