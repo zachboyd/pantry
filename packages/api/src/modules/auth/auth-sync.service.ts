@@ -17,7 +17,7 @@ export class AuthSyncServiceImpl implements AuthSyncService {
     try {
       // Extract first and last name from auth user's name field
       const nameParts = authUser.name.trim().split(' ');
-      const firstName = nameParts[0] || 'User';
+      const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
 
       this.logger.log(

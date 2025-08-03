@@ -134,6 +134,54 @@ describe('AuthSyncService', () => {
       );
     });
 
+    it('should handle empty name gracefully without defaulting to "User"', async () => {
+      // Arrange
+      const authUser: BetterAuthUser = {
+        id: 'auth-123',
+        email: 'test@example.com',
+        emailVerified: true,
+        name: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Act
+      await authSyncService.createBusinessUser(authUser);
+
+      // Assert - should NOT default first_name to 'User'
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          first_name: '',
+          last_name: '',
+          display_name: '',
+        }),
+      );
+    });
+
+    it('should handle whitespace-only name gracefully without defaulting to "User"', async () => {
+      // Arrange
+      const authUser: BetterAuthUser = {
+        id: 'auth-123',
+        email: 'test@example.com',
+        emailVerified: true,
+        name: '   ',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Act
+      await authSyncService.createBusinessUser(authUser);
+
+      // Assert - should NOT default first_name to 'User'
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          first_name: '',
+          last_name: '',
+          display_name: '   ', // display_name preserves original
+        }),
+      );
+    });
+
     it('should not throw on database errors', async () => {
       // Arrange
       const authUser: BetterAuthUser = {
