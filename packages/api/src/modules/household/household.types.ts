@@ -170,4 +170,15 @@ export interface HouseholdService {
    * @returns Promise with array of household records
    */
   getHouseholdsForUser(userId: string): Promise<HouseholdRecord[]>;
+
+  /**
+   * Get all members of a household with access control
+   * @param householdId - Household ID
+   * @param userId - User ID requesting access (for permission checks)
+   * @returns Promise with array of household member records
+   */
+  getHouseholdMembers(
+    householdId: string,
+    userId: string,
+  ): Promise<HouseholdMemberRecord[]>;
 }

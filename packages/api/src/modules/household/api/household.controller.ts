@@ -25,6 +25,7 @@ import {
   GuardedHouseholdService,
   CreateHouseholdInput,
   AddHouseholdMemberInput,
+  GetHouseholdMembersResponse,
 } from './guarded-household.service.js';
 
 @ApiTags('household')
@@ -129,6 +130,44 @@ export class HouseholdController {
       user,
     );
     return result.household;
+  }
+
+  @Get(':id/members')
+  @ApiOperation({ summary: 'Get all members of a household' })
+  @ApiSecurity('session')
+  @ApiResponse({
+    status: 200,
+    description: 'Household members retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        members: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              household_id: { type: 'string' },
+              user_id: { type: 'string' },
+              role: { type: 'string' },
+              joined_at: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
+  @ApiResponse({ status: 404, description: 'Household not found' })
+  async getHouseholdMembers(
+    @Param('id') householdId: string,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<GetHouseholdMembersResponse> {
+    return this.guardedHouseholdService.getHouseholdMembers(householdId, user);
   }
 
   @Post(':id/members')

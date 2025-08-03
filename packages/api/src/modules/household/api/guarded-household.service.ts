@@ -47,6 +47,10 @@ export interface ListHouseholdsResponse {
   households: HouseholdRecord[];
 }
 
+export interface GetHouseholdMembersResponse {
+  members: HouseholdMemberRecord[];
+}
+
 /**
  * GuardedHouseholdService provides permission-enforced access to household operations
  * This service wraps the core HouseholdService and adds permission guards
@@ -275,5 +279,38 @@ export class GuardedHouseholdService {
     );
 
     return { households };
+  }
+
+  async getHouseholdMembers(
+    householdId: string,
+    user: UserRecord | null,
+  ): Promise<GetHouseholdMembersResponse> {
+    // Validation
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!householdId || householdId.trim().length === 0) {
+      throw new BadRequestException('Household ID is required');
+    }
+
+    // Check permissions - user must be a member of the household
+    const canRead = await this.permissionService.canReadHousehold(
+      user.id,
+      householdId.trim(),
+    );
+    if (!canRead) {
+      throw new ForbiddenException(
+        'Insufficient permissions to view household members',
+      );
+    }
+
+    // Delegate to service
+    const members = await this.householdService.getHouseholdMembers(
+      householdId.trim(),
+      user.id,
+    );
+
+    return { members };
   }
 }

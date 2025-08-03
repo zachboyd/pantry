@@ -216,6 +216,47 @@ paths:
       summary: Get household by ID
       tags: *ref_1
   /api/household/{id}/members:
+    get:
+      operationId: HouseholdController_getHouseholdMembers
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Household members retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        household_id:
+                          type: string
+                        user_id:
+                          type: string
+                        role:
+                          type: string
+                        joined_at:
+                          type: string
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+        '404':
+          description: Household not found
+      security:
+        - session: []
+      summary: Get all members of a household
+      tags: *ref_1
     post:
       operationId: HouseholdController_addHouseholdMember
       parameters:

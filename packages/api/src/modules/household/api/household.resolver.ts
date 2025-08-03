@@ -97,6 +97,12 @@ export class ChangeHouseholdMemberRoleInput {
   newRole: string;
 }
 
+@InputType()
+export class GetHouseholdMembersInput {
+  @Field()
+  householdId: string;
+}
+
 @Resolver(() => Household)
 export class HouseholdResolver {
   constructor(
@@ -134,6 +140,18 @@ export class HouseholdResolver {
   ): Promise<Household[]> {
     const result = await this.guardedHouseholdService.listHouseholds(user);
     return result.households;
+  }
+
+  @Query(() => [HouseholdMember])
+  async householdMembers(
+    @Args('input') input: GetHouseholdMembersInput,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<HouseholdMember[]> {
+    const result = await this.guardedHouseholdService.getHouseholdMembers(
+      input.householdId,
+      user,
+    );
+    return result.members;
   }
 
   @Mutation(() => HouseholdMember)
