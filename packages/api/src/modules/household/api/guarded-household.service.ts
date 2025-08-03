@@ -43,6 +43,10 @@ export interface ChangeHouseholdMemberRoleInput {
   newRole: string;
 }
 
+export interface ListHouseholdsResponse {
+  households: HouseholdRecord[];
+}
+
 /**
  * GuardedHouseholdService provides permission-enforced access to household operations
  * This service wraps the core HouseholdService and adds permission guards
@@ -247,5 +251,29 @@ export class GuardedHouseholdService {
       input.newRole.trim(),
       user.id,
     );
+  }
+
+  async listHouseholds(
+    user: UserRecord | null,
+  ): Promise<ListHouseholdsResponse> {
+    // Validation
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Check permissions - any authenticated user can list their own households
+    const canList = await this.permissionService.canListHouseholds(user.id);
+    if (!canList) {
+      throw new ForbiddenException(
+        'Insufficient permissions to list households',
+      );
+    }
+
+    // Delegate to service
+    const households = await this.householdService.getHouseholdsForUser(
+      user.id,
+    );
+
+    return { households };
   }
 }

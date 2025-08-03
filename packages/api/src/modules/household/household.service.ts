@@ -422,4 +422,18 @@ export class HouseholdServiceImpl implements HouseholdService {
       throw error;
     }
   }
+
+  async getHouseholdsForUser(userId: string): Promise<HouseholdRecord[]> {
+    this.logger.log(`Getting households for user: ${userId}`);
+
+    try {
+      const households = await this.householdRepository.getHouseholdsForUser(userId);
+      
+      this.logger.log(`Retrieved ${households.length} households for user ${userId}`);
+      return households;
+    } catch (error) {
+      this.logger.error(`Failed to get households for user ${userId}:`, error);
+      throw error;
+    }
+  }
 }

@@ -144,6 +144,12 @@ export class PermissionServiceImpl implements PermissionService {
     return ability.can('read', 'User');
   }
 
+  async canListHouseholds(_userId: string): Promise<boolean> {
+    // Any authenticated user can list their own households
+    // This is a basic permission that all users should have
+    return true;
+  }
+
   /**
    * Invalidate user permissions cache when household membership changes
    */

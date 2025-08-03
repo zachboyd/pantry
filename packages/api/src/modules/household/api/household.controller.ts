@@ -35,6 +35,44 @@ export class HouseholdController {
     private readonly guardedHouseholdService: GuardedHouseholdService,
   ) {}
 
+  @Get()
+  @ApiOperation({ summary: 'List all households for the current user' })
+  @ApiSecurity('session')
+  @ApiResponse({
+    status: 200,
+    description: 'Households retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        households: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              description: { type: 'string' },
+              created_by: { type: 'string' },
+              created_at: { type: 'string' },
+              updated_at: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
+  async listHouseholds(
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<{ households: HouseholdRecord[] }> {
+    const result = await this.guardedHouseholdService.listHouseholds(user);
+    return result;
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create a new household' })
   @ApiSecurity('session')

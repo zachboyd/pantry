@@ -125,6 +125,43 @@ paths:
       summary: Get user by ID
       tags: *ref_0
   /api/household:
+    get:
+      operationId: HouseholdController_listHouseholds
+      parameters: []
+      responses:
+        '200':
+          description: Households retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  households:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        created_by:
+                          type: string
+                        created_at:
+                          type: string
+                        updated_at:
+                          type: string
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+      security:
+        - session: []
+      summary: List all households for the current user
+      tags: &ref_1
+        - household
     post:
       operationId: HouseholdController_createHousehold
       parameters: []
@@ -155,8 +192,7 @@ paths:
       security:
         - session: []
       summary: Create a new household
-      tags: &ref_1
-        - household
+      tags: *ref_1
   /api/household/{id}:
     get:
       operationId: HouseholdController_getHousehold

@@ -163,4 +163,11 @@ export interface HouseholdService {
     newRole: string,
     requesterId: string,
   ): Promise<HouseholdMemberRecord>;
+
+  /**
+   * Get all households for a user
+   * @param userId - User ID
+   * @returns Promise with array of household records
+   */
+  getHouseholdsForUser(userId: string): Promise<HouseholdRecord[]>;
 }

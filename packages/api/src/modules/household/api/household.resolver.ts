@@ -128,6 +128,14 @@ export class HouseholdResolver {
     return result.household;
   }
 
+  @Query(() => [Household])
+  async households(
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<Household[]> {
+    const result = await this.guardedHouseholdService.listHouseholds(user);
+    return result.households;
+  }
+
   @Mutation(() => HouseholdMember)
   async addHouseholdMember(
     @Args('input') input: AddHouseholdMemberInput,
