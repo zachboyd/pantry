@@ -45,7 +45,7 @@ async function bootstrap() {
   });
 
   // Mount better-auth handler on Express server
-  server.all('/api/auth/*splat', toNodeHandler(createAuth()));
+  server.all('/api/auth/*', toNodeHandler(createAuth()));
   server.use(express.json());
 
   // Apply request context middleware to NestJS app
