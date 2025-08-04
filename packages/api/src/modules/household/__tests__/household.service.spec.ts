@@ -38,6 +38,10 @@ describe('HouseholdService', () => {
   let householdService: HouseholdServiceImpl;
 
   beforeEach(async () => {
+    // Mock logger to avoid console output during tests
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+
     const module = await Test.createTestingModule({
       providers: [
         HouseholdServiceImpl,

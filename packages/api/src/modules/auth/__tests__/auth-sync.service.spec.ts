@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
+import { Logger } from '@nestjs/common';
 import { AuthSyncServiceImpl } from '../auth-sync.service.js';
 import { TOKENS } from '../../../common/tokens.js';
 import type { BetterAuthUser } from '../auth.types.js';
@@ -13,6 +14,10 @@ describe('AuthSyncService', () => {
   let mockDb: KyselyMock;
 
   beforeEach(async () => {
+    // Mock logger to avoid console output during tests
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+
     // Create mock database using utility
     mockDb = DatabaseMock.createKyselyMock();
     mockDb.mockBuilder.mockExecuteTakeFirstOrThrow({ id: 'business-user-123' });
