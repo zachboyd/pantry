@@ -5,23 +5,19 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { UserResolver, GetUserInput } from '../user.resolver.js';
+import { UserResolver, GetUserInput, UpdateUserInput } from '../user.resolver.js';
 import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
+import { GuardedUserServiceMock } from '../../../../test/mocks/guarded-user-service.mock.js';
+import type { GuardedUserServiceMockType } from '../../../../test/mocks/guarded-user-service.mock.js';
 
 describe('UserResolver', () => {
   let userResolver: UserResolver;
-  let mockGuardedUserService: {
-    getUser: ReturnType<typeof vi.fn>;
-    getCurrentUser: ReturnType<typeof vi.fn>;
-  };
+  let mockGuardedUserService: GuardedUserServiceMockType;
 
   beforeEach(async () => {
-    // Create mocks
-    mockGuardedUserService = {
-      getUser: vi.fn(),
-      getCurrentUser: vi.fn(),
-    };
+    // Create reusable mock
+    mockGuardedUserService = GuardedUserServiceMock.createGuardedUserServiceMock();
 
     // Create test module
     const module = await Test.createTestingModule({
@@ -279,6 +275,173 @@ describe('UserResolver', () => {
         serviceError,
       );
       expect(mockGuardedUserService.getCurrentUser).toHaveBeenCalledWith(
+        currentUser,
+      );
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update user when service succeeds', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'test-user-id',
+        first_name: 'Updated',
+        last_name: 'Name',
+        display_name: 'Updated Display Name',
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+      });
+      const updatedUser = DatabaseFixtures.createUserResult({
+        id: 'test-user-id',
+        first_name: 'Updated',
+        last_name: 'Name',
+        display_name: 'Updated Display Name',
+      });
+
+      mockGuardedUserService.updateUser.mockResolvedValue({
+        user: updatedUser,
+      });
+
+      // Act
+      const result = await userResolver.updateUser(input, currentUser);
+
+      // Assert
+      expect(result).toEqual(updatedUser);
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        currentUser,
+      );
+    });
+
+    it('should handle UnauthorizedException when user not authenticated', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'test-user-id',
+        first_name: 'Updated',
+      };
+
+      mockGuardedUserService.updateUser.mockRejectedValue(
+        new UnauthorizedException('User must be authenticated'),
+      );
+
+      // Act & Assert
+      await expect(userResolver.updateUser(input, null)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        null,
+      );
+    });
+
+    it('should handle NotFoundException when user not found', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'nonexistent-user-id',
+        first_name: 'Updated',
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+      });
+
+      mockGuardedUserService.updateUser.mockRejectedValue(
+        new NotFoundException('User with ID nonexistent-user-id not found'),
+      );
+
+      // Act & Assert
+      await expect(userResolver.updateUser(input, currentUser)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        currentUser,
+      );
+    });
+
+    it('should handle ForbiddenException when user lacks permission', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'other-user-id',
+        first_name: 'Updated',
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+      });
+
+      mockGuardedUserService.updateUser.mockRejectedValue(
+        new ForbiddenException('You do not have permission to update this user'),
+      );
+
+      // Act & Assert
+      await expect(userResolver.updateUser(input, currentUser)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        currentUser,
+      );
+    });
+
+    it('should update user with partial data', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'test-user-id',
+        first_name: 'OnlyFirstName',
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+      });
+      const updatedUser = DatabaseFixtures.createUserResult({
+        id: 'test-user-id',
+        first_name: 'OnlyFirstName',
+        last_name: 'OriginalLast', // unchanged
+      });
+
+      mockGuardedUserService.updateUser.mockResolvedValue({
+        user: updatedUser,
+      });
+
+      // Act
+      const result = await userResolver.updateUser(input, currentUser);
+
+      // Assert
+      expect(result.first_name).toBe('OnlyFirstName');
+      expect(result.last_name).toBe('OriginalLast');
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        currentUser,
+      );
+    });
+
+    it('should update own profile successfully', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'current-user-id',
+        display_name: 'My New Display Name',
+        phone: '+1234567890',
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+      });
+      const updatedUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+        display_name: 'My New Display Name',
+        phone: '+1234567890',
+      });
+
+      mockGuardedUserService.updateUser.mockResolvedValue({
+        user: updatedUser,
+      });
+
+      // Act
+      const result = await userResolver.updateUser(input, currentUser);
+
+      // Assert
+      expect(result.display_name).toBe('My New Display Name');
+      expect(result.phone).toBe('+1234567890');
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
         currentUser,
       );
     });

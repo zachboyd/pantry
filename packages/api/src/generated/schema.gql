@@ -61,10 +61,22 @@ input GetHouseholdMembersInput {
 }
 
 type Mutation {
+  updateUser(input: UpdateUserInput!): User!
   createHousehold(input: CreateHouseholdInput!): Household!
   addHouseholdMember(input: AddHouseholdMemberInput!): HouseholdMember!
   removeHouseholdMember(input: RemoveHouseholdMemberInput!): Boolean!
   changeHouseholdMemberRole(input: ChangeHouseholdMemberRoleInput!): HouseholdMember!
+}
+
+input UpdateUserInput {
+  id: String!
+  first_name: String
+  last_name: String
+  display_name: String
+  avatar_url: String
+  phone: String
+  birth_date: DateTime
+  email: String
 }
 
 input CreateHouseholdInput {

@@ -124,6 +124,66 @@ paths:
         - session: []
       summary: Get user by ID
       tags: *ref_0
+    put:
+      operationId: UserController_updateUser
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  auth_user_id:
+                    type: string
+                    nullable: true
+                  email:
+                    type: string
+                    nullable: true
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  display_name:
+                    type: string
+                    nullable: true
+                  avatar_url:
+                    type: string
+                    nullable: true
+                  phone:
+                    type: string
+                    nullable: true
+                  birth_date:
+                    type: string
+                    nullable: true
+                  managed_by:
+                    type: string
+                    nullable: true
+                  relationship_to_manager:
+                    type: string
+                    nullable: true
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+        '404':
+          description: User not found
+      security:
+        - session: []
+      summary: Update user profile
+      tags: *ref_0
   /api/household:
     get:
       operationId: HouseholdController_listHouseholds

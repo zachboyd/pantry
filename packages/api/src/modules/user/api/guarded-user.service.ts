@@ -14,7 +14,22 @@ export interface GetUserInput {
   id: string;
 }
 
+export interface UpdateUserInput {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  display_name?: string;
+  avatar_url?: string;
+  phone?: string;
+  birth_date?: Date;
+  email?: string;
+}
+
 export interface GetUserResponse {
+  user: UserRecord;
+}
+
+export interface UpdateUserResponse {
   user: UserRecord;
 }
 
@@ -91,5 +106,57 @@ export class GuardedUserService {
     }
 
     return { user };
+  }
+
+  /**
+   * Update user profile with permission check
+   * Users can update their own profile or users they have permission to manage
+   */
+  async updateUser(
+    input: UpdateUserInput,
+    currentUser: UserRecord | null,
+  ): Promise<UpdateUserResponse> {
+    if (!currentUser) {
+      throw new UnauthorizedException('User must be authenticated');
+    }
+
+    // Check if user exists
+    const targetUser = await this.userService.getUserById(input.id);
+    if (!targetUser) {
+      throw new NotFoundException(`User with ID ${input.id} not found`);
+    }
+
+    // Allow users to update their own profile
+    if (currentUser.id === input.id) {
+      // Extract updatable fields, excluding system fields
+      const { id, ...updateData } = input;
+      const filteredUpdateData = Object.fromEntries(
+        Object.entries(updateData).filter(([, value]) => value !== undefined)
+      );
+
+      const updatedUser = await this.userService.updateUser(input.id, filteredUpdateData);
+      return { user: updatedUser };
+    }
+
+    // Check if user has permission to update other users
+    const canUpdateUser = await this.permissionService.canViewUser(
+      currentUser.id,
+      input.id,
+    );
+
+    if (!canUpdateUser) {
+      throw new ForbiddenException(
+        'You do not have permission to update this user',
+      );
+    }
+
+    // Extract updatable fields, excluding system fields
+    const { id, ...updateData } = input;
+    const filteredUpdateData = Object.fromEntries(
+      Object.entries(updateData).filter(([, value]) => value !== undefined)
+    );
+
+    const updatedUser = await this.userService.updateUser(input.id, filteredUpdateData);
+    return { user: updatedUser };
   }
 }

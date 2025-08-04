@@ -419,4 +419,236 @@ describe('User Resolver Integration Tests', () => {
       expect(response.body.errors).toBeDefined();
     });
   });
+
+  describe('updateUser mutation', () => {
+    it('should update own profile successfully', async () => {
+      // Arrange - Sign up test user
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(
+          testRequest,
+          {
+            first_name: 'Original',
+            last_name: 'Name',
+            display_name: 'Original Display',
+          },
+          db,
+        );
+
+      // Act - Update user profile
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(userId, {
+          first_name: 'Updated',
+          last_name: 'NewName',
+          display_name: 'Updated Display Name',
+          phone: '+1234567890',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.data.updateUser;
+      expect(userData).toMatchObject({
+        id: userId,
+        first_name: 'Updated',
+        last_name: 'NewName',
+        display_name: 'Updated Display Name',
+        phone: '+1234567890',
+      });
+      expect(userData.created_at).toBeDefined();
+      expect(userData.updated_at).toBeDefined();
+    });
+
+    it('should update only provided fields', async () => {
+      // Arrange - Sign up test user with simple names to avoid auth sync issues
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(
+          testRequest,
+          {
+            first_name: 'Original',
+            last_name: 'User',
+          },
+          db,
+        );
+
+      // First, update user with initial values to establish known state
+      const setupResponse = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(userId, {
+          display_name: 'Original Display',
+          phone: '+0000000000',
+        }),
+      );
+      expect(setupResponse.status).toBe(200);
+
+      // Act - Update only first name
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(userId, {
+          first_name: 'UpdatedFirst',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.data.updateUser;
+      expect(userData).toMatchObject({
+        id: userId,
+        first_name: 'UpdatedFirst',
+        last_name: 'User', // unchanged
+        display_name: 'Original Display', // unchanged
+        phone: '+0000000000', // unchanged
+      });
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      // Arrange - Sign up a user but use their ID without authentication
+      const { userId } = await IntegrationTestModuleFactory.signUpTestUser(
+        testRequest,
+        {
+          first_name: 'Unauthorized',
+          last_name: 'User',
+        },
+        db,
+      );
+
+      // Act - Try to update user without authentication
+      const response = await GraphQLTestUtils.executeQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        GraphQLTestUtils.createUpdateUserInput(userId, {
+          first_name: 'Hacked',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200); // GraphQL always returns 200
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Authentication required');
+    });
+
+    it('should return 404 when user not found', async () => {
+      // Arrange
+      const { sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+      const nonExistentUserId = '00000000-0000-4000-8000-000000000000'; // Valid UUID format
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(nonExistentUserId, {
+          first_name: 'DoesNotExist',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200); // GraphQL always returns 200
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'User with ID 00000000-0000-4000-8000-000000000000 not found',
+      );
+    });
+
+    it('should return 403 when trying to update other user without permission', async () => {
+      // Arrange - Create two separate users
+      const { userId: user1Id, sessionToken: user1Token } =
+        await IntegrationTestModuleFactory.signUpTestUser(
+          testRequest,
+          {
+            first_name: 'User',
+            last_name: 'One',
+          },
+          db,
+        );
+
+      const { userId: user2Id } =
+        await IntegrationTestModuleFactory.signUpTestUser(
+          testRequest,
+          {
+            first_name: 'User',
+            last_name: 'Two',
+          },
+          db,
+        );
+
+      // Act - User 1 tries to update User 2's profile
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        user1Token,
+        GraphQLTestUtils.createUpdateUserInput(user2Id, {
+          first_name: 'Hacked',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200); // GraphQL always returns 200
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'You do not have permission to update this user',
+      );
+    });
+
+    it('should handle all supported update fields', async () => {
+      // Arrange - Sign up test user
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(
+          testRequest,
+          {
+            first_name: 'Original',
+            last_name: 'Name',
+          },
+          db,
+        );
+
+      // Act - Update all supported fields
+      const updateData = {
+        first_name: 'Updated',
+        last_name: 'LastName',
+        display_name: 'Updated Display Name',
+        avatar_url: 'https://example.com/avatar.jpg',
+        phone: '+1234567890',
+        birth_date: new Date('1990-01-01'),
+        email: 'updated@example.com',
+      };
+
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(userId, updateData),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.data.updateUser;
+      expect(userData).toMatchObject({
+        id: userId,
+        first_name: 'Updated',
+        last_name: 'LastName',
+        display_name: 'Updated Display Name',
+        avatar_url: 'https://example.com/avatar.jpg',
+        phone: '+1234567890',
+        email: 'updated@example.com',
+      });
+      // Note: birth_date comparison might need special handling due to date serialization
+      expect(userData.birth_date).toBeDefined();
+    });
+  });
 });

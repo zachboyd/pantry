@@ -1,4 +1,4 @@
-import { Resolver, Query, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { ObjectType, Field, InputType } from '@nestjs/graphql';
 import { CurrentUser } from '../../auth/auth.decorator.js';
@@ -55,6 +55,33 @@ export class GetUserInput {
   id: string;
 }
 
+@InputType()
+export class UpdateUserInput {
+  @Field()
+  id: string;
+
+  @Field({ nullable: true })
+  first_name?: string;
+
+  @Field({ nullable: true })
+  last_name?: string;
+
+  @Field({ nullable: true })
+  display_name?: string;
+
+  @Field({ nullable: true })
+  avatar_url?: string;
+
+  @Field({ nullable: true })
+  phone?: string;
+
+  @Field({ nullable: true })
+  birth_date?: Date;
+
+  @Field({ nullable: true })
+  email?: string;
+}
+
 @Resolver(() => User)
 export class UserResolver {
   constructor(
@@ -74,6 +101,15 @@ export class UserResolver {
   @Query(() => User)
   async currentUser(@CurrentUser() user: UserRecord | null): Promise<User> {
     const result = await this.guardedUserService.getCurrentUser(user);
+    return result.user;
+  }
+
+  @Mutation(() => User)
+  async updateUser(
+    @Args('input') input: UpdateUserInput,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<User> {
+    const result = await this.guardedUserService.updateUser(input, user);
     return result.user;
   }
 }

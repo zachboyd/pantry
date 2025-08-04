@@ -47,6 +47,31 @@ export class GraphQLTestUtils {
         }
       }
     `,
+  };
+
+  /**
+   * Common GraphQL mutations for testing
+   */
+  static readonly MUTATIONS = {
+    UPDATE_USER: `
+      mutation UpdateUser($input: UpdateUserInput!) {
+        updateUser(input: $input) {
+          id
+          auth_user_id
+          email
+          first_name
+          last_name
+          display_name
+          avatar_url
+          phone
+          birth_date
+          managed_by
+          relationship_to_manager
+          created_at
+          updated_at
+        }
+      }
+    `,
 
     CREATE_HOUSEHOLD: `
       mutation CreateHousehold($input: CreateHouseholdInput!) {
@@ -205,6 +230,29 @@ export class GraphQLTestUtils {
    */
   static createGetUserInput(userId: string) {
     return { input: { id: userId } };
+  }
+
+  /**
+   * Create test input for user updates
+   */
+  static createUpdateUserInput(
+    userId: string,
+    updates: {
+      first_name?: string;
+      last_name?: string;
+      display_name?: string;
+      avatar_url?: string;
+      phone?: string;
+      birth_date?: Date;
+      email?: string;
+    }
+  ) {
+    return {
+      input: {
+        id: userId,
+        ...updates,
+      },
+    };
   }
 
   /**
