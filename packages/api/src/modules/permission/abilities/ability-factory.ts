@@ -27,6 +27,7 @@ export class AbilityFactory {
 
     // Base permissions for all authenticated users
     can('read', 'User', { id: context.userId }); // Can read own profile
+    can('create', 'Household'); // All authenticated users can create households
 
     // Only non-AI users can update their profile by default
     // AI users get restricted update permissions later

@@ -91,7 +91,7 @@ export class PermissionServiceImpl implements PermissionService {
 
   /**
    * Centralized method to get or compute user abilities with caching
-   * Uses cache.wrap() for automatic cache management
+   * Caches serialized rules instead of ability objects to avoid serialization issues
    */
   private async getOrComputeUserAbility(userId: string): Promise<AppAbility> {
     const { key, ttl } = this.cacheHelper.getCacheConfig(
@@ -99,7 +99,28 @@ export class PermissionServiceImpl implements PermissionService {
       `user:${userId}`,
     );
 
-    return this.cache.wrap(key, () => this.computeUserPermissions(userId), ttl);
+    // Cache serialized rules instead of ability objects
+    const cachedRules = await this.cache.wrap(
+      key,
+      async () => {
+        // First try to get from database storage
+        const storedAbility = await this.getUserPermissions(userId);
+        if (storedAbility) {
+          // Return the serialized rules for caching
+          return packRules(storedAbility.rules);
+        }
+        
+        // If not in database, compute fresh
+        const freshAbility = await this.computeUserPermissions(userId);
+        return packRules(freshAbility.rules);
+      },
+      ttl,
+    );
+
+    // Reconstruct ability from cached rules
+    const rules = unpackRules(cachedRules);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return createMongoAbility(rules as any) as AppAbility;
   }
 
   async canCreateHousehold(userId: string): Promise<boolean> {

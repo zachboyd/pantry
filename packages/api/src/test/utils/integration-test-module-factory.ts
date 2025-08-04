@@ -252,4 +252,198 @@ export class IntegrationTestModuleFactory {
       email,
     };
   }
+
+  /**
+   * Creates a test household with the given user as manager
+   * @param request - Supertest request instance
+   * @param db - Database connection
+   * @param managerUserId - User ID to be the household manager
+   * @param householdData - Optional household data overrides
+   * @returns Promise with created household data
+   */
+  static async createTestHousehold(
+    request: ReturnType<typeof import('supertest')>,
+    db: Kysely<DB>,
+    managerUserId: string,
+    sessionToken: string,
+    householdData: { name?: string; description?: string } = {},
+  ): Promise<{
+    householdId: string;
+    household: {
+      id: string;
+      name: string;
+      description?: string;
+      created_by: string;
+      created_at: string;
+      updated_at: string;
+    };
+  }> {
+    const { GraphQLTestUtils } = await import('./graphql-test-utils.js');
+
+    const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+      request,
+      GraphQLTestUtils.QUERIES.CREATE_HOUSEHOLD,
+      sessionToken,
+      GraphQLTestUtils.createHouseholdInput(
+        householdData.name || 'Test Family',
+        householdData.description,
+      ),
+    );
+
+    if (response.status !== 200 || response.body.errors) {
+      throw new Error(
+        `Failed to create household: ${JSON.stringify(response.body)}`,
+      );
+    }
+
+    const household = response.body.data.createHousehold;
+    
+    // Wait a bit for any async operations (like permission recomputation) to complete
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    
+    return {
+      householdId: household.id,
+      household,
+    };
+  }
+
+  /**
+   * Adds a user to an existing household
+   * @param request - Supertest request instance
+   * @param db - Database connection
+   * @param householdId - Target household ID
+   * @param userId - User to add to household
+   * @param role - Role for the new member
+   * @param managerSessionToken - Session token of a household manager
+   * @returns Promise with created household member data
+   */
+  static async addUserToHousehold(
+    request: ReturnType<typeof import('supertest')>,
+    db: Kysely<DB>,
+    householdId: string,
+    userId: string,
+    role: string,
+    managerSessionToken: string,
+  ): Promise<{
+    member: {
+      id: string;
+      household_id: string;
+      user_id: string;
+      role: string;
+      joined_at: string;
+    };
+  }> {
+    const { GraphQLTestUtils } = await import('./graphql-test-utils.js');
+
+    const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+      request,
+      GraphQLTestUtils.QUERIES.ADD_HOUSEHOLD_MEMBER,
+      managerSessionToken,
+      GraphQLTestUtils.createAddHouseholdMemberInput(householdId, userId, role),
+    );
+
+    if (response.status !== 200 || response.body.errors) {
+      throw new Error(
+        `Failed to add user to household: ${JSON.stringify(response.body)}`,
+      );
+    }
+
+    const member = response.body.data.addHouseholdMember;
+    
+    // Wait a bit for any async operations (like permission recomputation) to complete
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    
+    return { member };
+  }
+
+  /**
+   * Creates a complete household scenario with multiple users
+   * @param request - Supertest request instance  
+   * @param db - Database connection
+   * @param memberCount - Number of additional members to create (excluding manager)
+   * @param householdData - Optional household data overrides
+   * @returns Promise with complete household scenario
+   */
+  static async createHouseholdWithMembers(
+    request: ReturnType<typeof import('supertest')>,
+    db: Kysely<DB>,
+    memberCount: number = 2,
+    householdData: { name?: string; description?: string } = {},
+  ): Promise<{
+    household: {
+      id: string;
+      name: string;
+      description?: string;
+      created_by: string;
+      created_at: string;
+      updated_at: string;
+    };
+    manager: { userId: string; sessionToken: string; email: string };
+    members: Array<{ 
+      userId: string; 
+      sessionToken: string; 
+      email: string; 
+      member: {
+        id: string;
+        household_id: string;
+        user_id: string;
+        role: string;
+        joined_at: string;
+      };
+    }>;
+    householdId: string;
+  }> {
+    // Create manager
+    const manager = await this.signUpTestUser(
+      request,
+      {
+        first_name: 'Manager',
+        last_name: 'User',
+      },
+      db,
+    );
+
+    // Create household
+    const { household, householdId } = await this.createTestHousehold(
+      request,
+      db,
+      manager.userId,
+      manager.sessionToken,
+      householdData,
+    );
+
+    // Create and add members
+    const members = [];
+    for (let i = 0; i < memberCount; i++) {
+      const memberUser = await this.signUpTestUser(
+        request,
+        {
+          first_name: `Member`,
+          last_name: `${i + 1}`,
+        },
+        db,
+      );
+
+      const { member } = await this.addUserToHousehold(
+        request,
+        db,
+        householdId,
+        memberUser.userId,
+        'member',
+        manager.sessionToken,
+      );
+
+      members.push({
+        ...memberUser,
+        member,
+      });
+    }
+
+    return {
+      household,
+      manager,
+      members,
+      householdId,
+    };
+  }
 }

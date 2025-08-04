@@ -92,6 +92,18 @@ export class GraphQLTestUtils {
       }
     `,
 
+    GET_HOUSEHOLD_MEMBERS: `
+      query GetHouseholdMembers($input: GetHouseholdMembersInput!) {
+        householdMembers(input: $input) {
+          id
+          household_id
+          user_id
+          role
+          joined_at
+        }
+      }
+    `,
+
     CHANGE_HOUSEHOLD_MEMBER_ROLE: `
       mutation ChangeHouseholdMemberRole($input: ChangeHouseholdMemberRoleInput!) {
         changeHouseholdMemberRole(input: $input) {
@@ -239,6 +251,17 @@ export class GraphQLTestUtils {
       input: {
         householdId,
         userId,
+      },
+    };
+  }
+
+  /**
+   * Create test input for getting household members
+   */
+  static createGetHouseholdMembersInput(householdId: string) {
+    return {
+      input: {
+        householdId,
       },
     };
   }

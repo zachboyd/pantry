@@ -216,8 +216,9 @@ export class PermissionFixtures {
   ): AppAbility {
     const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
 
-    // Only own profile access
+    // Base permissions for all authenticated users
     can(['read', 'update'], 'User', { id: userId });
+    can('create', 'Household'); // All authenticated users can create households
 
     return build();
   }

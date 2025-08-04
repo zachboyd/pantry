@@ -17,7 +17,12 @@ export class PermissionEventHandler {
   @OnEvent(EVENTS.USER.PERMISSIONS.RECOMPUTE)
   async handleRecomputeUserPermissions(event: RecomputeUserPermissionsEvent) {
     try {
+      // First invalidate cached permissions to ensure fresh computation
+      await this.permissionService.invalidateUserPermissions(event.userId);
+      
+      // Then recompute fresh permissions
       await this.permissionService.computeUserPermissions(event.userId);
+      
       this.logger.log(
         `Recomputed permissions for user ${event.userId}${event.reason ? ` (${event.reason})` : ''}`,
       );

@@ -151,8 +151,9 @@ describe('PermissionService', () => {
 
       const ability = await service.computeUserPermissions(userId);
 
-      // Should only have base permissions (own profile)
+      // Should have base permissions (own profile and household creation)
       expect(ability.can('read', 'User')).toBe(true);
+      expect(ability.can('create', 'Household')).toBe(true); // All authenticated users can create households
       expect(ability.can('read', 'Household')).toBe(false);
       expect(ability.can('create', 'Message')).toBe(false);
     });
@@ -702,6 +703,27 @@ describe('PermissionService', () => {
         userId,
         householdId,
       );
+
+      expect(result).toBe(true);
+      expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
+        'permissions',
+        `user:${userId}`,
+      );
+      expect(mockCache.wrap).toHaveBeenCalledWith(
+        `permissions:user:${userId}`,
+        expect.any(Function),
+        300000,
+      );
+    });
+
+    it('should allow users with no household memberships to create households', async () => {
+      const userId = 'test-new-user';
+
+      // Setup database mock for user with no household memberships
+      mockDb.mockBuilder.mockExecute([]); // No household memberships
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+
+      const result = await service.canCreateHousehold(userId);
 
       expect(result).toBe(true);
       expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
