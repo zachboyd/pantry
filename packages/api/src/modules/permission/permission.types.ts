@@ -53,6 +53,7 @@ export interface PermissionService {
     householdId: string,
   ): Promise<boolean>;
   canViewUser(currentUserId: string, targetUserId: string): Promise<boolean>;
+  canUpdateUser(currentUserId: string, targetUserId: string): Promise<boolean>;
   canListHouseholds(userId: string): Promise<boolean>;
 
   // Cache invalidation methods

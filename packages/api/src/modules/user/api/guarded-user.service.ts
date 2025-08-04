@@ -139,7 +139,7 @@ export class GuardedUserService {
     }
 
     // Check if user has permission to update other users
-    const canUpdateUser = await this.permissionService.canViewUser(
+    const canUpdateUser = await this.permissionService.canUpdateUser(
       currentUser.id,
       input.id,
     );

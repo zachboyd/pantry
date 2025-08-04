@@ -39,6 +39,13 @@ export class AbilityFactory {
       can('update', 'User', { id: context.userId }); // Can update own profile
     }
 
+    // All authenticated users can update users they manage (unless they are pure AI users)
+    if (
+      !(aiHouseholdIds.length > 0 && managerHouseholdIds.length === 0 && memberHouseholdIds.length === 0)
+    ) {
+      can('update', 'User', { managed_by: context.userId });
+    }
+
     // Apply consolidated role-based permissions
     this.defineConsolidatedPermissions(
       can,
@@ -132,15 +139,7 @@ export class AbilityFactory {
         ],
       });
 
-      // Additional update permissions for managers
-      if (managerHouseholdIds.length > 0) {
-        can('update', 'User', {
-          $or: [
-            { id: userId }, // Always own profile
-            { 'household_members.household_id': { $in: managerHouseholdIds } },
-          ],
-        });
-      }
+      // Additional update permissions for managers are now handled globally above
     }
 
     // AI-specific restrictions

@@ -282,7 +282,7 @@ export class IntegrationTestModuleFactory {
 
     const response = await GraphQLTestUtils.executeAuthenticatedQuery(
       request,
-      GraphQLTestUtils.QUERIES.CREATE_HOUSEHOLD,
+      GraphQLTestUtils.MUTATIONS.CREATE_HOUSEHOLD,
       sessionToken,
       GraphQLTestUtils.createHouseholdInput(
         householdData.name || 'Test Family',
@@ -337,7 +337,7 @@ export class IntegrationTestModuleFactory {
 
     const response = await GraphQLTestUtils.executeAuthenticatedQuery(
       request,
-      GraphQLTestUtils.QUERIES.ADD_HOUSEHOLD_MEMBER,
+      GraphQLTestUtils.MUTATIONS.ADD_HOUSEHOLD_MEMBER,
       managerSessionToken,
       GraphQLTestUtils.createAddHouseholdMemberInput(householdId, userId, role),
     );

@@ -47,6 +47,31 @@ export class GraphQLTestUtils {
         }
       }
     `,
+
+    GET_HOUSEHOLD: `
+      query GetHousehold($input: GetHouseholdInput!) {
+        household(input: $input) {
+          id
+          name
+          description
+          created_by
+          created_at
+          updated_at
+        }
+      }
+    `,
+
+    GET_HOUSEHOLD_MEMBERS: `
+      query GetHouseholdMembers($input: GetHouseholdMembersInput!) {
+        householdMembers(input: $input) {
+          id
+          household_id
+          user_id
+          role
+          joined_at
+        }
+      }
+    `,
   };
 
   /**
@@ -86,19 +111,6 @@ export class GraphQLTestUtils {
       }
     `,
 
-    GET_HOUSEHOLD: `
-      query GetHousehold($input: GetHouseholdInput!) {
-        household(input: $input) {
-          id
-          name
-          description
-          created_by
-          created_at
-          updated_at
-        }
-      }
-    `,
-
     ADD_HOUSEHOLD_MEMBER: `
       mutation AddHouseholdMember($input: AddHouseholdMemberInput!) {
         addHouseholdMember(input: $input) {
@@ -114,18 +126,6 @@ export class GraphQLTestUtils {
     REMOVE_HOUSEHOLD_MEMBER: `
       mutation RemoveHouseholdMember($input: RemoveHouseholdMemberInput!) {
         removeHouseholdMember(input: $input)
-      }
-    `,
-
-    GET_HOUSEHOLD_MEMBERS: `
-      query GetHouseholdMembers($input: GetHouseholdMembersInput!) {
-        householdMembers(input: $input) {
-          id
-          household_id
-          user_id
-          role
-          joined_at
-        }
       }
     `,
 

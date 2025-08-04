@@ -165,6 +165,26 @@ export class PermissionServiceImpl implements PermissionService {
     return ability.can('read', subject('User', targetUser));
   }
 
+  async canUpdateUser(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    const ability = await this.getOrComputeUserAbility(currentUserId);
+    
+    // Get the target user's managed_by field to check permissions
+    const targetUser = await this.db
+      .selectFrom('user')
+      .select(['id', 'managed_by'])
+      .where('id', '=', targetUserId)
+      .executeTakeFirst();
+
+    if (!targetUser) {
+      return false;
+    }
+
+    return ability.can('update', subject('User', targetUser));
+  }
+
   async canListHouseholds(_userId: string): Promise<boolean> {
     // Any authenticated user can list their own households
     // This is a basic permission that all users should have

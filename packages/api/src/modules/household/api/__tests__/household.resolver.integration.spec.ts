@@ -20,7 +20,7 @@ describe('Household Resolver Integration Tests', () => {
     testRequest = testApp.request;
     db = testApp.db;
     testDbService = testApp.testDbService;
-    
+
     // Clean database at the start to ensure clean state between test files
     try {
       await IntegrationTestModuleFactory.cleanDatabase(db);
@@ -45,7 +45,7 @@ describe('Household Resolver Integration Tests', () => {
     } catch (error) {
       console.warn('Database cleanup skipped in afterAll:', error);
     }
-    
+
     // Cleanup after all tests
     await IntegrationTestModuleFactory.closeApp(app, testDbService);
   });
@@ -78,11 +78,19 @@ describe('Household Resolver Integration Tests', () => {
       expect(householdMembers).toHaveLength(4); // Manager + AI + 2 members
 
       // Verify manager is included
-      HouseholdTestUtils.assertUserRole(householdMembers, manager.userId, 'manager');
+      HouseholdTestUtils.assertUserRole(
+        householdMembers,
+        manager.userId,
+        'manager',
+      );
 
       // Verify members are included
       members.forEach((member) => {
-        HouseholdTestUtils.assertUserRole(householdMembers, member.userId, 'member');
+        HouseholdTestUtils.assertUserRole(
+          householdMembers,
+          member.userId,
+          'member',
+        );
       });
 
       // Verify all members have correct structure
@@ -120,8 +128,16 @@ describe('Household Resolver Integration Tests', () => {
       expect(householdMembers).toHaveLength(3); // Manager + AI + 1 member
 
       // Verify both users are present
-      HouseholdTestUtils.assertUserRole(householdMembers, manager.userId, 'manager');
-      HouseholdTestUtils.assertUserRole(householdMembers, regularMember.userId, 'member');
+      HouseholdTestUtils.assertUserRole(
+        householdMembers,
+        manager.userId,
+        'manager',
+      );
+      HouseholdTestUtils.assertUserRole(
+        householdMembers,
+        regularMember.userId,
+        'member',
+      );
     });
 
     it('should return empty list for household with only manager', async () => {
@@ -132,13 +148,14 @@ describe('Household Resolver Integration Tests', () => {
         db,
       );
 
-      const { householdId } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        manager.userId,
-        manager.sessionToken,
-        { name: 'Solo Household' },
-      );
+      const { householdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          manager.userId,
+          manager.sessionToken,
+          { name: 'Solo Household' },
+        );
 
       // Act
       const response = await GraphQLTestUtils.executeAuthenticatedQuery(
@@ -156,10 +173,16 @@ describe('Household Resolver Integration Tests', () => {
       expect(householdMembers).toHaveLength(2); // Manager + AI assistant
 
       // Verify manager is present
-      HouseholdTestUtils.assertUserRole(householdMembers, manager.userId, 'manager');
-      
+      HouseholdTestUtils.assertUserRole(
+        householdMembers,
+        manager.userId,
+        'manager',
+      );
+
       // Verify AI assistant is present
-      const aiMember = householdMembers.find((member: any) => member.role === 'ai');
+      const aiMember = householdMembers.find(
+        (member: any) => member.role === 'ai',
+      );
       expect(aiMember).toBeDefined();
     });
 
@@ -171,12 +194,13 @@ describe('Household Resolver Integration Tests', () => {
         db,
       );
 
-      const { householdId } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        manager.userId,
-        manager.sessionToken,
-      );
+      const { householdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          manager.userId,
+          manager.sessionToken,
+        );
 
       // Act - Try to access without authentication
       const response = await GraphQLTestUtils.executeQuery(
@@ -205,13 +229,14 @@ describe('Household Resolver Integration Tests', () => {
         db,
       );
 
-      const { householdId } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        householdOwner.userId,
-        householdOwner.sessionToken,
-        { name: 'Private Household' },
-      );
+      const { householdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          householdOwner.userId,
+          householdOwner.sessionToken,
+          { name: 'Private Household' },
+        );
 
       // Act - Outsider tries to access household members
       const response = await GraphQLTestUtils.executeAuthenticatedQuery(
@@ -248,7 +273,10 @@ describe('Household Resolver Integration Tests', () => {
       // Assert - Should return permission error instead of revealing household existence
       expect(response.status).toBe(200);
       GraphQLTestUtils.assertHasErrors(response);
-      GraphQLTestUtils.assertErrorMessage(response, 'Insufficient permissions to view household members');
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'Insufficient permissions to view household members',
+      );
     });
 
     it('should handle malformed household ID gracefully', async () => {
@@ -281,13 +309,14 @@ describe('Household Resolver Integration Tests', () => {
       );
 
       // Create first household with shared user as manager
-      const { householdId: householdA } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        sharedUser.userId,
-        sharedUser.sessionToken,
-        { name: 'Household A' },
-      );
+      const { householdId: householdA } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          sharedUser.userId,
+          sharedUser.sessionToken,
+          { name: 'Household A' },
+        );
 
       // Create second household and add shared user as member
       const householdBOwner = await IntegrationTestModuleFactory.signUpTestUser(
@@ -296,13 +325,14 @@ describe('Household Resolver Integration Tests', () => {
         db,
       );
 
-      const { householdId: householdB } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        householdBOwner.userId,
-        householdBOwner.sessionToken,
-        { name: 'Household B' },
-      );
+      const { householdId: householdB } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          householdBOwner.userId,
+          householdBOwner.sessionToken,
+          { name: 'Household B' },
+        );
 
       await IntegrationTestModuleFactory.addUserToHousehold(
         testRequest,
@@ -341,7 +371,11 @@ describe('Household Resolver Integration Tests', () => {
 
       HouseholdTestUtils.assertUserRole(membersA, sharedUser.userId, 'manager');
       HouseholdTestUtils.assertUserRole(membersB, sharedUser.userId, 'member');
-      HouseholdTestUtils.assertUserRole(membersB, householdBOwner.userId, 'manager');
+      HouseholdTestUtils.assertUserRole(
+        membersB,
+        householdBOwner.userId,
+        'manager',
+      );
     });
 
     it('should include all member details with proper timestamps', async () => {
@@ -366,7 +400,7 @@ describe('Household Resolver Integration Tests', () => {
       GraphQLTestUtils.assertNoErrors(response);
 
       const householdMembers = response.body.data.householdMembers;
-      
+
       householdMembers.forEach((member: any) => {
         // Verify all required fields are present
         expect(member).toHaveProperty('id');
@@ -484,12 +518,13 @@ describe('Household Resolver Integration Tests', () => {
         db,
       );
 
-      const { householdId } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        user.userId,
-        user.sessionToken,
-      );
+      const { householdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          user.userId,
+          user.sessionToken,
+        );
 
       // Act - Try with invalid session token
       const response = await GraphQLTestUtils.executeAuthenticatedQuery(
@@ -514,12 +549,13 @@ describe('Household Resolver Integration Tests', () => {
         db,
       );
 
-      const { householdId } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        user.userId,
-        user.sessionToken,
-      );
+      const { householdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          user.userId,
+          user.sessionToken,
+        );
 
       // Act - Normal query should work
       const response = await GraphQLTestUtils.executeAuthenticatedQuery(

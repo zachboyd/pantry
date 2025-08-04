@@ -9,6 +9,7 @@ export type PermissionServiceMockType = {
   canReadHousehold: ReturnType<typeof vi.fn>;
   canManageHouseholdMember: ReturnType<typeof vi.fn>;
   canViewUser: ReturnType<typeof vi.fn>;
+  canUpdateUser: ReturnType<typeof vi.fn>;
   canListHouseholds: ReturnType<typeof vi.fn>;
   invalidateUserPermissions: ReturnType<typeof vi.fn>;
   invalidateHouseholdPermissions: ReturnType<typeof vi.fn>;
@@ -31,6 +32,7 @@ export class PermissionServiceMock {
       canReadHousehold: vi.fn().mockResolvedValue(false),
       canManageHouseholdMember: vi.fn().mockResolvedValue(false),
       canViewUser: vi.fn().mockResolvedValue(false),
+      canUpdateUser: vi.fn().mockResolvedValue(false),
       canListHouseholds: vi.fn().mockResolvedValue(false),
       invalidateUserPermissions: vi.fn().mockResolvedValue(undefined),
       invalidateHouseholdPermissions: vi.fn().mockResolvedValue(undefined),
@@ -51,6 +53,7 @@ export class PermissionServiceMock {
     mockService.canReadHousehold.mockResolvedValue(true);
     mockService.canManageHouseholdMember.mockResolvedValue(true);
     mockService.canViewUser.mockResolvedValue(true);
+    mockService.canUpdateUser.mockResolvedValue(true);
     mockService.canListHouseholds.mockResolvedValue(true);
 
     return mockService;
@@ -71,6 +74,7 @@ export class PermissionServiceMock {
     mockService.canReadHousehold.mockRejectedValue(defaultError);
     mockService.canManageHouseholdMember.mockRejectedValue(defaultError);
     mockService.canViewUser.mockRejectedValue(defaultError);
+    mockService.canUpdateUser.mockRejectedValue(defaultError);
     mockService.canListHouseholds.mockRejectedValue(defaultError);
     mockService.invalidateUserPermissions.mockRejectedValue(defaultError);
     mockService.invalidateHouseholdPermissions.mockRejectedValue(defaultError);
@@ -87,6 +91,7 @@ export class PermissionServiceMock {
     canRead?: boolean;
     canManage?: boolean;
     canView?: boolean;
+    canUpdate?: boolean;
     canList?: boolean;
   }): PermissionServiceMockType {
     const mockService = this.createPermissionServiceMock();
@@ -102,6 +107,9 @@ export class PermissionServiceMock {
     }
     if (permissions.canView !== undefined) {
       mockService.canViewUser.mockResolvedValue(permissions.canView);
+    }
+    if (permissions.canUpdate !== undefined) {
+      mockService.canUpdateUser.mockResolvedValue(permissions.canUpdate);
     }
     if (permissions.canList !== undefined) {
       mockService.canListHouseholds.mockResolvedValue(permissions.canList);
@@ -135,6 +143,7 @@ export class PermissionServiceMock {
       canRead?: boolean;
       canManage?: boolean;
       canView?: boolean;
+      canUpdate?: boolean;
       canList?: boolean;
     }
   ): PermissionService {

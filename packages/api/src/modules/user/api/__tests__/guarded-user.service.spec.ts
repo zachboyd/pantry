@@ -173,7 +173,7 @@ describe('GuardedUserService', () => {
       });
 
       mockUserService.getUserById = vi.fn().mockResolvedValue(targetUser);
-      mockPermissionService.canViewUser = vi.fn().mockResolvedValue(false);
+      mockPermissionService.canUpdateUser = vi.fn().mockResolvedValue(false);
 
       // Act & Assert
       await expect(service.updateUser(input, currentUser)).rejects.toThrow(
@@ -182,7 +182,7 @@ describe('GuardedUserService', () => {
       await expect(service.updateUser(input, currentUser)).rejects.toThrow(
         'You do not have permission to update this user',
       );
-      expect(mockPermissionService.canViewUser).toHaveBeenCalledWith(
+      expect(mockPermissionService.canUpdateUser).toHaveBeenCalledWith(
         'current-user-id',
         'other-user-id',
       );
@@ -208,7 +208,7 @@ describe('GuardedUserService', () => {
       });
 
       mockUserService.getUserById = vi.fn().mockResolvedValue(targetUser);
-      mockPermissionService.canViewUser = vi.fn().mockResolvedValue(true);
+      mockPermissionService.canUpdateUser = vi.fn().mockResolvedValue(true);
       mockUserService.updateUser = vi.fn().mockResolvedValue(updatedUser);
 
       // Act
@@ -216,7 +216,7 @@ describe('GuardedUserService', () => {
 
       // Assert
       expect(result.user).toEqual(updatedUser);
-      expect(mockPermissionService.canViewUser).toHaveBeenCalledWith(
+      expect(mockPermissionService.canUpdateUser).toHaveBeenCalledWith(
         'current-user-id',
         'other-user-id',
       );
