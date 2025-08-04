@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../modules/database/database.module.js';
-import { AuthModule } from '../modules/auth/auth.module.js';
 import { AppConfigModule } from '../modules/config/config.module.js';
 
 /**
@@ -8,7 +7,7 @@ import { AppConfigModule } from '../modules/config/config.module.js';
  * Provides access to essential services without the full application overhead
  */
 @Module({
-  imports: [AppConfigModule, DatabaseModule, AuthModule],
-  exports: [DatabaseModule, AuthModule, AppConfigModule],
+  imports: [AppConfigModule, DatabaseModule],
+  exports: [DatabaseModule, AppConfigModule],
 })
 export class MigrationContextModule {}
