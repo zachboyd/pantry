@@ -173,6 +173,7 @@ export interface User {
   email: string | null;
   first_name: string;
   id: string;
+  is_ai: Generated<boolean>;
   last_name: string;
   managed_by: string | null;
   permissions: Json | null;

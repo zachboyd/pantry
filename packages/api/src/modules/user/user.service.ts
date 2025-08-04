@@ -105,6 +105,7 @@ export class UserServiceImpl implements UserService {
         avatar_url: userData.avatar_url || '/avatars/default-ai-assistant.png',
         phone: userData.phone,
         birth_date: userData.birth_date,
+        is_ai: true, // Explicitly mark as AI user
         preferences: userData.preferences || {
           personality: personality,
         },

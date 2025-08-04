@@ -61,6 +61,7 @@ export class DatabaseFixtures {
       relationship_to_manager: baseUser.relationship_to_manager,
       created_at: new Date(),
       updated_at: new Date(),
+      is_ai: baseUser.is_ai || false,
       ...overrides,
     };
   }
@@ -181,6 +182,7 @@ export class DatabaseFixtures {
       display_name: 'Chat Assistant',
       avatar_url: '/avatars/default-ai-assistant.png',
       auth_user_id: null, // AI users don't have auth
+      is_ai: true, // Explicitly mark as AI user
       ...overrides,
     });
   }

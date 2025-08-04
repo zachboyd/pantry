@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../../generated/database.js';
@@ -19,7 +19,7 @@ describe('User Resolver Integration Tests', () => {
     testRequest = testApp.request;
     db = testApp.db;
     testDbService = testApp.testDbService;
-    
+
     // Clean database at the start to ensure clean state between test files
     try {
       await IntegrationTestModuleFactory.cleanDatabase(db);
@@ -44,7 +44,7 @@ describe('User Resolver Integration Tests', () => {
     } catch (error) {
       console.warn('Database cleanup skipped in afterAll:', error);
     }
-    
+
     // Cleanup after all tests
     await IntegrationTestModuleFactory.closeApp(app, testDbService);
   });

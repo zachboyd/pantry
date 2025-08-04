@@ -46,6 +46,16 @@ export class AbilityFactory {
       can('update', 'User', { managed_by: context.userId });
     }
 
+    // Household managers can update AI users in households they manage
+    if (managerHouseholdIds.length > 0) {
+      can('update', 'User', {
+        $and: [
+          { is_ai: true },
+          { 'household_members.household_id': { $in: managerHouseholdIds } },
+        ],
+      });
+    }
+
     // Apply consolidated role-based permissions
     this.defineConsolidatedPermissions(
       can,

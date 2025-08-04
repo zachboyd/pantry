@@ -171,16 +171,34 @@ export class PermissionServiceImpl implements PermissionService {
   ): Promise<boolean> {
     const ability = await this.getOrComputeUserAbility(currentUserId);
     
-    // Get the target user's managed_by field to check permissions
-    const targetUser = await this.db
+    // Get the target user's data including household memberships for CASL evaluation
+    const targetUserWithHouseholds = await this.db
       .selectFrom('user')
-      .select(['id', 'managed_by'])
-      .where('id', '=', targetUserId)
-      .executeTakeFirst();
+      .leftJoin('household_member', 'user.id', 'household_member.user_id')
+      .select([
+        'user.id',
+        'user.managed_by',
+        'user.is_ai',
+        'household_member.household_id',
+      ])
+      .where('user.id', '=', targetUserId)
+      .execute();
 
-    if (!targetUser) {
+    if (targetUserWithHouseholds.length === 0) {
       return false;
     }
+
+    // Build user object with household membership data for CASL
+    const targetUser = {
+      id: targetUserWithHouseholds[0].id,
+      managed_by: targetUserWithHouseholds[0].managed_by,
+      is_ai: targetUserWithHouseholds[0].is_ai,
+      household_members: targetUserWithHouseholds
+        .filter(row => row.household_id !== null)
+        .map(row => ({
+          household_id: row.household_id,
+        })),
+    };
 
     return ability.can('update', subject('User', targetUser));
   }
