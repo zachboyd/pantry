@@ -1,0 +1,20 @@
+// Example.xcconfig - Copy this file and rename for your environment
+// This file serves as a template for creating environment-specific configuration files
+
+GRAPHQL_ENDPOINT = http://localhost:3001/graphql
+AUTH_ENDPOINT = http://localhost:3001/api/auth
+
+// Environment-specific settings
+ENVIRONMENT_NAME = Development
+API_BASE_URL = $(GRAPHQL_ENDPOINT)
+
+// Feature flags (YES/NO)
+ENABLE_DEBUG_MENU = YES
+ENABLE_ANALYTICS = NO
+ENABLE_CRASH_REPORTING = NO
+
+// Instructions:
+// 1. Copy this file and rename it (Development.xcconfig, Staging.xcconfig, Production.xcconfig)
+// 2. Fill in your actual GraphQL and authentication endpoints
+// 3. Adjust feature flags for your environment
+// 4. Configure Xcode build settings to use this file

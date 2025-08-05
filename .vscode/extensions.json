@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "vknabel.vscode-swiftformat",
+    "sswg.swift-lang",
+    "sweetpad.sweetpad"
+  ],
+  "unwantedRecommendations": []
+}

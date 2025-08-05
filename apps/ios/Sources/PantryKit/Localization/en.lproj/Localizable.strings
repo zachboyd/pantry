@@ -1,0 +1,331 @@
+/* 
+   Localizable.strings (English)
+   PantryKit
+*/
+
+// MARK: - App General
+"app.name" = "Pantry";
+"app.tagline" = "Smart Kitchen Management";
+"app.loading" = "Loading...";
+"back" = "Back";
+"cancel" = "Cancel";
+"continue" = "Continue";
+"delete" = "Delete";
+"done" = "Done";
+"edit" = "Edit";
+"error" = "Error";
+"loading" = "Loading...";
+"next" = "Next";
+"ok" = "OK";
+"save" = "Save";
+"search" = "Search";
+"settings" = "Settings";
+"sign.out" = "Sign Out";
+"success" = "Success";
+"warning" = "Warning";
+"coming.soon" = "Coming Soon";
+"common.optional" = "(Optional)";
+"common.not_set" = "Not Set";
+"user.generic" = "User";
+"user.unknown" = "Unknown";
+"loading.message" = "Please wait while we fetch your data";
+
+// MARK: - Authentication
+"auth.button.create" = "Create Account";
+"auth.button.creating" = "Creating Account...";
+"auth.button.signup" = "Sign Up";
+"auth.signup.subtitle" = "Join Pantry to get started";
+"auth.button.signin" = "Sign In";
+"auth.button.signingin" = "Signing In...";
+"auth.welcome_back" = "Welcome Back";
+"auth.signin.subtitle" = "Sign in to your account";
+"auth.email" = "Email";
+"auth.email.placeholder" = "Enter your email";
+"auth.password" = "Password";
+"auth.password.placeholder" = "Enter your password";
+"auth.password.placeholder.with_length" = "Enter your password (min %d characters)";
+"auth.password.too_short" = "Password must be at least 6 characters";
+"auth.confirm_password" = "Confirm Password";
+"auth.confirm_password.placeholder" = "Confirm your password";
+"auth.forgot_password" = "Forgot Password?";
+"auth.no_account" = "Don't have an account?";
+"auth.has_account" = "Already have an account?";
+"auth.sign_in_google" = "Sign in with Google";
+"auth.sign_in_apple" = "Sign in with Apple";
+"auth.or_sign_in_email" = "Or sign in with email";
+"auth.terms_of_service" = "Terms of Service";
+"auth.privacy_policy" = "Privacy Policy";
+"auth.agreement_prefix" = "By signing up, you agree to our";
+"auth.and" = "and";
+"auth.validation.invalid_email" = "Please enter a valid email address";
+"auth.validation.password_short" = "Password must be at least 8 characters";
+"auth.validation.password_short.with_length" = "Password must be at least %d characters";
+"auth.validation.passwords_not_match" = "Passwords do not match";
+"auth.error.invalid_credentials" = "Invalid email or password";
+"auth.error.email_exists" = "An account with this email already exists";
+"auth.error.general" = "Authentication failed. Please try again.";
+
+// MARK: - Password Requirements
+"password.requirement.length" = "At least %d characters";
+"password.requirement.uppercase" = "One uppercase letter";
+"password.requirement.lowercase" = "One lowercase letter";
+"password.requirement.number" = "One number";
+
+// MARK: - Password Strength
+"password.strength.label" = "Password Strength:";
+"password.strength.very_weak" = "Very Weak";
+"password.strength.weak" = "Weak";
+"password.strength.fair" = "Fair";
+"password.strength.good" = "Good";
+"password.strength.strong" = "Strong";
+
+// MARK: - Onboarding
+"onboarding.welcome.title" = "Welcome to Pantry";
+"onboarding.welcome.subtitle" = "Let's get you set up to start managing your kitchen smarter";
+"onboarding.user_info.subtitle" = "We just need your name to get started";
+"onboarding.user_info.first_name.placeholder" = "Enter your first name";
+"onboarding.user_info.last_name.placeholder" = "Enter your last name";
+"onboarding.notifications.title" = "Enable Notifications";
+"onboarding.notifications.subtitle" = "Stay updated on pantry items and household activities";
+"onboarding.get_started" = "Get Started";
+"onboarding.user_info.title" = "Tell us about yourself";
+"onboarding.user_info.first_name" = "First Name";
+"onboarding.user_info.last_name" = "Last Name";
+"onboarding.user_info.display_name" = "Display Name (optional)";
+"onboarding.user_info.display_name_hint" = "How others will see you";
+"onboarding.household.title" = "Join or Create a Household";
+"onboarding.household.subtitle" = "A household lets you share lists and manage your kitchen together";
+"onboarding.household.create" = "Create New Household";
+"onboarding.household.join" = "Join Existing Household";
+"onboarding.skip_for_now" = "Skip for Now";
+"onboarding.complete.title" = "All set!";
+"onboarding.complete.subtitle" = "Welcome to Pantry";
+
+// MARK: - Household
+"household.title" = "Household";
+"household.create" = "Create Household";
+"household.name" = "Household Name";
+"household.description" = "Description (optional)";
+"household.members" = "Members";
+"household.invite_members" = "Invite Members";
+"household.leave" = "Leave Household";
+"household.delete" = "Delete Household";
+"household.settings" = "Household Settings";
+"household.no_households" = "No households yet";
+"household.create_first" = "Create your first household to get started";
+"household.role.owner" = "Owner";
+"household.role.admin" = "Admin";
+"household.role.member" = "Member";
+"household.member.remove" = "Remove Member";
+"household.member.change_role" = "Change Role";
+"household.member.remove_confirmation" = "Are you sure you want to remove this member?";
+"household.no_household_selected" = "No Household Selected";
+"household.no_household_selected_message" = "Join an existing household or create a new one to get started";
+"household.create_new" = "Create New Household";
+"household.join_existing" = "Join Existing Household";
+"household.join" = "Join Household";
+"household.join.subtitle" = "Enter the invite code shared by a household member";
+"household.invite_code" = "Invite Code";
+"household.invite_code.placeholder" = "Enter invite code";
+"household.invite_code.how_to" = "How to get an invite code:";
+"household.invite_code.step1" = "• Ask a household member to share their invite code";
+"household.invite_code.step2" = "• They can find it in Settings > Household > Invite Members";
+"household.invite_code.share_message" = "Share this code with people you want to add to your household";
+"household.invite_code.copy" = "Copy Code";
+"household.members.count" = "%d member|%d members";
+"household.member.joined_date" = "Joined %@";
+"household.creation.title" = "Create your household";
+"household.creation.subtitle" = "A household lets you share pantry items, shopping lists, and recipes with others";
+"household.name.placeholder" = "e.g., The Smith Family";
+"household.description.label" = "Description";
+"household.description.placeholder" = "Add a description...";
+"household.creation.admin_info" = "You'll be the household admin with full permissions";
+"household.switcher.your_households" = "Your Households";
+"household.switcher.actions" = "Actions";
+"household.switcher.title" = "Switch Household";
+"household.edit.section_title" = "Household Information";
+"household.edit.section_footer" = "This information will be visible to all household members.";
+"household.delete.warning" = "Deleting the household will remove all data and cannot be undone. All members will lose access.";
+"household.edit.title" = "Edit Household";
+"household.edit.save_error" = "Failed to save changes. Please try again.";
+"household.members.subtitle" = "View and manage household members";
+"household.invite_members.subtitle" = "Share invite code with new members";
+"household.management" = "Management";
+"household.edit" = "Edit Household";
+"household.details.title" = "Household Details";
+"household.loading" = "Loading households...";
+"household.load.error" = "Failed to load households";
+"household.created" = "Created";
+"household.information" = "Household Information";
+"household.manage_members" = "Manage Members";
+"household.shopping_day" = "Shopping Day";
+"household.default_store" = "Default Store";
+"household.meal_planning" = "Meal Planning";
+"household.meal_planning.weekly" = "Weekly";
+"household.preferences" = "Preferences";
+"household.preferences.coming_soon" = "Household preferences coming soon";
+
+// MARK: - Tabs
+"tabs.pantry" = "Pantry";
+"tabs.lists" = "Lists";
+"tabs.chat" = "Chat";
+"tabs.settings" = "Settings";
+
+// MARK: - Pantry
+"pantry.title" = "Your Pantry";
+"pantry.add_item" = "Add Item";
+"pantry.search_placeholder" = "Search items...";
+"pantry.no_items" = "No items in your pantry";
+"pantry.add_first_item" = "Add items to track what you have";
+"pantry.categories" = "Categories";
+"pantry.all_items" = "All Items";
+"pantry.expiring_soon" = "Expiring Soon";
+"pantry.low_stock" = "Low Stock";
+
+// MARK: - Lists
+"lists.title" = "Shopping Lists";
+"lists.create_list" = "Create List";
+"lists.no_lists" = "No lists yet";
+"lists.create_first" = "Create a shopping list to get started";
+"lists.shared_with_household" = "Shared with household";
+"lists.private_list" = "Private list";
+"lists.service" = "lists service";
+"lists.type.shopping" = "Shopping List";
+"lists.new_shopping_list" = "New Shopping List";
+"lists.type.meal_plan" = "Meal Plan";
+"lists.type.todo" = "Todo List";
+"lists.create_list_prompt" = "What type of list would you like to create?";
+"lists.items.count" = "%d item|%d items";
+"lists.items.completed" = "• %d completed";
+
+// MARK: - Chat
+"chat.title" = "Pantry Assistant";
+"chat.placeholder" = "Ask me anything about your pantry, recipes, or meal planning";
+"chat.input_placeholder" = "Type a message...";
+"chat.send" = "Send";
+"chat.empty" = "No messages yet";
+"chat.empty_message" = "Start a conversation with your household members about what to cook, shopping needs, or meal planning";
+"chat.send_message" = "Send Message";
+"chat.service" = "chat service";
+
+// MARK: - Settings
+"settings.title" = "Settings";
+"settings.account" = "Account";
+"settings.profile" = "Profile";
+"settings.notifications" = "Notifications";
+"settings.appearance" = "Appearance";
+"settings.privacy" = "Privacy";
+"settings.help_support" = "Help & Support";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.appearance.theme" = "Theme";
+"settings.appearance.theme.system" = "System";
+"settings.appearance.theme.light" = "Light";
+"settings.appearance.theme.dark" = "Dark";
+"settings.appearance.app_icon" = "App Icon";
+"settings.appearance.theme.description" = "Choose how Pantry looks. System will match your device's appearance settings.";
+"settings.appearance.preview" = "Preview";
+"settings.appearance.theme.light.description" = "Always use light appearance";
+"settings.appearance.theme.dark.description" = "Always use dark appearance";
+"settings.appearance.theme.system.description" = "Match system setting";
+"settings.language" = "Language";
+"settings.delete_account.not_implemented" = "Account deletion is not yet implemented. Please contact support.";
+"profile.signout.confirmation" = "Are you sure you want to sign out?";
+"profile.current_household" = "Currently in: %@";
+
+// MARK: - Empty States
+"empty.no_items" = "No %@";
+"empty.items_will_appear" = "Your %@ will appear here";
+"search.no_results" = "No Results";
+"search.no_results_for" = "No results found for '%@'";
+"pantry.empty" = "Pantry is Empty";
+"pantry.empty_message" = "Add items to your pantry to get started";
+"pantry.add_first_item" = "Add First Item";
+"lists.empty" = "No Shopping Lists";
+"lists.empty_message" = "Create a shopping list to start planning your grocery trips";
+"lists.create" = "Create Shopping List";
+"recipes.empty" = "No Recipes";
+"recipes.empty_message" = "Save your favorite recipes to access them anytime";
+"recipes.browse" = "Browse Recipes";
+"household.no_other_members" = "No Other Members";
+"household.invite_members_message" = "Invite family members to collaborate on your household";
+"household.invite_members" = "Invite Members";
+"notifications.empty" = "No Notifications";
+"notifications.all_caught_up" = "You're all caught up!";
+"coming.soon_message" = "%@ will be available in a future update";
+
+// MARK: - Errors
+"error.connection" = "Connection Error";
+"error.connection_message" = "Unable to load content. Please check your internet connection.";
+"error.generic_title" = "Something went wrong";
+"error.generic_message" = "Please try again later";
+"error.network_title" = "Network Error";
+"error.network_message" = "Please check your internet connection";
+"error.try_again" = "Try Again";
+"error.retry" = "Retry";
+"error.service_unavailable" = "Service Unavailable";
+"error.service_unavailable_message" = "Unable to load %@. Please try again.";
+"error.no_household_selected" = "Please select a household first";
+
+// MARK: - Plurals
+"plurals.items" = "%d item(s)";
+"plurals.members" = "%d member(s)";
+"plurals.days_ago" = "%d day(s) ago";
+
+// MARK: - Loading Operations
+"loading.operation.initial" = "Loading...";
+"loading.operation.refresh" = "Refreshing...";
+"loading.operation.save" = "Saving...";
+"loading.operation.delete" = "Deleting...";
+"loading.operation.update" = "Updating...";
+"loading.operation.load" = "Loading...";
+"loading.operation.sync" = "Syncing...";
+"loading.operation.search" = "Searching...";
+"loading.operation.filter" = "Filtering...";
+"loading.operation.create" = "Creating...";
+"loading.operation.send" = "Sending...";
+"loading.operation.add_item" = "Adding item...";
+"loading.operation.remove_item" = "Removing item...";
+"loading.operation.update_quantity" = "Updating quantity...";
+"loading.operation.add_member" = "Adding member...";
+"loading.operation.remove_member" = "Removing member...";
+"loading.operation.generate_list" = "Generating list...";
+"loading.operation.analyze_receipt" = "Analyzing receipt...";
+
+// MARK: - Validation Errors
+"validation.email_required" = "Email is required";
+"validation.password_required" = "Password is required";
+"validation.password_uppercase_required" = "Password must contain at least one uppercase letter";
+"validation.password_lowercase_required" = "Password must contain at least one lowercase letter";
+"validation.password_number_required" = "Password must contain at least one number";
+"validation.confirm_password_required" = "Please confirm your password";
+"validation.terms_required" = "You must accept the terms and conditions";
+
+// MARK: - Error Messages
+"error.network_unavailable" = "Network unavailable. Please check your connection.";
+"error.unauthorized" = "You are not authorized to perform this action.";
+"error.forbidden" = "Access denied.";
+"error.not_found" = "The requested item was not found.";
+"error.validation_failed" = "Validation failed.";
+"error.operation_failed" = "Operation failed: %@";
+"error.repository_error" = "Data error: %@";
+"error.household_not_found" = "Household not found.";
+"error.item_not_found" = "Item not found.";
+"error.member_not_found" = "Member not found.";
+"error.insufficient_permissions" = "You don't have permission to perform this action.";
+"error.storage_error" = "Storage error: %@";
+"error.unknown" = "An unexpected error occurred: %@";
+
+// MARK: - Error Recovery Suggestions
+"error.recovery.network_unavailable" = "Check your internet connection and try again.";
+"error.recovery.unauthorized" = "Please sign in again.";
+"error.recovery.forbidden" = "Contact your household administrator for access.";
+"error.recovery.not_found" = "Please refresh and try again.";
+"error.recovery.validation_failed" = "Please check your input and try again.";
+"error.recovery.try_later" = "Please try again later.";
+"error.recovery.household_not_found" = "Please select a valid household.";
+"error.recovery.item_not_found" = "The item may have been removed. Please refresh.";
+"error.recovery.member_not_found" = "The member may have left the household.";
+"error.recovery.insufficient_permissions" = "Contact your household administrator.";
+"error.recovery.unknown" = "Please restart the app and try again.";
+

@@ -1,0 +1,43 @@
+{
+  "schemaNamespace": "PantryGraphQL",
+  "input": {
+    "operationSearchPaths": [
+      "Sources/**/*.graphql"
+    ],
+    "schemaSearchPaths": [
+      "Sources/PantryKit/GraphQL/schema.graphqls"
+    ]
+  },
+  "output": {
+    "testMocks": {
+      "none": {}
+    },
+    "schemaTypes": {
+      "path": "Sources/PantryKit/GraphQL/Generated",
+      "moduleType": {
+        "embeddedInTarget": {
+          "name": "PantryKit",
+          "accessModifier": "public"
+        }
+      }
+    },
+    "operations": {
+      "inSchemaModule": {}
+    }
+  },
+  "schemaDownloadConfiguration": {
+    "downloadMethod": {
+      "introspection": {
+        "endpointURL": "http://localhost:3001/graphql",
+        "httpMethod": {
+          "POST": {}
+        },
+        "includeDeprecatedInputValues": false,
+        "outputFormat": "SDL"
+      }
+    },
+    "downloadTimeout": 60,
+    "headers": [],
+    "outputPath": "Sources/PantryKit/GraphQL/schema.graphqls"
+  }
+}

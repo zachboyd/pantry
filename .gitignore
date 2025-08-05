@@ -61,13 +61,75 @@ coverage/
 # Yarn Integrity file
 .yarn-integrity
 
-# iOS
+# iOS / Xcode
 apps/ios/build/
 apps/ios/DerivedData/
-apps/ios/*.xcworkspace/xcuserdata/
-apps/ios/*.xcodeproj/xcuserdata/
+apps/ios/xcuserdata/
+apps/ios/**/*.xcworkspace/xcuserdata/
+apps/ios/**/*.xcodeproj/xcuserdata/
+apps/ios/**/*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+apps/ios/**/*.xcodeproj/xcshareddata/IDEWorkspaceChecks.plist
+
+# Xcode legacy
+apps/ios/*.moved-aside
+apps/ios/*.pbxuser
+apps/ios/!default.pbxuser
+apps/ios/*.mode1v3
+apps/ios/!default.mode1v3
+apps/ios/*.mode2v3
+apps/ios/!default.mode2v3
+apps/ios/*.perspectivev3
+apps/ios/!default.perspectivev3
+apps/ios/*.xccheckout
+apps/ios/*.xcscmblueprint
+
+# Swift specific
+apps/ios/*.hmap
+apps/ios/*.ipa
+apps/ios/*.dSYM.zip
+apps/ios/*.dSYM
+
+# Playgrounds
+apps/ios/timeline.xctimeline
+apps/ios/playground.xcworkspace
+
+# Swift Package Manager
+apps/ios/.build/
+apps/ios/.swiftpm/
+apps/ios/Package.pins
+# Note: Package.resolved is intentionally tracked for reproducible builds
+
+# CocoaPods (if used)
 apps/ios/Pods/
 apps/ios/Podfile.lock
+
+# Carthage (if used)
+apps/ios/Carthage/Build/
+
+# Accio dependency management
+apps/ios/Dependencies/
+apps/ios/.accio/
+
+# fastlane
+apps/ios/fastlane/report.xml
+apps/ios/fastlane/Preview.html
+apps/ios/fastlane/screenshots/**/*.png
+apps/ios/fastlane/test_output
+
+# Code Injection
+apps/ios/iOSInjectionProject/
+
+# Environment configuration files (keep Example.xcconfig)
+apps/ios/Config/Development.xcconfig
+apps/ios/Config/Staging.xcconfig
+apps/ios/Config/Production.xcconfig
+
+# Apollo CLI (downloaded by Swift Package Manager)
+apps/ios/apollo-ios-cli
+
+# Build logs
+apps/ios/*.log
+apps/ios/build.log
 
 # Android
 apps/android/build/
