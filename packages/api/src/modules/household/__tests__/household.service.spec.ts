@@ -16,7 +16,7 @@ import {
 } from '../../../test/mocks/user-service.mock.js';
 import {
   EventEmitterMock,
-  type EventEmitterMockType,
+  type EventEmitter2Mock,
 } from '../../../test/mocks/event-emitter.mock.js';
 import { DatabaseFixtures } from '../../../test/fixtures/database-fixtures.js';
 
@@ -24,7 +24,7 @@ describe('HouseholdService', () => {
   let householdService: HouseholdServiceImpl;
   let mockHouseholdRepository: HouseholdRepositoryMockType;
   let mockUserService: UserServiceMockType;
-  let mockEventEmitter: EventEmitterMockType;
+  let mockEventEmitter: EventEmitter2Mock;
 
   beforeEach(async () => {
     // Create mocks

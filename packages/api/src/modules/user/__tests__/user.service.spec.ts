@@ -394,7 +394,7 @@ describe('UserService', () => {
     it('should handle null household ID', async () => {
       // Arrange
       const userId = 'test-user-id';
-      const householdId = null as any; // Testing edge case
+      const householdId: string | null = null; // Testing edge case
       const updatedUser = DatabaseFixtures.createUserResult({
         id: userId,
         primary_household_id: null,

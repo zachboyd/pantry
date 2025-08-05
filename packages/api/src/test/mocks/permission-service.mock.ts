@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { PermissionService, AppAbility } from '../../modules/permission/permission.types.js';
+import type { PermissionService } from '../../modules/permission/permission.types.js';
 
 // Define the mock type for PermissionService following codebase patterns
 export type PermissionServiceMockType = {

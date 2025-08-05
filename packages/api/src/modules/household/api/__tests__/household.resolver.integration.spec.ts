@@ -53,7 +53,7 @@ describe('Household Resolver Integration Tests', () => {
   describe('householdMembers query', () => {
     it('should return household members when user is a household member', async () => {
       // Arrange - Create household with multiple members
-      const { household, manager, members, householdId } =
+      const { manager, members, householdId } =
         await IntegrationTestModuleFactory.createHouseholdWithMembers(
           testRequest,
           db,
@@ -181,7 +181,7 @@ describe('Household Resolver Integration Tests', () => {
 
       // Verify AI assistant is present
       const aiMember = householdMembers.find(
-        (member: any) => member.role === 'ai',
+        (member: { role: string }) => member.role === 'ai',
       );
       expect(aiMember).toBeDefined();
     });
@@ -380,7 +380,7 @@ describe('Household Resolver Integration Tests', () => {
 
     it('should include all member details with proper timestamps', async () => {
       // Arrange
-      const { manager, members, householdId } =
+      const { manager, householdId } =
         await IntegrationTestModuleFactory.createHouseholdWithMembers(
           testRequest,
           db,
@@ -401,7 +401,13 @@ describe('Household Resolver Integration Tests', () => {
 
       const householdMembers = response.body.data.householdMembers;
 
-      householdMembers.forEach((member: any) => {
+      householdMembers.forEach((member: { 
+        id: string; 
+        household_id: string; 
+        user_id: string; 
+        role: string; 
+        joined_at: string;
+      }) => {
         // Verify all required fields are present
         expect(member).toHaveProperty('id');
         expect(member).toHaveProperty('household_id');

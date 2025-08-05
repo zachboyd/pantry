@@ -129,7 +129,7 @@ export class GuardedUserService {
     // Allow users to update their own profile
     if (currentUser.id === input.id) {
       // Extract updatable fields, excluding system fields
-      const { id, ...updateData } = input;
+      const { id: _id, ...updateData } = input;
       const filteredUpdateData = Object.fromEntries(
         Object.entries(updateData).filter(([, value]) => value !== undefined)
       );
@@ -151,7 +151,7 @@ export class GuardedUserService {
     }
 
     // Extract updatable fields, excluding system fields
-    const { id, ...updateData } = input;
+    const { id: _id, ...updateData } = input;
     const filteredUpdateData = Object.fromEntries(
       Object.entries(updateData).filter(([, value]) => value !== undefined)
     );

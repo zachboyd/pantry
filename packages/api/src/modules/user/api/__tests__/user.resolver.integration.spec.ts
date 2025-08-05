@@ -564,7 +564,7 @@ describe('User Resolver Integration Tests', () => {
 
     it('should return 403 when trying to update other user without permission', async () => {
       // Arrange - Create two separate users
-      const { userId: user1Id, sessionToken: user1Token } =
+      const { sessionToken: user1Token } =
         await IntegrationTestModuleFactory.signUpTestUser(
           testRequest,
           {

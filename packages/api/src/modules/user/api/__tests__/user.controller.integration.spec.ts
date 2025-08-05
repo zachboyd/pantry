@@ -251,7 +251,7 @@ describe('User Controller Integration Tests', () => {
 
     it('should return 403 when trying to update other user without permission', async () => {
       // Arrange - Create two separate users
-      const { userId: user1Id, sessionToken: user1Token } =
+      const { sessionToken: user1Token } =
         await IntegrationTestModuleFactory.signUpTestUser(
           testRequest,
           {
@@ -481,7 +481,7 @@ describe('User Controller Integration Tests', () => {
 
     it('should update primary_household_id along with other fields', async () => {
       // Arrange - Create user with household
-      const { manager, householdId: firstHouseholdId } =
+      const { manager } =
         await IntegrationTestModuleFactory.createHouseholdWithMembers(
           testRequest,
           db,

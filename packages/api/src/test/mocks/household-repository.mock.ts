@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { HouseholdRepository } from '../../modules/household/household.types.js';
+import type { HouseholdRepository, HouseholdRecord, HouseholdMemberRecord } from '../../modules/household/household.types.js';
 
 // Define the mock type for HouseholdRepository following codebase patterns
 export type HouseholdRepositoryMockType = {
@@ -44,10 +44,10 @@ export class HouseholdRepositoryMock {
    * Returns mock household data for all operations
    */
   static createSuccessfulHouseholdRepositoryMock(
-    mockHousehold?: any,
-    mockMember?: any,
+    mockHousehold?: Partial<HouseholdRecord>,
+    mockMember?: Partial<HouseholdMemberRecord>,
   ): HouseholdRepositoryMockType {
-    const defaultHousehold = {
+    const defaultHousehold: HouseholdRecord = {
       id: 'test-household-id',
       name: 'Test Household',
       description: 'A test household',
@@ -56,7 +56,7 @@ export class HouseholdRepositoryMock {
       updated_at: new Date(),
     };
 
-    const defaultMember = {
+    const defaultMember: HouseholdMemberRecord = {
       id: 'test-member-id',
       household_id: 'test-household-id',
       user_id: 'test-user-id',
@@ -64,8 +64,8 @@ export class HouseholdRepositoryMock {
       joined_at: new Date(),
     };
 
-    const household = mockHousehold || defaultHousehold;
-    const member = mockMember || defaultMember;
+    const household = mockHousehold ? { ...defaultHousehold, ...mockHousehold } : defaultHousehold;
+    const member = mockMember ? { ...defaultMember, ...mockMember } : defaultMember;
     const mockRepository = this.createHouseholdRepositoryMock();
 
     mockRepository.createHousehold.mockResolvedValue(household);
@@ -109,8 +109,8 @@ export class HouseholdRepositoryMock {
    * Includes type assertion for use in NestJS test modules
    */
   static createTypedHouseholdRepositoryMock(
-    mockHousehold?: any,
-    mockMember?: any,
+    mockHousehold?: Partial<HouseholdRecord>,
+    mockMember?: Partial<HouseholdMemberRecord>,
   ): HouseholdRepository {
     const mockRepository = mockHousehold || mockMember
       ? this.createSuccessfulHouseholdRepositoryMock(mockHousehold, mockMember)

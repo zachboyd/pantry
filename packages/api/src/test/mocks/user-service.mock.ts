@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { UserService } from '../../modules/user/user.types.js';
+import type { UserService, UserRecord } from '../../modules/user/user.types.js';
 
 // Define the mock type for UserService following codebase patterns
 export type UserServiceMockType = {
@@ -37,17 +37,28 @@ export class UserServiceMock {
    * Creates a UserService mock that simulates successful operations
    * Returns mock user data for all operations
    */
-  static createSuccessfulUserServiceMock(mockUser?: any): UserServiceMockType {
-    const defaultUser = {
+  static createSuccessfulUserServiceMock(mockUser?: Partial<UserRecord>): UserServiceMockType {
+    const defaultUser: UserRecord = {
       id: 'test-user-id',
       first_name: 'Test',
       last_name: 'User',
       email: 'test@example.com',
+      auth_user_id: 'test-auth-id',
+      avatar_url: null,
+      birth_date: null,
+      display_name: null,
+      is_ai: false,
+      managed_by: null,
+      permissions: null,
+      phone: null,
+      preferences: null,
+      primary_household_id: null,
+      relationship_to_manager: null,
       created_at: new Date(),
       updated_at: new Date(),
     };
 
-    const user = mockUser || defaultUser;
+    const user = mockUser ? { ...defaultUser, ...mockUser } : defaultUser;
     const mockService = this.createUserServiceMock();
 
     mockService.getUserByAuthId.mockResolvedValue(user);
@@ -82,7 +93,7 @@ export class UserServiceMock {
    * Creates a typed UserService mock that can be used with dependency injection
    * Includes type assertion for use in NestJS test modules
    */
-  static createTypedUserServiceMock(mockUser?: any): UserService {
+  static createTypedUserServiceMock(mockUser?: Partial<UserRecord>): UserService {
     const mockService = mockUser
       ? this.createSuccessfulUserServiceMock(mockUser)
       : this.createUserServiceMock();
