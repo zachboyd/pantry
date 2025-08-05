@@ -5,7 +5,11 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { UserResolver, GetUserInput, UpdateUserInput } from '../user.resolver.js';
+import {
+  UserResolver,
+  GetUserInput,
+  UpdateUserInput,
+} from '../user.resolver.js';
 import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
 import { GuardedUserServiceMock } from '../../../../test/mocks/guarded-user-service.mock.js';
@@ -17,7 +21,8 @@ describe('UserResolver', () => {
 
   beforeEach(async () => {
     // Create reusable mock
-    mockGuardedUserService = GuardedUserServiceMock.createGuardedUserServiceMock();
+    mockGuardedUserService =
+      GuardedUserServiceMock.createGuardedUserServiceMock();
 
     // Create test module
     const module = await Test.createTestingModule({
@@ -372,7 +377,9 @@ describe('UserResolver', () => {
       });
 
       mockGuardedUserService.updateUser.mockRejectedValue(
-        new ForbiddenException('You do not have permission to update this user'),
+        new ForbiddenException(
+          'You do not have permission to update this user',
+        ),
       );
 
       // Act & Assert

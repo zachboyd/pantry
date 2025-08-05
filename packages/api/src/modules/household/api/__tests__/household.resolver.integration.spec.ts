@@ -401,27 +401,29 @@ describe('Household Resolver Integration Tests', () => {
 
       const householdMembers = response.body.data.householdMembers;
 
-      householdMembers.forEach((member: { 
-        id: string; 
-        household_id: string; 
-        user_id: string; 
-        role: string; 
-        joined_at: string;
-      }) => {
-        // Verify all required fields are present
-        expect(member).toHaveProperty('id');
-        expect(member).toHaveProperty('household_id');
-        expect(member).toHaveProperty('user_id');
-        expect(member).toHaveProperty('role');
-        expect(member).toHaveProperty('joined_at');
+      householdMembers.forEach(
+        (member: {
+          id: string;
+          household_id: string;
+          user_id: string;
+          role: string;
+          joined_at: string;
+        }) => {
+          // Verify all required fields are present
+          expect(member).toHaveProperty('id');
+          expect(member).toHaveProperty('household_id');
+          expect(member).toHaveProperty('user_id');
+          expect(member).toHaveProperty('role');
+          expect(member).toHaveProperty('joined_at');
 
-        // Verify field types and formats
-        expect(typeof member.id).toBe('string');
-        expect(member.household_id).toBe(householdId);
-        expect(typeof member.user_id).toBe('string');
-        expect(['manager', 'member', 'ai']).toContain(member.role);
-        expect(new Date(member.joined_at)).toBeInstanceOf(Date);
-      });
+          // Verify field types and formats
+          expect(typeof member.id).toBe('string');
+          expect(member.household_id).toBe(householdId);
+          expect(typeof member.user_id).toBe('string');
+          expect(['manager', 'member', 'ai']).toContain(member.role);
+          expect(new Date(member.joined_at)).toBeInstanceOf(Date);
+        },
+      );
     });
   });
 
@@ -580,11 +582,8 @@ describe('Household Resolver Integration Tests', () => {
   describe('createHousehold mutation', () => {
     it('should create household and set as primary when user has no primary household', async () => {
       // Arrange
-      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(
-        testRequest,
-        {},
-        db,
-      );
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
 
       const createHouseholdInput = {
         name: 'My First Household',
@@ -683,11 +682,8 @@ describe('Household Resolver Integration Tests', () => {
 
     it('should create household via REST API and set as primary household', async () => {
       // Arrange
-      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(
-        testRequest,
-        {},
-        db,
-      );
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
 
       const createHouseholdInput = {
         name: 'REST API Household',

@@ -136,9 +136,7 @@ export class UserServiceImpl implements UserService {
       const user = await this.userRepository.updateUser(userId, {
         primary_household_id: householdId,
       });
-      this.logger.log(
-        `Primary household set successfully for user ${userId}`,
-      );
+      this.logger.log(`Primary household set successfully for user ${userId}`);
       return user;
     } catch (error) {
       this.logger.error(

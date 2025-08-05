@@ -18,7 +18,7 @@ describe('User Controller Integration Tests', () => {
     testRequest = testApp.request;
     db = testApp.db;
     testDbService = testApp.testDbService;
-    
+
     // Clean database at the start to ensure clean state between test files
     try {
       await IntegrationTestModuleFactory.cleanDatabase(db);
@@ -43,7 +43,7 @@ describe('User Controller Integration Tests', () => {
     } catch (error) {
       console.warn('Database cleanup skipped in afterAll:', error);
     }
-    
+
     // Cleanup after all tests
     await IntegrationTestModuleFactory.closeApp(app, testDbService);
   });
@@ -81,9 +81,7 @@ describe('User Controller Integration Tests', () => {
 
     it('should return 401 when not authenticated', async () => {
       // Act & Assert
-      await testRequest
-        .get('/api/user/current')
-        .expect(401);
+      await testRequest.get('/api/user/current').expect(401);
     });
   });
 
@@ -126,9 +124,7 @@ describe('User Controller Integration Tests', () => {
       );
 
       // Act & Assert
-      await testRequest
-        .get(`/api/user/${userId}`)
-        .expect(401);
+      await testRequest.get(`/api/user/${userId}`).expect(401);
     });
   });
 
@@ -261,14 +257,15 @@ describe('User Controller Integration Tests', () => {
           db,
         );
 
-      const { userId: user2Id } = await IntegrationTestModuleFactory.signUpTestUser(
-        testRequest,
-        {
-          first_name: 'User',
-          last_name: 'Two',
-        },
-        db,
-      );
+      const { userId: user2Id } =
+        await IntegrationTestModuleFactory.signUpTestUser(
+          testRequest,
+          {
+            first_name: 'User',
+            last_name: 'Two',
+          },
+          db,
+        );
 
       // Act & Assert - User1 tries to update User2 (who they don't manage)
       await testRequest
@@ -292,14 +289,15 @@ describe('User Controller Integration Tests', () => {
           db,
         );
 
-      const { userId: managedUserId } = await IntegrationTestModuleFactory.signUpTestUser(
-        testRequest,
-        {
-          first_name: 'Managed',
-          last_name: 'User',
-        },
-        db,
-      );
+      const { userId: managedUserId } =
+        await IntegrationTestModuleFactory.signUpTestUser(
+          testRequest,
+          {
+            first_name: 'Managed',
+            last_name: 'User',
+          },
+          db,
+        );
 
       // Set up managed_by relationship in the database
       await db
@@ -440,9 +438,7 @@ describe('User Controller Integration Tests', () => {
 
     it('should return 401 when not authenticated', async () => {
       // Act & Assert
-      await testRequest
-        .get('/api/user/current')
-        .expect(401);
+      await testRequest.get('/api/user/current').expect(401);
     });
   });
 

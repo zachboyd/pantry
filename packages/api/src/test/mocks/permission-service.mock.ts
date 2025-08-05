@@ -47,7 +47,7 @@ export class PermissionServiceMock {
    */
   static createAdminPermissionServiceMock(): PermissionServiceMockType {
     const mockService = this.createPermissionServiceMock();
-    
+
     // Override permission checks to return true
     mockService.canCreateHousehold.mockResolvedValue(true);
     mockService.canReadHousehold.mockResolvedValue(true);
@@ -63,7 +63,9 @@ export class PermissionServiceMock {
    * Creates a PermissionService mock that simulates service failures
    * All methods throw errors
    */
-  static createFailingPermissionServiceMock(error?: Error): PermissionServiceMockType {
+  static createFailingPermissionServiceMock(
+    error?: Error,
+  ): PermissionServiceMockType {
     const defaultError = error || new Error('Permission service error');
     const mockService = this.createPermissionServiceMock();
 
@@ -103,7 +105,9 @@ export class PermissionServiceMock {
       mockService.canReadHousehold.mockResolvedValue(permissions.canRead);
     }
     if (permissions.canManage !== undefined) {
-      mockService.canManageHouseholdMember.mockResolvedValue(permissions.canManage);
+      mockService.canManageHouseholdMember.mockResolvedValue(
+        permissions.canManage,
+      );
     }
     if (permissions.canView !== undefined) {
       mockService.canViewUser.mockResolvedValue(permissions.canView);
@@ -122,7 +126,9 @@ export class PermissionServiceMock {
    * Creates a PermissionService mock that simulates cache invalidation failures
    * Permission checks work normally but cache operations fail
    */
-  static createCacheFailurePermissionServiceMock(error?: Error): PermissionServiceMockType {
+  static createCacheFailurePermissionServiceMock(
+    error?: Error,
+  ): PermissionServiceMockType {
     const defaultError = error || new Error('Cache operation failed');
     const mockService = this.createPermissionServiceMock();
 
@@ -137,16 +143,14 @@ export class PermissionServiceMock {
    * Creates a typed PermissionService mock that can be used with dependency injection
    * Includes type assertion for use in NestJS test modules
    */
-  static createTypedPermissionServiceMock(
-    permissions?: {
-      canCreate?: boolean;
-      canRead?: boolean;
-      canManage?: boolean;
-      canView?: boolean;
-      canUpdate?: boolean;
-      canList?: boolean;
-    }
-  ): PermissionService {
+  static createTypedPermissionServiceMock(permissions?: {
+    canCreate?: boolean;
+    canRead?: boolean;
+    canManage?: boolean;
+    canView?: boolean;
+    canUpdate?: boolean;
+    canList?: boolean;
+  }): PermissionService {
     const mockService = permissions
       ? this.createCustomPermissionServiceMock(permissions)
       : this.createPermissionServiceMock();

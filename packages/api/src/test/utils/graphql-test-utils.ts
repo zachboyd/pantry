@@ -249,7 +249,7 @@ export class GraphQLTestUtils {
       birth_date?: Date;
       email?: string;
       primary_household_id?: string;
-    }
+    },
   ) {
     return {
       input: {

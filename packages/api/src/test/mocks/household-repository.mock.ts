@@ -1,5 +1,9 @@
 import { vi } from 'vitest';
-import type { HouseholdRepository, HouseholdRecord, HouseholdMemberRecord } from '../../modules/household/household.types.js';
+import type {
+  HouseholdRepository,
+  HouseholdRecord,
+  HouseholdMemberRecord,
+} from '../../modules/household/household.types.js';
 
 // Define the mock type for HouseholdRepository following codebase patterns
 export type HouseholdRepositoryMockType = {
@@ -64,8 +68,12 @@ export class HouseholdRepositoryMock {
       joined_at: new Date(),
     };
 
-    const household = mockHousehold ? { ...defaultHousehold, ...mockHousehold } : defaultHousehold;
-    const member = mockMember ? { ...defaultMember, ...mockMember } : defaultMember;
+    const household = mockHousehold
+      ? { ...defaultHousehold, ...mockHousehold }
+      : defaultHousehold;
+    const member = mockMember
+      ? { ...defaultMember, ...mockMember }
+      : defaultMember;
     const mockRepository = this.createHouseholdRepositoryMock();
 
     mockRepository.createHousehold.mockResolvedValue(household);
@@ -112,9 +120,13 @@ export class HouseholdRepositoryMock {
     mockHousehold?: Partial<HouseholdRecord>,
     mockMember?: Partial<HouseholdMemberRecord>,
   ): HouseholdRepository {
-    const mockRepository = mockHousehold || mockMember
-      ? this.createSuccessfulHouseholdRepositoryMock(mockHousehold, mockMember)
-      : this.createHouseholdRepositoryMock();
+    const mockRepository =
+      mockHousehold || mockMember
+        ? this.createSuccessfulHouseholdRepositoryMock(
+            mockHousehold,
+            mockMember,
+          )
+        : this.createHouseholdRepositoryMock();
 
     return mockRepository as unknown as HouseholdRepository;
   }

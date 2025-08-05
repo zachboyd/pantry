@@ -682,12 +682,13 @@ describe('User Resolver Integration Tests', () => {
         await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
 
       // Create household (should become primary)
-      const { householdId } = await IntegrationTestModuleFactory.createTestHousehold(
-        testRequest,
-        db,
-        userId,
-        sessionToken,
-      );
+      const { householdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          userId,
+          sessionToken,
+        );
 
       // Act
       const response = await GraphQLTestUtils.executeAuthenticatedQuery(
@@ -777,6 +778,5 @@ describe('User Resolver Integration Tests', () => {
       expect(userData.primary_household_id).toBe(secondHouseholdId);
       expect(userData.primary_household_id).not.toBe(firstHouseholdId);
     });
-
   });
 });

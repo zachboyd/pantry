@@ -297,10 +297,10 @@ export class IntegrationTestModuleFactory {
     }
 
     const household = response.body.data.createHousehold;
-    
+
     // Wait a bit for any async operations (like permission recomputation) to complete
     await new Promise((resolve) => setTimeout(resolve, 200));
-    
+
     return {
       householdId: household.id,
       household,
@@ -349,16 +349,16 @@ export class IntegrationTestModuleFactory {
     }
 
     const member = response.body.data.addHouseholdMember;
-    
+
     // Wait a bit for any async operations (like permission recomputation) to complete
     await new Promise((resolve) => setTimeout(resolve, 100));
-    
+
     return { member };
   }
 
   /**
    * Creates a complete household scenario with multiple users
-   * @param request - Supertest request instance  
+   * @param request - Supertest request instance
    * @param db - Database connection
    * @param memberCount - Number of additional members to create (excluding manager)
    * @param householdData - Optional household data overrides
@@ -379,10 +379,10 @@ export class IntegrationTestModuleFactory {
       updated_at: string;
     };
     manager: { userId: string; sessionToken: string; email: string };
-    members: Array<{ 
-      userId: string; 
-      sessionToken: string; 
-      email: string; 
+    members: Array<{
+      userId: string;
+      sessionToken: string;
+      email: string;
       member: {
         id: string;
         household_id: string;

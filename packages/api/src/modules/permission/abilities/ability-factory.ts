@@ -41,7 +41,11 @@ export class AbilityFactory {
 
     // All authenticated users can update users they manage (unless they are pure AI users)
     if (
-      !(aiHouseholdIds.length > 0 && managerHouseholdIds.length === 0 && memberHouseholdIds.length === 0)
+      !(
+        aiHouseholdIds.length > 0 &&
+        managerHouseholdIds.length === 0 &&
+        memberHouseholdIds.length === 0
+      )
     ) {
       can('update', 'User', { managed_by: context.userId });
     }

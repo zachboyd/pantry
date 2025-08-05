@@ -22,7 +22,7 @@ export class HouseholdTestUtils {
     expect(member).toHaveProperty('joined_at');
 
     const memberObj = member as Record<string, unknown>;
-    
+
     if (expectedValues.household_id) {
       expect(memberObj.household_id).toBe(expectedValues.household_id);
     }
@@ -90,13 +90,14 @@ export class HouseholdTestUtils {
     userId: string,
     expectedRole: string,
   ) {
-    const userMember = members.find((member: unknown) => 
-      typeof member === 'object' && 
-      member !== null && 
-      'user_id' in member && 
-      (member as { user_id: string }).user_id === userId
+    const userMember = members.find(
+      (member: unknown) =>
+        typeof member === 'object' &&
+        member !== null &&
+        'user_id' in member &&
+        (member as { user_id: string }).user_id === userId,
     ) as { user_id: string; role: string } | undefined;
-    
+
     expect(userMember).toBeDefined();
     expect(userMember?.role).toBe(expectedRole);
   }
@@ -104,15 +105,17 @@ export class HouseholdTestUtils {
   /**
    * Assert that response contains permission error
    */
-  static assertPermissionError(response: { body: { errors?: Array<{ message: string }> } }) {
+  static assertPermissionError(response: {
+    body: { errors?: Array<{ message: string }> };
+  }) {
     expect(response.body.errors).toBeDefined();
     expect(response.body.errors!.length).toBeGreaterThan(0);
-    
+
     const errorMessage = response.body.errors![0].message.toLowerCase();
     expect(
-      errorMessage.includes('permission') || 
-      errorMessage.includes('forbidden') || 
-      errorMessage.includes('access')
+      errorMessage.includes('permission') ||
+        errorMessage.includes('forbidden') ||
+        errorMessage.includes('access'),
     ).toBe(true);
   }
 }

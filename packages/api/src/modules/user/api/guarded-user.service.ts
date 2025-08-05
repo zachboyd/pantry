@@ -131,10 +131,13 @@ export class GuardedUserService {
       // Extract updatable fields, excluding system fields
       const { id: _id, ...updateData } = input;
       const filteredUpdateData = Object.fromEntries(
-        Object.entries(updateData).filter(([, value]) => value !== undefined)
+        Object.entries(updateData).filter(([, value]) => value !== undefined),
       );
 
-      const updatedUser = await this.userService.updateUser(input.id, filteredUpdateData);
+      const updatedUser = await this.userService.updateUser(
+        input.id,
+        filteredUpdateData,
+      );
       return { user: updatedUser };
     }
 
@@ -153,10 +156,13 @@ export class GuardedUserService {
     // Extract updatable fields, excluding system fields
     const { id: _id, ...updateData } = input;
     const filteredUpdateData = Object.fromEntries(
-      Object.entries(updateData).filter(([, value]) => value !== undefined)
+      Object.entries(updateData).filter(([, value]) => value !== undefined),
     );
 
-    const updatedUser = await this.userService.updateUser(input.id, filteredUpdateData);
+    const updatedUser = await this.userService.updateUser(
+      input.id,
+      filteredUpdateData,
+    );
     return { user: updatedUser };
   }
 }

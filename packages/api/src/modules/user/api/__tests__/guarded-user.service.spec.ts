@@ -81,7 +81,9 @@ describe('GuardedUserService', () => {
       await expect(service.updateUser(input, currentUser)).rejects.toThrow(
         'User with ID nonexistent-user-id not found',
       );
-      expect(mockUserService.getUserById).toHaveBeenCalledWith('nonexistent-user-id');
+      expect(mockUserService.getUserById).toHaveBeenCalledWith(
+        'nonexistent-user-id',
+      );
     });
 
     it('should allow user to update their own profile', async () => {
@@ -114,12 +116,17 @@ describe('GuardedUserService', () => {
 
       // Assert
       expect(result.user).toEqual(updatedUser);
-      expect(mockUserService.getUserById).toHaveBeenCalledWith('current-user-id');
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('current-user-id', {
-        first_name: 'Updated',
-        last_name: 'Name',
-        display_name: 'Updated Display',
-      });
+      expect(mockUserService.getUserById).toHaveBeenCalledWith(
+        'current-user-id',
+      );
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(
+        'current-user-id',
+        {
+          first_name: 'Updated',
+          last_name: 'Name',
+          display_name: 'Updated Display',
+        },
+      );
       // Permission check should not be called for own profile
       expect(mockPermissionService.canViewUser).not.toHaveBeenCalled();
     });
@@ -153,10 +160,13 @@ describe('GuardedUserService', () => {
 
       // Assert
       expect(result.user).toEqual(updatedUser);
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('current-user-id', {
-        first_name: 'Updated',
-        display_name: 'New Display',
-      });
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(
+        'current-user-id',
+        {
+          first_name: 'Updated',
+          display_name: 'New Display',
+        },
+      );
     });
 
     it('should check permissions when updating other users', async () => {
@@ -240,13 +250,20 @@ describe('GuardedUserService', () => {
       });
 
       mockUserService.getUserById = vi.fn().mockResolvedValue(existingUser);
-      mockUserService.updateUser = vi.fn().mockRejectedValue(new Error('Database error'));
+      mockUserService.updateUser = vi
+        .fn()
+        .mockRejectedValue(new Error('Database error'));
 
       // Act & Assert
-      await expect(service.updateUser(input, currentUser)).rejects.toThrow('Database error');
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('current-user-id', {
-        first_name: 'Updated',
-      });
+      await expect(service.updateUser(input, currentUser)).rejects.toThrow(
+        'Database error',
+      );
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(
+        'current-user-id',
+        {
+          first_name: 'Updated',
+        },
+      );
     });
 
     it('should update user with all supported fields', async () => {
@@ -280,15 +297,18 @@ describe('GuardedUserService', () => {
 
       // Assert
       expect(result.user).toEqual(updatedUser);
-      expect(mockUserService.updateUser).toHaveBeenCalledWith('current-user-id', {
-        first_name: 'Updated',
-        last_name: 'LastName',
-        display_name: 'Display Name',
-        avatar_url: 'https://example.com/avatar.jpg',
-        phone: '+1234567890',
-        birth_date: new Date('1990-01-01'),
-        email: 'updated@example.com',
-      });
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(
+        'current-user-id',
+        {
+          first_name: 'Updated',
+          last_name: 'LastName',
+          display_name: 'Display Name',
+          avatar_url: 'https://example.com/avatar.jpg',
+          phone: '+1234567890',
+          birth_date: new Date('1990-01-01'),
+          email: 'updated@example.com',
+        },
+      );
     });
   });
 });

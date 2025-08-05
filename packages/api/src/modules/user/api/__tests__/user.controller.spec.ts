@@ -23,7 +23,8 @@ describe('UserController', () => {
     vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
 
     // Create reusable mock
-    mockGuardedUserService = GuardedUserServiceMock.createGuardedUserServiceMock();
+    mockGuardedUserService =
+      GuardedUserServiceMock.createGuardedUserServiceMock();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
@@ -56,7 +57,9 @@ describe('UserController', () => {
 
       // Assert
       expect(result).toEqual(currentUser);
-      expect(mockGuardedUserService.getCurrentUser).toHaveBeenCalledWith(currentUser);
+      expect(mockGuardedUserService.getCurrentUser).toHaveBeenCalledWith(
+        currentUser,
+      );
     });
 
     it('should handle UnauthorizedException when user not authenticated', async () => {
@@ -95,7 +98,10 @@ describe('UserController', () => {
 
       // Assert
       expect(result).toEqual(targetUser);
-      expect(mockGuardedUserService.getUser).toHaveBeenCalledWith(userId, currentUser);
+      expect(mockGuardedUserService.getUser).toHaveBeenCalledWith(
+        userId,
+        currentUser,
+      );
     });
 
     it('should handle NotFoundException when user not found', async () => {
@@ -113,7 +119,10 @@ describe('UserController', () => {
       await expect(controller.getUser(userId, currentUser)).rejects.toThrow(
         NotFoundException,
       );
-      expect(mockGuardedUserService.getUser).toHaveBeenCalledWith(userId, currentUser);
+      expect(mockGuardedUserService.getUser).toHaveBeenCalledWith(
+        userId,
+        currentUser,
+      );
     });
   });
 
@@ -143,7 +152,11 @@ describe('UserController', () => {
       });
 
       // Act
-      const result = await controller.updateUser(userId, updateData, currentUser);
+      const result = await controller.updateUser(
+        userId,
+        updateData,
+        currentUser,
+      );
 
       // Assert
       expect(result).toEqual(updatedUser);
@@ -165,9 +178,9 @@ describe('UserController', () => {
       );
 
       // Act & Assert
-      await expect(controller.updateUser(userId, updateData, null)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.updateUser(userId, updateData, null),
+      ).rejects.toThrow(UnauthorizedException);
       expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
         { id: userId, ...updateData },
         null,
@@ -189,9 +202,9 @@ describe('UserController', () => {
       );
 
       // Act & Assert
-      await expect(controller.updateUser(userId, updateData, currentUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.updateUser(userId, updateData, currentUser),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should handle ForbiddenException when user lacks permission', async () => {
@@ -205,13 +218,15 @@ describe('UserController', () => {
       });
 
       mockGuardedUserService.updateUser.mockRejectedValue(
-        new ForbiddenException('You do not have permission to update this user'),
+        new ForbiddenException(
+          'You do not have permission to update this user',
+        ),
       );
 
       // Act & Assert
-      await expect(controller.updateUser(userId, updateData, currentUser)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        controller.updateUser(userId, updateData, currentUser),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should update user with partial data', async () => {
@@ -234,7 +249,11 @@ describe('UserController', () => {
       });
 
       // Act
-      const result = await controller.updateUser(userId, updateData, currentUser);
+      const result = await controller.updateUser(
+        userId,
+        updateData,
+        currentUser,
+      );
 
       // Assert
       expect(result.first_name).toBe('OnlyFirstName');
@@ -266,7 +285,11 @@ describe('UserController', () => {
       });
 
       // Act
-      const result = await controller.updateUser(userId, updateData, currentUser);
+      const result = await controller.updateUser(
+        userId,
+        updateData,
+        currentUser,
+      );
 
       // Assert
       expect(result.display_name).toBe('My New Display Name');
@@ -302,7 +325,11 @@ describe('UserController', () => {
       });
 
       // Act
-      const result = await controller.updateUser(userId, updateData, currentUser);
+      const result = await controller.updateUser(
+        userId,
+        updateData,
+        currentUser,
+      );
 
       // Assert
       expect(result).toMatchObject(updateData);

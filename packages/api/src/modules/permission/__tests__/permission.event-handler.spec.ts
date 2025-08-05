@@ -39,9 +39,15 @@ describe('PermissionEventHandler', () => {
 
       await handler.handleRecomputeUserPermissions(event);
 
-      expect(mockPermissionService.invalidateUserPermissions).toHaveBeenCalledWith(userId);
-      expect(mockPermissionService.computeUserPermissions).toHaveBeenCalledWith(userId);
-      expect(Logger.prototype.log).toHaveBeenCalledWith(`Recomputed permissions for user ${userId}`);
+      expect(
+        mockPermissionService.invalidateUserPermissions,
+      ).toHaveBeenCalledWith(userId);
+      expect(mockPermissionService.computeUserPermissions).toHaveBeenCalledWith(
+        userId,
+      );
+      expect(Logger.prototype.log).toHaveBeenCalledWith(
+        `Recomputed permissions for user ${userId}`,
+      );
     });
 
     it('should include reason in log message when provided', async () => {
@@ -51,9 +57,15 @@ describe('PermissionEventHandler', () => {
 
       await handler.handleRecomputeUserPermissions(event);
 
-      expect(mockPermissionService.invalidateUserPermissions).toHaveBeenCalledWith(userId);
-      expect(mockPermissionService.computeUserPermissions).toHaveBeenCalledWith(userId);
-      expect(Logger.prototype.log).toHaveBeenCalledWith(`Recomputed permissions for user ${userId} (${reason})`);
+      expect(
+        mockPermissionService.invalidateUserPermissions,
+      ).toHaveBeenCalledWith(userId);
+      expect(mockPermissionService.computeUserPermissions).toHaveBeenCalledWith(
+        userId,
+      );
+      expect(Logger.prototype.log).toHaveBeenCalledWith(
+        `Recomputed permissions for user ${userId} (${reason})`,
+      );
     });
 
     it('should call invalidateUserPermissions before computeUserPermissions', async () => {
@@ -61,15 +73,19 @@ describe('PermissionEventHandler', () => {
       const event = new RecomputeUserPermissionsEvent(userId);
       const callOrder: string[] = [];
 
-      mockPermissionService.invalidateUserPermissions = vi.fn().mockImplementation(() => {
-        callOrder.push('invalidate');
-        return Promise.resolve();
-      });
-      
-      mockPermissionService.computeUserPermissions = vi.fn().mockImplementation(() => {
-        callOrder.push('compute');
-        return Promise.resolve();
-      });
+      mockPermissionService.invalidateUserPermissions = vi
+        .fn()
+        .mockImplementation(() => {
+          callOrder.push('invalidate');
+          return Promise.resolve();
+        });
+
+      mockPermissionService.computeUserPermissions = vi
+        .fn()
+        .mockImplementation(() => {
+          callOrder.push('compute');
+          return Promise.resolve();
+        });
 
       await handler.handleRecomputeUserPermissions(event);
 
@@ -81,12 +97,18 @@ describe('PermissionEventHandler', () => {
       const event = new RecomputeUserPermissionsEvent(userId);
       const error = new Error('Cache invalidation failed');
 
-      mockPermissionService.invalidateUserPermissions = vi.fn().mockRejectedValue(error);
+      mockPermissionService.invalidateUserPermissions = vi
+        .fn()
+        .mockRejectedValue(error);
 
       await handler.handleRecomputeUserPermissions(event);
 
-      expect(mockPermissionService.invalidateUserPermissions).toHaveBeenCalledWith(userId);
-      expect(mockPermissionService.computeUserPermissions).not.toHaveBeenCalled();
+      expect(
+        mockPermissionService.invalidateUserPermissions,
+      ).toHaveBeenCalledWith(userId);
+      expect(
+        mockPermissionService.computeUserPermissions,
+      ).not.toHaveBeenCalled();
       expect(Logger.prototype.error).toHaveBeenCalledWith(
         `Failed to recompute permissions for user ${userId}:`,
         error,
@@ -98,12 +120,18 @@ describe('PermissionEventHandler', () => {
       const event = new RecomputeUserPermissionsEvent(userId);
       const error = new Error('Permission computation failed');
 
-      mockPermissionService.computeUserPermissions = vi.fn().mockRejectedValue(error);
+      mockPermissionService.computeUserPermissions = vi
+        .fn()
+        .mockRejectedValue(error);
 
       await handler.handleRecomputeUserPermissions(event);
 
-      expect(mockPermissionService.invalidateUserPermissions).toHaveBeenCalledWith(userId);
-      expect(mockPermissionService.computeUserPermissions).toHaveBeenCalledWith(userId);
+      expect(
+        mockPermissionService.invalidateUserPermissions,
+      ).toHaveBeenCalledWith(userId);
+      expect(mockPermissionService.computeUserPermissions).toHaveBeenCalledWith(
+        userId,
+      );
       expect(Logger.prototype.error).toHaveBeenCalledWith(
         `Failed to recompute permissions for user ${userId}:`,
         error,
@@ -116,7 +144,9 @@ describe('PermissionEventHandler', () => {
       const event = new RecomputeUserPermissionsEvent(userId, reason);
       const error = new Error('Database connection failed');
 
-      mockPermissionService.invalidateUserPermissions = vi.fn().mockRejectedValue(error);
+      mockPermissionService.invalidateUserPermissions = vi
+        .fn()
+        .mockRejectedValue(error);
 
       await handler.handleRecomputeUserPermissions(event);
 
@@ -130,11 +160,17 @@ describe('PermissionEventHandler', () => {
       const userId = 'test-user-id';
       const event = new RecomputeUserPermissionsEvent(userId);
 
-      mockPermissionService.invalidateUserPermissions = vi.fn().mockRejectedValue(new Error('Service error'));
-      mockPermissionService.computeUserPermissions = vi.fn().mockRejectedValue(new Error('Another error'));
+      mockPermissionService.invalidateUserPermissions = vi
+        .fn()
+        .mockRejectedValue(new Error('Service error'));
+      mockPermissionService.computeUserPermissions = vi
+        .fn()
+        .mockRejectedValue(new Error('Another error'));
 
       // Should not throw
-      await expect(handler.handleRecomputeUserPermissions(event)).resolves.not.toThrow();
+      await expect(
+        handler.handleRecomputeUserPermissions(event),
+      ).resolves.not.toThrow();
     });
   });
 });

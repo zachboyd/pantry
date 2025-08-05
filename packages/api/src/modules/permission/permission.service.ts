@@ -109,7 +109,7 @@ export class PermissionServiceImpl implements PermissionService {
           // Return the serialized rules for caching
           return packRules(storedAbility.rules);
         }
-        
+
         // If not in database, compute fresh
         const freshAbility = await this.computeUserPermissions(userId);
         return packRules(freshAbility.rules);
@@ -170,7 +170,7 @@ export class PermissionServiceImpl implements PermissionService {
     targetUserId: string,
   ): Promise<boolean> {
     const ability = await this.getOrComputeUserAbility(currentUserId);
-    
+
     // Get the target user's data including household memberships for CASL evaluation
     const targetUserWithHouseholds = await this.db
       .selectFrom('user')
@@ -194,8 +194,8 @@ export class PermissionServiceImpl implements PermissionService {
       managed_by: targetUserWithHouseholds[0].managed_by,
       is_ai: targetUserWithHouseholds[0].is_ai,
       household_members: targetUserWithHouseholds
-        .filter(row => row.household_id !== null)
-        .map(row => ({
+        .filter((row) => row.household_id !== null)
+        .map((row) => ({
           household_id: row.household_id,
         })),
     };

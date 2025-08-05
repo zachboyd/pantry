@@ -37,7 +37,9 @@ export class UserServiceMock {
    * Creates a UserService mock that simulates successful operations
    * Returns mock user data for all operations
    */
-  static createSuccessfulUserServiceMock(mockUser?: Partial<UserRecord>): UserServiceMockType {
+  static createSuccessfulUserServiceMock(
+    mockUser?: Partial<UserRecord>,
+  ): UserServiceMockType {
     const defaultUser: UserRecord = {
       id: 'test-user-id',
       first_name: 'Test',
@@ -93,7 +95,9 @@ export class UserServiceMock {
    * Creates a typed UserService mock that can be used with dependency injection
    * Includes type assertion for use in NestJS test modules
    */
-  static createTypedUserServiceMock(mockUser?: Partial<UserRecord>): UserService {
+  static createTypedUserServiceMock(
+    mockUser?: Partial<UserRecord>,
+  ): UserService {
     const mockService = mockUser
       ? this.createSuccessfulUserServiceMock(mockUser)
       : this.createUserServiceMock();

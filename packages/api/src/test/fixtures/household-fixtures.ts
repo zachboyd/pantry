@@ -10,12 +10,14 @@ export class HouseholdTestFixtures {
   /**
    * Creates a basic test household
    */
-  static createBasicHousehold(overrides: {
-    id?: string;
-    name?: string;
-    description?: string;
-    created_by?: string;
-  } = {}) {
+  static createBasicHousehold(
+    overrides: {
+      id?: string;
+      name?: string;
+      description?: string;
+      created_by?: string;
+    } = {},
+  ) {
     return {
       id: overrides.id || uuidv4(),
       name: overrides.name || 'Test Family',
@@ -29,12 +31,14 @@ export class HouseholdTestFixtures {
   /**
    * Creates a household member record
    */
-  static createHouseholdMember(overrides: {
-    id?: string;
-    household_id?: string;
-    user_id?: string;
-    role?: HouseholdRole;
-  } = {}) {
+  static createHouseholdMember(
+    overrides: {
+      id?: string;
+      household_id?: string;
+      user_id?: string;
+      role?: HouseholdRole;
+    } = {},
+  ) {
     return {
       id: overrides.id || uuidv4(),
       household_id: overrides.household_id || 'test-household-id',
@@ -136,10 +140,7 @@ export class HouseholdTestFixtures {
   /**
    * Creates multiple households for a user (user belongs to multiple households)
    */
-  static createMultiHouseholdUser(
-    userId: string,
-    householdCount: number = 2,
-  ) {
+  static createMultiHouseholdUser(userId: string, householdCount: number = 2) {
     const households = [];
     const members = [];
 
@@ -181,10 +182,7 @@ export class HouseholdTestFixtures {
     },
   ) {
     // Insert household
-    await db
-      .insertInto('household')
-      .values(scenario.household)
-      .execute();
+    await db.insertInto('household').values(scenario.household).execute();
 
     // Insert members
     if (scenario.members.length > 0) {
@@ -203,7 +201,7 @@ export class HouseholdTestFixtures {
   static createPermissionTestScenario() {
     const userAId = uuidv4();
     const userBId = uuidv4();
-    
+
     // User A's household (user A is manager)
     const householdA = this.createFamilyHousehold(userAId, [], {
       name: 'User A Household',
@@ -240,9 +238,6 @@ export class HouseholdTestFixtures {
       .where('household_id', 'in', householdIds)
       .execute();
 
-    await db
-      .deleteFrom('household')
-      .where('id', 'in', householdIds)
-      .execute();
+    await db.deleteFrom('household').where('id', 'in', householdIds).execute();
   }
 }
