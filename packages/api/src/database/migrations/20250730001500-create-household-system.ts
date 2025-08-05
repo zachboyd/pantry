@@ -30,6 +30,18 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     )
     .execute();
 
+  // Add primary_household_id foreign key constraint to user table
+  await db.schema
+    .alterTable('user')
+    .addForeignKeyConstraint(
+      'fk_user_primary_household',
+      ['primary_household_id'],
+      'household',
+      ['id'],
+    )
+    .onDelete('set null')
+    .execute();
+
   // Create household_member table
   await db.schema
     .createTable('household_member')
@@ -183,6 +195,13 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
+  // Drop foreign key constraint from user table first
+  await db.schema
+    .alterTable('user')
+    .dropConstraint('fk_user_primary_household')
+    .ifExists()
+    .execute();
+
   // Drop tables in reverse dependency order
   await db.schema.dropTable('typing_indicator').ifExists().execute();
   await db.schema.dropTable('message_read').ifExists().execute();

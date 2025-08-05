@@ -651,4 +651,132 @@ describe('User Resolver Integration Tests', () => {
       expect(userData.birth_date).toBeDefined();
     });
   });
+
+  describe('currentUser query with primary_household_id', () => {
+    it('should return null primary_household_id for new user without household', async () => {
+      // Arrange - Create user without any household
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.body.data.currentUser;
+      expect(userData).toMatchObject({
+        id: userId,
+        primary_household_id: null,
+      });
+    });
+
+    it('should return primary_household_id when user creates their first household', async () => {
+      // Arrange - Create user
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+
+      // Create household (should become primary)
+      const { householdId } = await IntegrationTestModuleFactory.createTestHousehold(
+        testRequest,
+        db,
+        userId,
+        sessionToken,
+      );
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.body.data.currentUser;
+      expect(userData).toMatchObject({
+        id: userId,
+        primary_household_id: householdId,
+      });
+    });
+
+    it('should maintain correct primary_household_id when user has multiple households', async () => {
+      // Arrange - Create user with first household
+      const { manager, householdId: firstHouseholdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Create second household (should not change primary)
+      const { householdId: secondHouseholdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          manager.userId,
+          manager.sessionToken,
+        );
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_CURRENT_USER,
+        manager.sessionToken,
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.body.data.currentUser;
+      expect(userData.primary_household_id).toBe(firstHouseholdId);
+      expect(userData.primary_household_id).not.toBe(secondHouseholdId);
+    });
+
+    it('should allow updating primary_household_id via updateUser mutation', async () => {
+      // Arrange - Create user with household
+      const { manager, householdId: firstHouseholdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Create second household
+      const { householdId: secondHouseholdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          manager.userId,
+          manager.sessionToken,
+        );
+
+      // Act - Update primary household to the second one
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        manager.sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(manager.userId, {
+          primary_household_id: secondHouseholdId,
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.body.data.updateUser;
+      expect(userData.primary_household_id).toBe(secondHouseholdId);
+      expect(userData.primary_household_id).not.toBe(firstHouseholdId);
+    });
+
+  });
 });

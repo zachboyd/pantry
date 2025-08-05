@@ -22,6 +22,7 @@ export class GraphQLTestUtils {
           birth_date
           managed_by
           relationship_to_manager
+          primary_household_id
           created_at
           updated_at
         }
@@ -42,6 +43,7 @@ export class GraphQLTestUtils {
           birth_date
           managed_by
           relationship_to_manager
+          primary_household_id
           created_at
           updated_at
         }
@@ -92,6 +94,7 @@ export class GraphQLTestUtils {
           birth_date
           managed_by
           relationship_to_manager
+          primary_household_id
           created_at
           updated_at
         }

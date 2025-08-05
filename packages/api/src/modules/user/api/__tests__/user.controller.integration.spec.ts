@@ -396,4 +396,147 @@ describe('User Controller Integration Tests', () => {
       });
     });
   });
+
+  describe('GET /api/user/current with primary_household_id', () => {
+    it('should return null primary_household_id for new user without household', async () => {
+      // Arrange - Create user without any household
+      const { userId, sessionToken } =
+        await IntegrationTestModuleFactory.signUpTestUser(testRequest, {}, db);
+
+      // Act
+      const response = await testRequest
+        .get('/api/user/current')
+        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .expect(200);
+
+      // Assert
+      expect(response.body).toMatchObject({
+        id: userId,
+        primary_household_id: null,
+      });
+    });
+
+    it('should return primary_household_id when user creates their first household', async () => {
+      // Arrange - Create user with household
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0, // No additional members
+        );
+
+      // Act
+      const response = await testRequest
+        .get('/api/user/current')
+        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .expect(200);
+
+      // Assert
+      expect(response.body).toMatchObject({
+        id: manager.userId,
+        primary_household_id: householdId,
+      });
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      // Act & Assert
+      await testRequest
+        .get('/api/user/current')
+        .expect(401);
+    });
+  });
+
+  describe('PUT /api/user/:id with primary_household_id', () => {
+    it('should update primary_household_id successfully', async () => {
+      // Arrange - Create user with household
+      const { manager, householdId: firstHouseholdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Create second household
+      const { householdId: secondHouseholdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          manager.userId,
+          manager.sessionToken,
+        );
+
+      // Act - Update primary household via REST API
+      const response = await testRequest
+        .put(`/api/user/${manager.userId}`)
+        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .send({
+          primary_household_id: secondHouseholdId,
+        })
+        .expect(200);
+
+      // Assert
+      expect(response.body.primary_household_id).toBe(secondHouseholdId);
+      expect(response.body.primary_household_id).not.toBe(firstHouseholdId);
+    });
+
+    it('should update primary_household_id along with other fields', async () => {
+      // Arrange - Create user with household
+      const { manager, householdId: firstHouseholdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Create second household
+      const { householdId: secondHouseholdId } =
+        await IntegrationTestModuleFactory.createTestHousehold(
+          testRequest,
+          db,
+          manager.userId,
+          manager.sessionToken,
+        );
+
+      // Act - Update primary household and other fields via REST API
+      const response = await testRequest
+        .put(`/api/user/${manager.userId}`)
+        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .send({
+          primary_household_id: secondHouseholdId,
+          first_name: 'Updated',
+          last_name: 'Name',
+        })
+        .expect(200);
+
+      // Assert
+      expect(response.body).toMatchObject({
+        id: manager.userId,
+        primary_household_id: secondHouseholdId,
+        first_name: 'Updated',
+        last_name: 'Name',
+      });
+    });
+
+    it('should allow setting primary_household_id to null', async () => {
+      // Arrange - Create user with household
+      const { manager } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Act - Set primary household to null
+      const response = await testRequest
+        .put(`/api/user/${manager.userId}`)
+        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .send({
+          primary_household_id: null,
+        })
+        .expect(200);
+
+      // Assert
+      expect(response.body.primary_household_id).toBe(null);
+    });
+  });
 });

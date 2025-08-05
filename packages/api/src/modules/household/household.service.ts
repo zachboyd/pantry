@@ -66,6 +66,15 @@ export class HouseholdServiceImpl implements HouseholdService {
         true, // Skip permission check for initial creation
       );
 
+      // 3. Set as primary household if user doesn't have one yet
+      const creator = await this.userService.getUserById(creatorId);
+      if (creator && !creator.primary_household_id) {
+        await this.userService.setPrimaryHousehold(
+          creatorId,
+          createdHousehold.id,
+        );
+      }
+
       // 4. Create AI user for the household using user service
       const aiUser = await this.userService.createAIUser({
         id: uuidv4(),

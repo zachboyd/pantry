@@ -123,4 +123,29 @@ export class UserServiceImpl implements UserService {
       throw error;
     }
   }
+
+  async setPrimaryHousehold(
+    userId: string,
+    householdId: string,
+  ): Promise<UserRecord> {
+    this.logger.log(
+      `Setting primary household ${householdId} for user ${userId}`,
+    );
+
+    try {
+      const user = await this.userRepository.updateUser(userId, {
+        primary_household_id: householdId,
+      });
+      this.logger.log(
+        `Primary household set successfully for user ${userId}`,
+      );
+      return user;
+    } catch (error) {
+      this.logger.error(
+        `Error setting primary household for user ${userId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
 }

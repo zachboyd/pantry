@@ -64,6 +64,7 @@ describe('UserResolver', () => {
         birth_date: targetUser.birth_date,
         managed_by: targetUser.managed_by,
         relationship_to_manager: targetUser.relationship_to_manager,
+        primary_household_id: targetUser.primary_household_id,
         created_at: targetUser.created_at,
         updated_at: targetUser.updated_at,
       });
@@ -188,6 +189,7 @@ describe('UserResolver', () => {
         birth_date: currentUser.birth_date,
         managed_by: currentUser.managed_by,
         relationship_to_manager: currentUser.relationship_to_manager,
+        primary_household_id: currentUser.primary_household_id,
         created_at: currentUser.created_at,
         updated_at: currentUser.updated_at,
       });
@@ -440,6 +442,104 @@ describe('UserResolver', () => {
       // Assert
       expect(result.display_name).toBe('My New Display Name');
       expect(result.phone).toBe('+1234567890');
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        currentUser,
+      );
+    });
+
+    it('should update primary_household_id successfully', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'current-user-id',
+        primary_household_id: 'new-household-id',
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+        primary_household_id: 'old-household-id',
+      });
+      const updatedUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+        primary_household_id: 'new-household-id',
+      });
+
+      mockGuardedUserService.updateUser.mockResolvedValue({
+        user: updatedUser,
+      });
+
+      // Act
+      const result = await userResolver.updateUser(input, currentUser);
+
+      // Assert
+      expect(result.primary_household_id).toBe('new-household-id');
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        currentUser,
+      );
+    });
+
+    it('should set primary_household_id to null', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'current-user-id',
+        primary_household_id: null,
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+        primary_household_id: 'old-household-id',
+      });
+      const updatedUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+        primary_household_id: null,
+      });
+
+      mockGuardedUserService.updateUser.mockResolvedValue({
+        user: updatedUser,
+      });
+
+      // Act
+      const result = await userResolver.updateUser(input, currentUser);
+
+      // Assert
+      expect(result.primary_household_id).toBe(null);
+      expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
+        input,
+        currentUser,
+      );
+    });
+
+    it('should update primary_household_id along with other fields', async () => {
+      // Arrange
+      const input: UpdateUserInput = {
+        id: 'current-user-id',
+        primary_household_id: 'new-household-id',
+        first_name: 'Updated',
+        display_name: 'Updated Display',
+      };
+      const currentUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+      });
+      const updatedUser = DatabaseFixtures.createUserResult({
+        id: 'current-user-id',
+        primary_household_id: 'new-household-id',
+        first_name: 'Updated',
+        display_name: 'Updated Display',
+      });
+
+      mockGuardedUserService.updateUser.mockResolvedValue({
+        user: updatedUser,
+      });
+
+      // Act
+      const result = await userResolver.updateUser(input, currentUser);
+
+      // Assert
+      expect(result).toMatchObject({
+        id: 'current-user-id',
+        primary_household_id: 'new-household-id',
+        first_name: 'Updated',
+        display_name: 'Updated Display',
+      });
       expect(mockGuardedUserService.updateUser).toHaveBeenCalledWith(
         input,
         currentUser,

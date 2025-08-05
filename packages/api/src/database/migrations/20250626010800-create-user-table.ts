@@ -22,6 +22,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .addColumn('permissions', 'jsonb')
     .addColumn('managed_by', 'uuid', (col) => col.references('user.id'))
     .addColumn('relationship_to_manager', 'varchar(50)')
+    .addColumn('primary_household_id', 'uuid')
     .addColumn('is_ai', 'boolean', (col) => col.notNull().defaultTo(false))
     .addColumn('created_at', 'timestamptz', (col) =>
       col.notNull().defaultTo(sql`now()`),
@@ -56,6 +57,13 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .createIndex('idx_user_is_ai')
     .on('user')
     .column('is_ai')
+    .execute();
+
+  // Create index for primary household
+  await db.schema
+    .createIndex('idx_user_primary_household')
+    .on('user')
+    .column('primary_household_id')
     .execute();
 }
 

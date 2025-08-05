@@ -570,4 +570,171 @@ describe('Household Resolver Integration Tests', () => {
       GraphQLTestUtils.assertNoErrors(response);
     });
   });
+
+  describe('createHousehold mutation', () => {
+    it('should create household and set as primary when user has no primary household', async () => {
+      // Arrange
+      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(
+        testRequest,
+        {},
+        db,
+      );
+
+      const createHouseholdInput = {
+        name: 'My First Household',
+        description: 'This is my first household',
+      };
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.CREATE_HOUSEHOLD,
+        sessionToken,
+        GraphQLTestUtils.createHouseholdInput(
+          createHouseholdInput.name,
+          createHouseholdInput.description,
+        ),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const createdHousehold = response.body.data.createHousehold;
+      expect(createdHousehold).toMatchObject({
+        name: 'My First Household',
+        description: 'This is my first household',
+        created_by: userId,
+      });
+
+      // Verify the user's primary household was set
+      const updatedUser = await db
+        .selectFrom('user')
+        .selectAll()
+        .where('id', '=', userId)
+        .executeTakeFirst();
+
+      expect(updatedUser?.primary_household_id).toBe(createdHousehold.id);
+    });
+
+    it('should create household but not change primary when user already has one', async () => {
+      // Arrange - Create user with an existing household (which becomes primary)
+      const { manager, householdId: existingHouseholdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0, // No additional members, just the creator
+        );
+
+      // Verify user has primary household set to the first one
+      const userBeforeSecondHousehold = await db
+        .selectFrom('user')
+        .selectAll()
+        .where('id', '=', manager.userId)
+        .executeTakeFirst();
+
+      expect(userBeforeSecondHousehold?.primary_household_id).toBe(
+        existingHouseholdId,
+      );
+
+      const createHouseholdInput = {
+        name: 'My Second Household',
+        description: 'This is my second household',
+      };
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.CREATE_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.createHouseholdInput(
+          createHouseholdInput.name,
+          createHouseholdInput.description,
+        ),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const createdHousehold = response.body.data.createHousehold;
+      expect(createdHousehold).toMatchObject({
+        name: 'My Second Household',
+        description: 'This is my second household',
+        created_by: manager.userId,
+      });
+
+      // Verify the user's primary household remained unchanged
+      const updatedUser = await db
+        .selectFrom('user')
+        .selectAll()
+        .where('id', '=', manager.userId)
+        .executeTakeFirst();
+
+      expect(updatedUser?.primary_household_id).toBe(existingHouseholdId);
+      expect(updatedUser?.primary_household_id).not.toBe(createdHousehold.id);
+    });
+
+    it('should create household via REST API and set as primary household', async () => {
+      // Arrange
+      const { userId, sessionToken } = await IntegrationTestModuleFactory.signUpTestUser(
+        testRequest,
+        {},
+        db,
+      );
+
+      const createHouseholdInput = {
+        name: 'REST API Household',
+        description: 'Created via REST API',
+      };
+
+      // Act
+      const response = await testRequest
+        .post('/api/household')
+        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .send(createHouseholdInput);
+
+      // Assert
+      expect(response.status).toBe(201);
+
+      const createdHousehold = response.body;
+      expect(createdHousehold).toMatchObject({
+        name: 'REST API Household',
+        description: 'Created via REST API',
+        created_by: userId,
+      });
+
+      // Verify the user's primary household was set
+      const updatedUser = await db
+        .selectFrom('user')
+        .selectAll()
+        .where('id', '=', userId)
+        .executeTakeFirst();
+
+      expect(updatedUser?.primary_household_id).toBe(createdHousehold.id);
+    });
+
+    it('should require authentication for createHousehold mutation', async () => {
+      // Arrange
+      const createHouseholdInput = {
+        name: 'Unauthorized Household',
+        description: 'This should fail',
+      };
+
+      // Act
+      const response = await GraphQLTestUtils.executeQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.CREATE_HOUSEHOLD,
+        GraphQLTestUtils.createHouseholdInput(
+          createHouseholdInput.name,
+          createHouseholdInput.description,
+        ),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Authentication required');
+    });
+  });
 });

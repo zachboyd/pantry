@@ -3,6 +3,8 @@ import type {
   Message,
   TypingIndicator,
   User,
+  Household,
+  HouseholdMember,
 } from '../../generated/database.js';
 
 /**
@@ -29,6 +31,7 @@ export class DatabaseFixtures {
       permissions: null,
       managed_by: null,
       relationship_to_manager: null,
+      primary_household_id: null,
       ...overrides,
     };
   }
@@ -59,6 +62,7 @@ export class DatabaseFixtures {
       permissions: baseUser.permissions,
       managed_by: baseUser.managed_by,
       relationship_to_manager: baseUser.relationship_to_manager,
+      primary_household_id: baseUser.primary_household_id,
       created_at: new Date(),
       updated_at: new Date(),
       is_ai: baseUser.is_ai || false,
@@ -218,5 +222,70 @@ export class DatabaseFixtures {
       display_name: 'Manager User',
       ...overrides,
     });
+  }
+
+  /**
+   * Creates a test household fixture
+   */
+  static createHousehold(
+    overrides: Partial<Insertable<Household>> = {},
+  ): Insertable<Household> {
+    return {
+      id: 'test-household-id',
+      name: 'Test Household',
+      description: 'A test household',
+      created_by: 'test-user-id',
+      ...overrides,
+    };
+  }
+
+  /**
+   * Creates a test household result (with generated fields)
+   */
+  static createHouseholdRecord(
+    overrides: Partial<Selectable<Household>> = {},
+  ): Selectable<Household> {
+    const baseHousehold = this.createHousehold();
+    return {
+      id: baseHousehold.id || 'test-household-id',
+      name: baseHousehold.name || 'Test Household',
+      description: baseHousehold.description || 'A test household',
+      created_by: baseHousehold.created_by || 'test-user-id',
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...overrides,
+    };
+  }
+
+  /**
+   * Creates a test household member fixture
+   */
+  static createHouseholdMember(
+    overrides: Partial<Insertable<HouseholdMember>> = {},
+  ): Insertable<HouseholdMember> {
+    return {
+      id: 'test-household-member-id',
+      household_id: 'test-household-id',
+      user_id: 'test-user-id',
+      role: 'member',
+      ...overrides,
+    };
+  }
+
+  /**
+   * Creates a test household member result (with generated fields)
+   */
+  static createHouseholdMemberRecord(
+    overrides: Partial<Selectable<HouseholdMember>> = {},
+  ): Selectable<HouseholdMember> {
+    const baseMember = this.createHouseholdMember();
+    return {
+      id: baseMember.id || 'test-household-member-id',
+      household_id: baseMember.household_id || 'test-household-id',
+      user_id: baseMember.user_id || 'test-user-id',
+      role: baseMember.role || 'member',
+      joined_at: new Date(),
+      ...overrides,
+    };
   }
 }

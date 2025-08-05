@@ -42,6 +42,9 @@ export class User {
   @Field({ nullable: true })
   relationship_to_manager?: string;
 
+  @Field({ nullable: true })
+  primary_household_id?: string;
+
   @Field()
   created_at: Date;
 
@@ -80,6 +83,9 @@ export class UpdateUserInput {
 
   @Field({ nullable: true })
   email?: string;
+
+  @Field({ nullable: true })
+  primary_household_id?: string;
 }
 
 @Resolver(() => User)

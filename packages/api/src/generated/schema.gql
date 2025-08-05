@@ -14,6 +14,7 @@ type User {
   birth_date: DateTime
   managed_by: String
   relationship_to_manager: String
+  primary_household_id: String
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -77,6 +78,7 @@ input UpdateUserInput {
   phone: String
   birth_date: DateTime
   email: String
+  primary_household_id: String
 }
 
 input CreateHouseholdInput {

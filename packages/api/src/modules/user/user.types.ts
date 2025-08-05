@@ -54,4 +54,12 @@ export interface UserService {
   updateUser(id: string, userData: Updateable<User>): Promise<UserRecord>;
   createUser(userData: Insertable<User>): Promise<UserRecord>;
   createAIUser(userData: Insertable<User>): Promise<UserRecord>;
+  
+  /**
+   * Set the primary household for a user
+   * @param userId - User ID
+   * @param householdId - Household ID to set as primary
+   * @returns Promise with updated user record
+   */
+  setPrimaryHousehold(userId: string, householdId: string): Promise<UserRecord>;
 }
