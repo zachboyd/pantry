@@ -84,8 +84,10 @@ export class GuardedHouseholdService {
     }
 
     // Check permissions - any authenticated user can create a household
-    const canCreate = await this.permissionService.canCreateHousehold(user.id);
-    if (!canCreate) {
+    const evaluator = await this.permissionService.getPermissionEvaluator(
+      user.id,
+    );
+    if (!evaluator.canCreateHousehold()) {
       throw new ForbiddenException(
         'Insufficient permissions to create household',
       );
@@ -119,11 +121,10 @@ export class GuardedHouseholdService {
     }
 
     // Check permissions - user must be a member of the household
-    const canRead = await this.permissionService.canReadHousehold(
+    const evaluator = await this.permissionService.getPermissionEvaluator(
       user.id,
-      householdId.trim(),
     );
-    if (!canRead) {
+    if (!evaluator.canReadHousehold(householdId.trim())) {
       throw new ForbiddenException(
         'Insufficient permissions to read this household',
       );
@@ -161,11 +162,10 @@ export class GuardedHouseholdService {
     }
 
     // Check permissions - user must be a manager of the household
-    const canManage = await this.permissionService.canManageHouseholdMember(
+    const evaluator = await this.permissionService.getPermissionEvaluator(
       user.id,
-      householdId.trim(),
     );
-    if (!canManage) {
+    if (!evaluator.canManageHouseholdMember(householdId.trim())) {
       throw new ForbiddenException('Only household managers can add members');
     }
 
@@ -197,11 +197,10 @@ export class GuardedHouseholdService {
     }
 
     // Check permissions - user must be a manager of the household
-    const canManage = await this.permissionService.canManageHouseholdMember(
+    const evaluator = await this.permissionService.getPermissionEvaluator(
       user.id,
-      householdId.trim(),
     );
-    if (!canManage) {
+    if (!evaluator.canManageHouseholdMember(householdId.trim())) {
       throw new ForbiddenException(
         'Only household managers can remove members',
       );
@@ -238,11 +237,10 @@ export class GuardedHouseholdService {
     }
 
     // Check permissions - user must be a manager of the household
-    const canManage = await this.permissionService.canManageHouseholdMember(
+    const evaluator = await this.permissionService.getPermissionEvaluator(
       user.id,
-      householdId.trim(),
     );
-    if (!canManage) {
+    if (!evaluator.canManageHouseholdMember(householdId.trim())) {
       throw new ForbiddenException(
         'Only household managers can change member roles',
       );
@@ -266,12 +264,7 @@ export class GuardedHouseholdService {
     }
 
     // Check permissions - any authenticated user can list their own households
-    const canList = await this.permissionService.canListHouseholds(user.id);
-    if (!canList) {
-      throw new ForbiddenException(
-        'Insufficient permissions to list households',
-      );
-    }
+    // No explicit permission check needed - all authenticated users can list their households
 
     // Delegate to service
     const households = await this.householdService.getHouseholdsForUser(
@@ -295,11 +288,10 @@ export class GuardedHouseholdService {
     }
 
     // Check permissions - user must be a member of the household
-    const canRead = await this.permissionService.canReadHousehold(
+    const evaluator = await this.permissionService.getPermissionEvaluator(
       user.id,
-      householdId.trim(),
     );
-    if (!canRead) {
+    if (!evaluator.canReadHousehold(householdId.trim())) {
       throw new ForbiddenException(
         'Insufficient permissions to view household members',
       );

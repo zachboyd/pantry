@@ -1,12 +1,18 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { ObjectType, Field, InputType } from '@nestjs/graphql';
+import { GraphQLJSON } from 'graphql-type-json';
 import { CurrentUser } from '../../auth/auth.decorator.js';
 import { TOKENS } from '../../../common/tokens.js';
-import type { UserRecord } from '../user.types.js';
+import type {
+  UserRecord,
+  UserPreferences,
+  UserPermissions,
+} from '../user.types.js';
 import { GuardedUserService } from './guarded-user.service.js';
 
 // GraphQL Types
+
 @ObjectType()
 export class User {
   @Field()
@@ -44,6 +50,15 @@ export class User {
 
   @Field({ nullable: true })
   primary_household_id?: string;
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  permissions?: UserPermissions;
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  preferences?: UserPreferences;
+
+  @Field()
+  is_ai: boolean;
 
   @Field()
   created_at: Date;
@@ -86,6 +101,9 @@ export class UpdateUserInput {
 
   @Field({ nullable: true })
   primary_household_id?: string;
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  preferences?: UserPreferences;
 }
 
 @Resolver(() => User)
@@ -95,19 +113,27 @@ export class UserResolver {
     private readonly guardedUserService: GuardedUserService,
   ) {}
 
+  private transformUserForGraphQL(user: UserRecord): User {
+    return {
+      ...user,
+      permissions: user.permissions as UserPermissions,
+      preferences: user.preferences as UserPreferences,
+    };
+  }
+
   @Query(() => User)
   async user(
     @Args('input') input: GetUserInput,
     @CurrentUser() user: UserRecord | null,
   ): Promise<User> {
     const result = await this.guardedUserService.getUser(input.id, user);
-    return result.user;
+    return this.transformUserForGraphQL(result.user);
   }
 
   @Query(() => User)
   async currentUser(@CurrentUser() user: UserRecord | null): Promise<User> {
     const result = await this.guardedUserService.getCurrentUser(user);
-    return result.user;
+    return this.transformUserForGraphQL(result.user);
   }
 
   @Mutation(() => User)
@@ -116,6 +142,6 @@ export class UserResolver {
     @CurrentUser() user: UserRecord | null,
   ): Promise<User> {
     const result = await this.guardedUserService.updateUser(input, user);
-    return result.user;
+    return this.transformUserForGraphQL(result.user);
   }
 }

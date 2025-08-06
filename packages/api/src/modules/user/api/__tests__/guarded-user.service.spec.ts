@@ -10,6 +10,7 @@ import { GuardedUserService } from '../guarded-user.service.js';
 import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
 import { PermissionServiceMock } from '../../../../test/mocks/permission-service.mock.js';
+import { PermissionEvaluatorMock } from '../../../../test/mocks/permission-evaluator.mock.js';
 import { UserServiceMock } from '../../../../test/mocks/user-service.mock.js';
 import type { PermissionServiceMockType } from '../../../../test/mocks/permission-service.mock.js';
 import type { UserServiceMockType } from '../../../../test/mocks/user-service.mock.js';
@@ -128,7 +129,9 @@ describe('GuardedUserService', () => {
         },
       );
       // Permission check should not be called for own profile
-      expect(mockPermissionService.canViewUser).not.toHaveBeenCalled();
+      expect(
+        mockPermissionService.getPermissionEvaluator,
+      ).not.toHaveBeenCalled();
     });
 
     it('should filter out undefined values when updating own profile', async () => {
@@ -182,8 +185,15 @@ describe('GuardedUserService', () => {
         id: 'other-user-id',
       });
 
+      // Setup mock evaluator to deny permission
+      const mockEvaluator =
+        PermissionEvaluatorMock.createPermissionEvaluatorMock({
+          canUpdate: false,
+        });
       mockUserService.getUserById = vi.fn().mockResolvedValue(targetUser);
-      mockPermissionService.canUpdateUser = vi.fn().mockResolvedValue(false);
+      mockPermissionService.getPermissionEvaluator = vi
+        .fn()
+        .mockResolvedValue(mockEvaluator);
 
       // Act & Assert
       await expect(service.updateUser(input, currentUser)).rejects.toThrow(
@@ -192,10 +202,12 @@ describe('GuardedUserService', () => {
       await expect(service.updateUser(input, currentUser)).rejects.toThrow(
         'You do not have permission to update this user',
       );
-      expect(mockPermissionService.canUpdateUser).toHaveBeenCalledWith(
+
+      // Verify permissions were checked
+      expect(mockPermissionService.getPermissionEvaluator).toHaveBeenCalledWith(
         'current-user-id',
-        'other-user-id',
       );
+      expect(mockEvaluator.canUpdateUser).toHaveBeenCalledWith('other-user-id');
     });
 
     it('should allow updating other users when user has permission', async () => {
@@ -217,8 +229,15 @@ describe('GuardedUserService', () => {
         phone: '+1234567890',
       });
 
+      // Setup mock evaluator to allow permission
+      const mockEvaluator =
+        PermissionEvaluatorMock.createPermissionEvaluatorMock({
+          canUpdate: true,
+        });
       mockUserService.getUserById = vi.fn().mockResolvedValue(targetUser);
-      mockPermissionService.canUpdateUser = vi.fn().mockResolvedValue(true);
+      mockPermissionService.getPermissionEvaluator = vi
+        .fn()
+        .mockResolvedValue(mockEvaluator);
       mockUserService.updateUser = vi.fn().mockResolvedValue(updatedUser);
 
       // Act
@@ -226,10 +245,10 @@ describe('GuardedUserService', () => {
 
       // Assert
       expect(result.user).toEqual(updatedUser);
-      expect(mockPermissionService.canUpdateUser).toHaveBeenCalledWith(
+      expect(mockPermissionService.getPermissionEvaluator).toHaveBeenCalledWith(
         'current-user-id',
-        'other-user-id',
       );
+      expect(mockEvaluator.canUpdateUser).toHaveBeenCalledWith('other-user-id');
       expect(mockUserService.updateUser).toHaveBeenCalledWith('other-user-id', {
         first_name: 'Updated',
         phone: '+1234567890',

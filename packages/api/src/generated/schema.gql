@@ -15,6 +15,9 @@ type User {
   managed_by: String
   relationship_to_manager: String
   primary_household_id: String
+  permissions: JSON
+  preferences: JSON
+  is_ai: Boolean!
   created_at: DateTime!
   updated_at: DateTime!
 }
@@ -23,6 +26,11 @@ type User {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
 
 type Household {
   id: String!
@@ -79,6 +87,7 @@ input UpdateUserInput {
   birth_date: DateTime
   email: String
   primary_household_id: String
+  preferences: JSON
 }
 
 input CreateHouseholdInput {

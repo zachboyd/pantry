@@ -29,42 +29,39 @@ export class AbilityFactory {
     can('read', 'User', { id: context.userId }); // Can read own profile
     can('create', 'Household'); // All authenticated users can create households
 
-    // Only non-AI users can update their profile by default
-    // AI users get restricted update permissions later
-    if (
-      aiHouseholdIds.length === 0 ||
-      managerHouseholdIds.length > 0 ||
-      memberHouseholdIds.length > 0
-    ) {
-      can('update', 'User', { id: context.userId }); // Can update own profile
-    }
+    // All users can update their own profile
+    can('update', 'User', { id: context.userId });
 
-    // All authenticated users can update users they manage (unless they are pure AI users)
+    // Users can update users they manage directly (using pre-packed context)
     if (
+      context.managedUsers.length > 0 &&
       !(
         aiHouseholdIds.length > 0 &&
         managerHouseholdIds.length === 0 &&
         memberHouseholdIds.length === 0
       )
     ) {
-      can('update', 'User', { managed_by: context.userId });
+      can('update', 'User', { id: { $in: context.managedUsers } });
     }
 
-    // Household managers can update AI users in households they manage
+    // Household managers can update AI users in households they manage (using pre-packed context)
     if (managerHouseholdIds.length > 0) {
-      can('update', 'User', {
-        $and: [
-          { is_ai: true },
-          { 'household_members.household_id': { $in: managerHouseholdIds } },
-        ],
-      });
+      const manageableAiUsers: string[] = [];
+      for (const householdId of managerHouseholdIds) {
+        if (context.aiUsers[householdId]) {
+          manageableAiUsers.push(...context.aiUsers[householdId]);
+        }
+      }
+      if (manageableAiUsers.length > 0) {
+        can('update', 'User', { id: { $in: manageableAiUsers } });
+      }
     }
 
     // Apply consolidated role-based permissions
     this.defineConsolidatedPermissions(
       can,
       cannot,
-      context.userId,
+      context,
       allHouseholdIds,
       managerHouseholdIds,
       memberHouseholdIds,
@@ -85,12 +82,13 @@ export class AbilityFactory {
       subject: Subject | Subject[],
       conditions?: Record<string, unknown>,
     ) => void,
-    userId: string,
+    context: UserContext,
     allHouseholdIds: string[],
     managerHouseholdIds: string[],
     memberHouseholdIds: string[],
     aiHouseholdIds: string[],
   ): void {
+    const { userId } = context;
     // Household permissions using $in for multiple households
     if (managerHouseholdIds.length > 0) {
       can('manage', 'Household', { id: { $in: managerHouseholdIds } });
@@ -143,17 +141,20 @@ export class AbilityFactory {
       can('read', 'Pantry', { household_id: { $in: allHouseholdIds } });
     }
 
-    // User permissions - properly restricted to household members
+    // User permissions - using pre-packed context for household members
     if (allHouseholdIds.length > 0) {
-      // All household members can read users in same households
-      can('read', 'User', {
-        $or: [
-          { id: userId }, // Own profile
-          { 'household_members.household_id': { $in: allHouseholdIds } },
-        ],
-      });
+      const readableUsers: string[] = [userId]; // Always include own profile
 
-      // Additional update permissions for managers are now handled globally above
+      // Add all household members from pre-packed context
+      for (const householdId of allHouseholdIds) {
+        if (context.householdMembers[householdId]) {
+          readableUsers.push(...context.householdMembers[householdId]);
+        }
+      }
+
+      // Remove duplicates and allow reading these specific users
+      const uniqueReadableUsers = [...new Set(readableUsers)];
+      can('read', 'User', { id: { $in: uniqueReadableUsers } });
     }
 
     // AI-specific restrictions

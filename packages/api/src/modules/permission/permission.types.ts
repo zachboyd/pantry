@@ -26,6 +26,10 @@ export interface UserContext {
     householdId: string;
     role: HouseholdRole;
   }>;
+  // Pre-packed context to avoid database queries during permission checks
+  managedUsers: string[]; // User IDs this user can manage directly
+  householdMembers: Record<string, string[]>; // householdId -> array of member user IDs
+  aiUsers: Record<string, string[]>; // householdId -> array of AI user IDs in that household
 }
 
 // Serialized permissions stored in database
@@ -40,21 +44,53 @@ export interface SerializedPermissions {
   version: string; // for future migrations of permission format
 }
 
+// Forward declaration for PermissionEvaluator to avoid circular imports
+export interface PermissionEvaluator {
+  canUpdateUser(targetUserId: string): boolean;
+  canReadUser(targetUserId: string): boolean;
+  canCreateUser(): boolean;
+  canDeleteUser(targetUserId: string): boolean;
+  canManageHousehold(householdId: string): boolean;
+  canReadHousehold(householdId: string): boolean;
+  canCreateHousehold(): boolean;
+  canUpdateHousehold(householdId: string): boolean;
+  canDeleteHousehold(householdId: string): boolean;
+  canManageHouseholdMember(householdId: string): boolean;
+  canReadHouseholdMember(householdId: string): boolean;
+  canCreateHouseholdMember(householdId: string): boolean;
+  canUpdateHouseholdMember(householdId: string, targetRole?: string): boolean;
+  canDeleteHouseholdMember(householdId: string): boolean;
+  canManageMessage(householdId: string): boolean;
+  canCreateMessage(householdId: string): boolean;
+  canReadMessage(householdId: string): boolean;
+  canUpdateOwnMessage(
+    messageId: string,
+    householdId: string,
+    authorId: string,
+  ): boolean;
+  canDeleteOwnMessage(
+    messageId: string,
+    householdId: string,
+    authorId: string,
+  ): boolean;
+  canUpdateAnyMessage(messageId: string, householdId: string): boolean;
+  canDeleteAnyMessage(messageId: string, householdId: string): boolean;
+  canManagePantry(householdId: string): boolean;
+  canReadPantry(householdId: string): boolean;
+  canCreatePantryItem(householdId: string): boolean;
+  canUpdatePantryItem(householdId: string): boolean;
+  canDeletePantryItem(householdId: string): boolean;
+  getRawAbility(): AppAbility;
+  hasAnyPermission(subject: string): boolean;
+}
+
 // Service interface
 export interface PermissionService {
   computeUserPermissions(userId: string): Promise<AppAbility>;
   getUserPermissions(userId: string): Promise<AppAbility | null>;
 
-  // Permission check methods with proper object types
-  canCreateHousehold(userId: string): Promise<boolean>;
-  canReadHousehold(userId: string, householdId: string): Promise<boolean>;
-  canManageHouseholdMember(
-    userId: string,
-    householdId: string,
-  ): Promise<boolean>;
-  canViewUser(currentUserId: string, targetUserId: string): Promise<boolean>;
-  canUpdateUser(currentUserId: string, targetUserId: string): Promise<boolean>;
-  canListHouseholds(userId: string): Promise<boolean>;
+  // Primary permission evaluation method
+  getPermissionEvaluator(userId: string): Promise<PermissionEvaluator>;
 
   // Cache invalidation methods
   invalidateUserPermissions(userId: string): Promise<void>;

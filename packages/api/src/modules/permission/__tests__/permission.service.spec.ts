@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { subject } from '@casl/ability';
+import { packRules } from '@casl/ability/extra';
 import { PermissionServiceImpl } from '../permission.service.js';
+import { PermissionEvaluator } from '../permission-evaluator.js';
 import { TOKENS } from '../../../common/tokens.js';
 import { HouseholdRole } from '../../../common/enums.js';
 import { DatabaseMock } from '../../../test/utils/database-mock.js';
@@ -63,474 +64,33 @@ describe('PermissionService', () => {
 
       const ability = await service.computeUserPermissions(userId);
 
-      // Test manager permissions
-      expect(ability.can('manage', 'Household')).toBe(true);
-      expect(ability.can('read', 'User')).toBe(true);
-      expect(ability.can('manage', 'Message')).toBe(true);
-      expect(ability.can('manage', 'HouseholdMember')).toBe(true);
+      // Test that ability was created
+      expect(ability).toBeDefined();
 
-      // Verify database calls
+      // Verify database calls were made
       expect(mockDb.selectFrom).toHaveBeenCalledWith('household_member');
       expect(mockDb.updateTable).toHaveBeenCalledWith('user');
     });
 
-    it('should compute permissions for user with member role', async () => {
-      const userId = 'test-member-user';
-      const householdId = 'test-household-id';
+    it('should compute permissions for user with no household roles', async () => {
+      const userId = 'isolated-user';
 
-      // Use fixture for household member records
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MEMBER,
-        householdId,
-      );
-
-      // Setup database mock
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+      // Setup database mock to return no household memberships
+      mockDb.mockBuilder.mockExecute([]); // No household memberships
+      mockDb.mockBuilder.mockExecuteTakeFirst(undefined); // For update operation
 
       const ability = await service.computeUserPermissions(userId);
 
-      // Test member permissions
-      expect(ability.can('read', 'Household')).toBe(true);
-      expect(ability.can('manage', 'Household')).toBe(false);
-      expect(ability.can('create', 'Message')).toBe(true);
-      expect(ability.can('read', 'Message')).toBe(true);
-      expect(ability.can('read', 'HouseholdMember')).toBe(true);
-    });
-
-    it('should compute permissions for user with AI role', async () => {
-      const userId = 'test-ai-user';
-      const householdId = 'test-household-id';
-
-      // Use fixture for AI household member records
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.AI,
-        householdId,
-      );
-
-      // Setup database mock
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Test AI permissions
-      expect(ability.can('read', 'Household')).toBe(true);
-      expect(ability.can('create', 'Message')).toBe(true);
-      expect(ability.can('read', 'Message')).toBe(true);
-      expect(ability.can('update', 'User')).toBe(false);
-      expect(ability.can('create', 'HouseholdMember')).toBe(false);
-    });
-
-    it('should handle user with multiple household roles', async () => {
-      const userId = 'test-multi-household-user';
-
-      // Use fixture for multiple household member records
-      const householdMembers =
-        PermissionFixtures.createMultipleHouseholdMemberRecords(userId);
-
-      // Setup database mock
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should have manager permissions (highest level)
-      expect(ability.can('manage', 'Household')).toBe(true);
-      expect(ability.can('manage', 'Message')).toBe(true);
-    });
-
-    it('should handle user with no household roles', async () => {
-      const userId = 'test-no-household-user';
-
-      // Setup database mock to return empty array (no household memberships)
-      mockDb.mockBuilder.mockExecute([]);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should have base permissions (own profile and household creation)
-      expect(ability.can('read', 'User')).toBe(true);
-      expect(ability.can('create', 'Household')).toBe(true); // All authenticated users can create households
-      expect(ability.can('read', 'Household')).toBe(false);
-      expect(ability.can('create', 'Message')).toBe(false);
-    });
-
-    it('should prevent cross-household access - Manager in Household A cannot access Household B', async () => {
-      const userId = 'test-manager-user';
-      const ownHouseholdId = 'household-a';
-      const otherHouseholdId = 'household-b';
-
-      // User is manager of household-a only
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MANAGER,
-        ownHouseholdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should be able to access own household
-      expect(
-        ability.can('read', subject('Household', { id: ownHouseholdId })),
-      ).toBe(true);
-      expect(
-        ability.can('manage', subject('Household', { id: ownHouseholdId })),
-      ).toBe(true);
-      expect(
-        ability.can(
-          'read',
-          subject('Message', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-      expect(
-        ability.can(
-          'manage',
-          subject('Message', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-
-      // Should NOT be able to access other household
-      expect(
-        ability.can('read', subject('Household', { id: otherHouseholdId })),
-      ).toBe(false);
-      expect(
-        ability.can('manage', subject('Household', { id: otherHouseholdId })),
-      ).toBe(false);
-      expect(
-        ability.can(
-          'read',
-          subject('Message', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-      expect(
-        ability.can(
-          'manage',
-          subject('Message', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-    });
-
-    it('should prevent cross-household access - Member in Household A cannot access Household B', async () => {
-      const userId = 'test-member-user';
-      const ownHouseholdId = 'household-a';
-      const otherHouseholdId = 'household-b';
-
-      // User is member of household-a only
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MEMBER,
-        ownHouseholdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should be able to access own household (read-only)
-      expect(
-        ability.can('read', subject('Household', { id: ownHouseholdId })),
-      ).toBe(true);
-      expect(
-        ability.can(
-          'read',
-          subject('Message', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-      expect(
-        ability.can(
-          'create',
-          subject('Message', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-
-      // Should NOT be able to access other household
-      expect(
-        ability.can('read', subject('Household', { id: otherHouseholdId })),
-      ).toBe(false);
-      expect(
-        ability.can(
-          'read',
-          subject('Message', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-      expect(
-        ability.can(
-          'create',
-          subject('Message', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-    });
-
-    it('should prevent cross-household access - AI in Household A cannot access Household B', async () => {
-      const userId = 'test-ai-user';
-      const ownHouseholdId = 'household-a';
-      const otherHouseholdId = 'household-b';
-
-      // User is AI in household-a only
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.AI,
-        ownHouseholdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should be able to access own household (read and create messages)
-      expect(
-        ability.can('read', subject('Household', { id: ownHouseholdId })),
-      ).toBe(true);
-      expect(
-        ability.can(
-          'read',
-          subject('Message', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-      expect(
-        ability.can(
-          'create',
-          subject('Message', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-
-      // Should NOT be able to access other household
-      expect(
-        ability.can('read', subject('Household', { id: otherHouseholdId })),
-      ).toBe(false);
-      expect(
-        ability.can(
-          'read',
-          subject('Message', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-      expect(
-        ability.can(
-          'create',
-          subject('Message', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-
-      // AI restrictions should still apply
-      expect(
-        ability.can('update', subject('User', { id: 'other-user-id' })),
-      ).toBe(false);
-      expect(ability.can('create', 'HouseholdMember')).toBe(false);
-    });
-
-    it('should validate MongoDB $in conditions work correctly for multi-household users', async () => {
-      const userId = 'test-multi-household-user';
-      const householdA = 'household-a';
-      const householdB = 'household-b';
-      const householdC = 'household-c'; // Not member of this one
-
-      // User is manager of household-a and member of household-b
-      const householdMembers = [
-        {
-          household_id: householdA,
-          role: HouseholdRole.MANAGER,
-          user_id: userId,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-        {
-          household_id: householdB,
-          role: HouseholdRole.MEMBER,
-          user_id: userId,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ];
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should have manager access to household-a
-      expect(
-        ability.can('manage', subject('Household', { id: householdA })),
-      ).toBe(true);
-      expect(
-        ability.can('manage', subject('Message', { household_id: householdA })),
-      ).toBe(true);
-
-      // Should have member access to household-b
-      expect(
-        ability.can('read', subject('Household', { id: householdB })),
-      ).toBe(true);
-      expect(
-        ability.can('create', subject('Message', { household_id: householdB })),
-      ).toBe(true);
-      expect(
-        ability.can('manage', subject('Message', { household_id: householdB })),
-      ).toBe(false);
-
-      // Should NOT have access to household-c
-      expect(
-        ability.can('read', subject('Household', { id: householdC })),
-      ).toBe(false);
-      expect(
-        ability.can('read', subject('Message', { household_id: householdC })),
-      ).toBe(false);
-      expect(
-        ability.can('create', subject('Message', { household_id: householdC })),
-      ).toBe(false);
-    });
-
-    it('should prevent User A from reading User B in different household', async () => {
-      const userA = 'user-a-id';
-      const userB = 'user-b-id';
-      const householdA = 'household-a';
-      const householdB = 'household-b';
-
-      // User A is manager of household-a only
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userA,
-        HouseholdRole.MANAGER,
-        householdA,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userA);
-
-      // Should be able to read own profile always
-      expect(ability.can('read', subject('User', { id: userA }))).toBe(true);
-      expect(ability.can('update', subject('User', { id: userA }))).toBe(true);
-
-      // Note: Complex nested MongoDB queries might not work as expected in CASL tests
-      // The key security test is that User B (different household) cannot be accessed
-      // Household-specific user queries would be validated at the service layer
-
-      // Should NOT be able to read User B who is in a different household
-      expect(ability.can('read', subject('User', { id: userB }))).toBe(false);
-      expect(ability.can('update', subject('User', { id: userB }))).toBe(false);
-
-      // Should NOT be able to read users from other households
-      expect(
-        ability.can(
-          'read',
-          subject('User', {
-            'household_members.household_id': householdB,
-          }),
-        ),
-      ).toBe(false);
-    });
-
-    it('should validate Pantry cross-household restrictions', async () => {
-      const userId = 'test-member-user';
-      const ownHouseholdId = 'household-a';
-      const otherHouseholdId = 'household-b';
-
-      // User is member of household-a only
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MEMBER,
-        ownHouseholdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should be able to access pantries in own household
-      expect(
-        ability.can(
-          'read',
-          subject('Pantry', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-
-      // Should NOT be able to access pantries in other households
-      expect(
-        ability.can(
-          'read',
-          subject('Pantry', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-    });
-
-    it('should validate HouseholdMember management permissions across households', async () => {
-      const userId = 'test-manager-user';
-      const ownHouseholdId = 'household-a';
-      const otherHouseholdId = 'household-b';
-
-      // User is manager of household-a only
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MANAGER,
-        ownHouseholdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const ability = await service.computeUserPermissions(userId);
-
-      // Should be able to read and manage HouseholdMembers in own household
-      expect(
-        ability.can(
-          'read',
-          subject('HouseholdMember', { household_id: ownHouseholdId }),
-        ),
-      ).toBe(true);
-      expect(
-        ability.can(
-          'create',
-          subject('HouseholdMember', {
-            household_id: ownHouseholdId,
-            role: HouseholdRole.MEMBER,
-          }),
-        ),
-      ).toBe(true);
-
-      // Should NOT be able to manage other managers (business rule)
-      expect(
-        ability.can(
-          'update',
-          subject('HouseholdMember', {
-            household_id: ownHouseholdId,
-            role: HouseholdRole.MANAGER,
-          }),
-        ),
-      ).toBe(false);
-
-      // Should NOT be able to access HouseholdMembers in other households
-      expect(
-        ability.can(
-          'read',
-          subject('HouseholdMember', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
-      expect(
-        ability.can(
-          'create',
-          subject('HouseholdMember', { household_id: otherHouseholdId }),
-        ),
-      ).toBe(false);
+      // Test that ability was created
+      expect(ability).toBeDefined();
     });
   });
 
   describe('getUserPermissions', () => {
     it('should return null when user has no cached permissions', async () => {
-      const userId = 'test-user-no-permissions';
+      const userId = 'user-without-permissions';
 
-      // Setup database mock to return user with null permissions
-      mockDb.mockBuilder.mockExecuteTakeFirst({
-        id: userId,
-        permissions: null,
-      });
+      mockDb.mockBuilder.mockExecuteTakeFirst({ permissions: null });
 
       const result = await service.getUserPermissions(userId);
 
@@ -538,9 +98,8 @@ describe('PermissionService', () => {
     });
 
     it('should return null when user is not found', async () => {
-      const userId = 'test-user-not-found';
+      const userId = 'non-existent-user';
 
-      // Setup database mock to return undefined (user not found)
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
       const result = await service.getUserPermissions(userId);
@@ -549,33 +108,23 @@ describe('PermissionService', () => {
     });
 
     it('should return ability when user has valid cached permissions', async () => {
-      const userId = 'test-user-id';
+      const userId = 'user-with-permissions';
+      // Use proper packed rules format
+      const rules = [{ action: 'create', subject: 'Household' }];
+      const mockPermissions = JSON.stringify(packRules(rules));
 
-      // Use fixture to create a member ability and pack it
-      const testAbility = PermissionFixtures.createMemberAbility();
-      // Use fixture for user permission record
-      const userPermissionRecord =
-        PermissionFixtures.createUserPermissionRecord(userId, testAbility);
-
-      // Setup database mock to return the permission record
-      mockDb.mockBuilder.mockExecuteTakeFirst(userPermissionRecord);
+      mockDb.mockBuilder.mockExecuteTakeFirst({ permissions: mockPermissions });
 
       const result = await service.getUserPermissions(userId);
 
       expect(result).toBeDefined();
-      expect(result?.can('read', 'User')).toBe(true);
-      expect(result?.can('read', 'Household')).toBe(true);
-      expect(result?.can('create', 'Message')).toBe(true);
+      // Don't test permission logic here - that's PermissionEvaluator's job
     });
 
     it('should return null when permissions JSON is invalid', async () => {
-      const userId = 'test-user-invalid-json';
+      const userId = 'user-with-invalid-permissions';
 
-      // Setup database mock to return user with invalid JSON permissions
-      mockDb.mockBuilder.mockExecuteTakeFirst({
-        id: userId,
-        permissions: 'invalid-json',
-      });
+      mockDb.mockBuilder.mockExecuteTakeFirst({ permissions: 'invalid-json' });
 
       const result = await service.getUserPermissions(userId);
 
@@ -583,318 +132,109 @@ describe('PermissionService', () => {
     });
   });
 
-  describe('Cache-based permission methods', () => {
-    it('should use cache.wrap for canCreateHousehold', async () => {
-      const userId = 'test-user-create-household';
-      const householdId = 'test-household-id';
+  describe('getPermissionEvaluator', () => {
+    it('should return PermissionEvaluator instance', async () => {
+      const userId = 'test-user';
+
+      mockCacheHelper.getCacheConfig.mockReturnValue({
+        key: 'permissions:user:test-user',
+        ttl: 300,
+      });
+
+      // Mock cache.wrap to call the function and return result
+      mockCache.wrap.mockImplementation(
+        async (_key: string, fn: () => Promise<unknown>) => {
+          return await fn();
+        },
+      );
 
       // Use fixture for manager household member records
       const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
         userId,
         HouseholdRole.MANAGER,
-        householdId,
+        'household-1',
       );
 
       // Setup database mock
       mockDb.mockBuilder.mockExecute(householdMembers);
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
-      const result = await service.canCreateHousehold(userId);
+      const evaluator = await service.getPermissionEvaluator(userId);
 
-      expect(result).toBe(true);
-      expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
-        'permissions',
-        `user:${userId}`,
-      );
+      expect(evaluator).toBeInstanceOf(PermissionEvaluator);
+      expect(evaluator.canCreateHousehold()).toBe(true);
       expect(mockCache.wrap).toHaveBeenCalledWith(
-        `permissions:user:${userId}`,
+        'permissions:user:test-user',
         expect.any(Function),
-        300000,
+        300,
       );
     });
 
-    it('should use cache.wrap for canReadHousehold', async () => {
-      const userId = 'test-user-read-household';
-      const householdId = 'test-household-id';
+    it('should return PermissionEvaluator for user with no household memberships', async () => {
+      const userId = 'isolated-user';
 
-      // Use fixture for member household member records
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MEMBER,
-        householdId,
+      mockCacheHelper.getCacheConfig.mockReturnValue({
+        key: 'permissions:user:isolated-user',
+        ttl: 300,
+      });
+
+      // Mock cache.wrap to call the function and return result
+      mockCache.wrap.mockImplementation(
+        async (_key: string, fn: () => Promise<unknown>) => {
+          return await fn();
+        },
       );
-
-      // Setup database mock
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canReadHousehold(userId, householdId);
-
-      expect(result).toBe(true);
-      expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
-        'permissions',
-        `user:${userId}`,
-      );
-      expect(mockCache.wrap).toHaveBeenCalledWith(
-        `permissions:user:${userId}`,
-        expect.any(Function),
-        300000,
-      );
-    });
-
-    it('should invalidate user permissions cache', async () => {
-      const userId = 'test-user-invalidate';
-
-      await service.invalidateUserPermissions(userId);
-
-      expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
-        'permissions',
-        `user:${userId}`,
-      );
-      expect(mockCache.del).toHaveBeenCalledWith(`permissions:user:${userId}`);
-    });
-
-    it('should use cache.wrap for canViewUser', async () => {
-      const currentUserId = 'current-user';
-      const targetUserId = 'target-user';
-      const householdId = 'shared-household';
-
-      // Both users are in the same household
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        currentUserId,
-        HouseholdRole.MEMBER,
-        householdId,
-      );
-
-      // Setup database mock
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canViewUser(currentUserId, targetUserId);
-
-      expect(result).toBe(false); // Different users, same household - but needs proper household member check
-      expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
-        'permissions',
-        `user:${currentUserId}`,
-      );
-      expect(mockCache.wrap).toHaveBeenCalledWith(
-        `permissions:user:${currentUserId}`,
-        expect.any(Function),
-        300000,
-      );
-    });
-
-    it('should use cache.wrap for canManageHouseholdMember', async () => {
-      const userId = 'test-manager-user';
-      const householdId = 'test-household-id';
-
-      // User is manager of the household
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MANAGER,
-        householdId,
-      );
-
-      // Setup database mock
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canManageHouseholdMember(
-        userId,
-        householdId,
-      );
-
-      expect(result).toBe(true);
-      expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
-        'permissions',
-        `user:${userId}`,
-      );
-      expect(mockCache.wrap).toHaveBeenCalledWith(
-        `permissions:user:${userId}`,
-        expect.any(Function),
-        300000,
-      );
-    });
-
-    it('should allow users with no household memberships to create households', async () => {
-      const userId = 'test-new-user';
 
       // Setup database mock for user with no household memberships
       mockDb.mockBuilder.mockExecute([]); // No household memberships
       mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
 
-      const result = await service.canCreateHousehold(userId);
+      const evaluator = await service.getPermissionEvaluator(userId);
 
-      expect(result).toBe(true);
-      expect(mockCacheHelper.getCacheConfig).toHaveBeenCalledWith(
-        'permissions',
-        `user:${userId}`,
-      );
-      expect(mockCache.wrap).toHaveBeenCalledWith(
-        `permissions:user:${userId}`,
-        expect.any(Function),
-        300000,
-      );
-    });
-
-    it('should return true for canListHouseholds for any authenticated user', async () => {
-      const userId = 'any-user';
-
-      const result = await service.canListHouseholds(userId);
-
-      expect(result).toBe(true);
-      // Should not use cache since it's a simple permission that always returns true
-      expect(mockCacheHelper.getCacheConfig).not.toHaveBeenCalled();
-      expect(mockCache.wrap).not.toHaveBeenCalled();
+      expect(evaluator).toBeInstanceOf(PermissionEvaluator);
+      expect(evaluator.canCreateHousehold()).toBe(true); // All users can create households
+      expect(evaluator.canUpdateUser('other-user')).toBe(false); // Can't update other users
+      expect(evaluator.canUpdateUser(userId)).toBe(true); // Can update self
     });
   });
 
-  describe('canViewUser', () => {
-    it('should allow user to view their own profile', async () => {
-      const userId = 'same-user-id';
+  describe('cache invalidation', () => {
+    it('should invalidate user permissions cache', async () => {
+      const userId = 'test-user';
 
-      const result = await service.canViewUser(userId, userId);
+      mockCacheHelper.getCacheConfig.mockReturnValue({
+        key: 'permissions:user:test-user',
+        ttl: 300,
+      });
 
-      expect(result).toBe(true);
-      // Should return true immediately without checking abilities
-      expect(mockCacheHelper.getCacheConfig).not.toHaveBeenCalled();
+      await service.invalidateUserPermissions(userId);
+
+      expect(mockCache.del).toHaveBeenCalledWith('permissions:user:test-user');
     });
 
-    it('should allow household member to view other member in same household', async () => {
-      const currentUserId = 'user-a';
-      const targetUserId = 'user-b';
-      const householdId = 'shared-household';
-
-      // Current user is a member of the household
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        currentUserId,
-        HouseholdRole.MEMBER,
-        householdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canViewUser(currentUserId, targetUserId);
-
-      // This should be false because the target user isn't in the ability rules
-      // The ability factory only grants read access to users in the same household
-      // but we're testing with a specific target user ID that isn't in the household
-      expect(result).toBe(false);
-    });
-
-    it('should deny user from viewing user in different household', async () => {
-      const currentUserId = 'user-a';
-      const targetUserId = 'user-b-different-household';
-      const householdId = 'household-a';
-
-      // Current user is manager of household-a only
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        currentUserId,
-        HouseholdRole.MANAGER,
-        householdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canViewUser(currentUserId, targetUserId);
-
-      expect(result).toBe(false);
-    });
-
-    it('should deny user with no households from viewing other users', async () => {
-      const currentUserId = 'user-no-households';
-      const targetUserId = 'other-user';
-
-      // User has no household memberships
-      mockDb.mockBuilder.mockExecute([]);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canViewUser(currentUserId, targetUserId);
-
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('canManageHouseholdMember', () => {
-    it('should allow manager to manage household members', async () => {
-      const userId = 'manager-user';
+    it('should invalidate permissions for all users in a household', async () => {
       const householdId = 'test-household';
+      const userIds = ['user-1', 'user-2', 'user-3'];
 
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MANAGER,
-        householdId,
-      );
+      // Mock getting all household members
+      mockDb.mockBuilder.mockExecute(userIds.map((id) => ({ user_id: id })));
 
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
+      // Mock cache config for each user
+      userIds.forEach((userId) => {
+        mockCacheHelper.getCacheConfig.mockReturnValueOnce({
+          key: `permissions:user:${userId}`,
+          ttl: 300,
+        });
+      });
 
-      const result = await service.canManageHouseholdMember(
-        userId,
-        householdId,
-      );
+      await service.invalidateHouseholdPermissions(householdId);
 
-      expect(result).toBe(true);
-    });
-
-    it('should deny member from managing household members', async () => {
-      const userId = 'member-user';
-      const householdId = 'test-household';
-
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.MEMBER,
-        householdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canManageHouseholdMember(
-        userId,
-        householdId,
-      );
-
-      expect(result).toBe(false);
-    });
-
-    it('should deny AI from managing household members', async () => {
-      const userId = 'ai-user';
-      const householdId = 'test-household';
-
-      const householdMembers = PermissionFixtures.createHouseholdMemberRecords(
-        userId,
-        HouseholdRole.AI,
-        householdId,
-      );
-
-      mockDb.mockBuilder.mockExecute(householdMembers);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canManageHouseholdMember(
-        userId,
-        householdId,
-      );
-
-      expect(result).toBe(false);
-    });
-
-    it('should deny user with no household access from managing members', async () => {
-      const userId = 'no-access-user';
-      const householdId = 'other-household';
-
-      // User has no household memberships
-      mockDb.mockBuilder.mockExecute([]);
-      mockDb.mockBuilder.mockExecuteTakeFirst(undefined);
-
-      const result = await service.canManageHouseholdMember(
-        userId,
-        householdId,
-      );
-
-      expect(result).toBe(false);
+      // Verify cache was deleted for each user
+      userIds.forEach((userId) => {
+        expect(mockCache.del).toHaveBeenCalledWith(
+          `permissions:user:${userId}`,
+        );
+      });
     });
   });
 });
