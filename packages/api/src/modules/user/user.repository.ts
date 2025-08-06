@@ -112,6 +112,8 @@ export class UserRepositoryImpl implements UserRepository {
           preferences: userData.preferences,
           managed_by: userData.managed_by,
           relationship_to_manager: userData.relationship_to_manager,
+          primary_household_id: userData.primary_household_id,
+          is_ai: userData.is_ai,
           ...(userData.created_at && { created_at: userData.created_at }),
           ...(userData.updated_at && { updated_at: userData.updated_at }),
         })

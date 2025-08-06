@@ -650,6 +650,201 @@ describe('User Resolver Integration Tests', () => {
       // Note: birth_date comparison might need special handling due to date serialization
       expect(userData.birth_date).toBeDefined();
     });
+
+    it('should allow household manager to update AI user in their household', async () => {
+      // Arrange - Create household with manager and AI user
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0, // No additional members, just manager and AI
+        );
+
+      // Find the AI user in the household
+      const aiUser = await db
+        .selectFrom('household_member')
+        .innerJoin('user', 'user.id', 'household_member.user_id')
+        .selectAll('user')
+        .where('household_member.household_id', '=', householdId)
+        .where('household_member.role', '=', 'ai')
+        .executeTakeFirst();
+
+      expect(aiUser).toBeDefined();
+
+      // Act - Manager updates AI user profile
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        manager.sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(aiUser!.id, {
+          first_name: 'Assistant',
+          last_name: 'AI',
+          display_name: 'Household AI Assistant',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.data.updateUser;
+      expect(userData).toMatchObject({
+        id: aiUser!.id,
+        first_name: 'Assistant',
+        last_name: 'AI',
+        display_name: 'Household AI Assistant',
+      });
+    });
+
+    it('should forbid household member from updating AI user', async () => {
+      // Arrange - Create household with manager, member, and AI user
+      const { manager, members, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          1, // Create 1 member
+        );
+
+      const member = members[0];
+
+      // Find the AI user in the household
+      const aiUser = await db
+        .selectFrom('household_member')
+        .innerJoin('user', 'user.id', 'household_member.user_id')
+        .selectAll('user')
+        .where('household_member.household_id', '=', householdId)
+        .where('household_member.role', '=', 'ai')
+        .executeTakeFirst();
+
+      expect(aiUser).toBeDefined();
+
+      // Act - Member tries to update AI user profile
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        member.sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(aiUser!.id, {
+          first_name: 'Hacked',
+          display_name: 'Compromised AI',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200); // GraphQL always returns 200
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'You do not have permission to update this user',
+      );
+    });
+
+    it('should forbid user from updating AI user in different household', async () => {
+      // Arrange - Create two separate households
+      const { manager: manager1, householdId: household1Id } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      const { manager: manager2, householdId: household2Id } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Find the AI user in household2
+      const aiUserHousehold2 = await db
+        .selectFrom('household_member')
+        .innerJoin('user', 'user.id', 'household_member.user_id')
+        .selectAll('user')
+        .where('household_member.household_id', '=', household2Id)
+        .where('household_member.role', '=', 'ai')
+        .executeTakeFirst();
+
+      expect(aiUserHousehold2).toBeDefined();
+
+      // Act - Manager1 tries to update AI user from household2
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        manager1.sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(aiUserHousehold2!.id, {
+          first_name: 'Unauthorized',
+          display_name: 'Cross-household hack',
+        }),
+      );
+
+      // Assert
+      expect(response.status).toBe(200); // GraphQL always returns 200
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'You do not have permission to update this user',
+      );
+    });
+
+    it('should verify AI user has expected properties after manager update', async () => {
+      // Arrange - Create household with AI user
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Find the AI user
+      const aiUser = await db
+        .selectFrom('household_member')
+        .innerJoin('user', 'user.id', 'household_member.user_id')
+        .selectAll('user')
+        .where('household_member.household_id', '=', householdId)
+        .where('household_member.role', '=', 'ai')
+        .executeTakeFirst();
+
+      expect(aiUser).toBeDefined();
+      expect(aiUser!.is_ai).toBe(true); // Verify it's marked as AI user
+
+      // Act - Update AI user with comprehensive data
+      const updateData = {
+        first_name: 'Advanced',
+        last_name: 'Assistant',
+        display_name: 'Household AI Helper',
+        avatar_url: 'https://example.com/ai-avatar.jpg',
+      };
+
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_USER,
+        manager.sessionToken,
+        GraphQLTestUtils.createUpdateUserInput(aiUser!.id, updateData),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const userData = response.data.updateUser;
+      expect(userData).toMatchObject({
+        id: aiUser!.id,
+        first_name: 'Advanced',
+        last_name: 'Assistant',
+        display_name: 'Household AI Helper',
+        avatar_url: 'https://example.com/ai-avatar.jpg',
+      });
+
+      // Verify AI user properties remain intact in database
+      const updatedAiUser = await db
+        .selectFrom('user')
+        .selectAll()
+        .where('id', '=', aiUser!.id)
+        .executeTakeFirst();
+
+      expect(updatedAiUser!.is_ai).toBe(true);
+      expect(updatedAiUser!.first_name).toBe('Advanced');
+      expect(updatedAiUser!.display_name).toBe('Household AI Helper');
+    });
   });
 
   describe('currentUser query with primary_household_id', () => {

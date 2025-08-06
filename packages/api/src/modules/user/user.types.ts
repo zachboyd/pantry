@@ -4,6 +4,12 @@ import type { Insertable, Selectable, Updateable } from 'kysely';
 // Runtime type for User queries - what Kysely actually returns
 export type UserRecord = Selectable<User>;
 
+// Server-side type for user preferences (flexible JSON)
+export type UserPreferences = Record<string, unknown>;
+
+// Server-side type for user permissions (flexible JSON)
+export type UserPermissions = Record<string, unknown>;
+
 /**
  * Interface for User repository operations (pure data access)
  */
