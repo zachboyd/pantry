@@ -22,6 +22,11 @@ export class PermissionFixtures {
           role: HouseholdRole.MEMBER,
         },
       ],
+      managedUsers: [],
+      householdMembers: {
+        'test-household-id': ['test-user-id'],
+      },
+      aiUsers: {},
       ...overrides,
     };
   }
@@ -41,6 +46,11 @@ export class PermissionFixtures {
           role: HouseholdRole.MANAGER,
         },
       ],
+      managedUsers: [],
+      householdMembers: {
+        [householdId]: [userId],
+      },
+      aiUsers: {},
     };
   }
 
@@ -59,6 +69,13 @@ export class PermissionFixtures {
           role: HouseholdRole.AI,
         },
       ],
+      managedUsers: [],
+      householdMembers: {
+        [householdId]: [userId],
+      },
+      aiUsers: {
+        [householdId]: [userId],
+      },
     };
   }
 
@@ -84,6 +101,15 @@ export class PermissionFixtures {
           role: HouseholdRole.AI,
         },
       ],
+      managedUsers: [],
+      householdMembers: {
+        'household-1': [userId],
+        'household-2': [userId],
+        'household-3': [userId],
+      },
+      aiUsers: {
+        'household-3': [userId],
+      },
     };
   }
 
@@ -96,6 +122,9 @@ export class PermissionFixtures {
     return {
       userId,
       households: [],
+      managedUsers: [],
+      householdMembers: {},
+      aiUsers: {},
     };
   }
 

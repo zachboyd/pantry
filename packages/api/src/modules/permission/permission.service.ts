@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { Kysely } from 'kysely';
-import { createMongoAbility, subject } from '@casl/ability';
+import { createMongoAbility } from '@casl/ability';
 import { packRules, unpackRules } from '@casl/ability/extra';
 import type { Cache } from 'cache-manager';
 import { DB, Json } from '../../generated/database.js';
@@ -12,6 +12,7 @@ import {
   UserContext,
 } from './permission.types.js';
 import { AbilityFactory } from './abilities/ability-factory.js';
+import { PermissionEvaluator } from './permission-evaluator.js';
 import type { CacheHelper } from '../cache/cache.helper.js';
 
 @Injectable()
@@ -33,12 +34,59 @@ export class PermissionServiceImpl implements PermissionService {
       .where('user_id', '=', userId)
       .execute();
 
+    // Get users managed directly by this user
+    const managedUsers = await this.db
+      .selectFrom('user')
+      .select('id')
+      .where('managed_by', '=', userId)
+      .execute();
+
+    // Get all household members for households this user belongs to
+    const householdIds = householdRoles.map((role) => role.household_id);
+    const householdMembersData =
+      householdIds.length > 0
+        ? await this.db
+            .selectFrom('user')
+            .innerJoin(
+              'household_member',
+              'user.id',
+              'household_member.user_id',
+            )
+            .select(['household_member.household_id', 'user.id', 'user.is_ai'])
+            .where('household_member.household_id', 'in', householdIds)
+            .execute()
+        : [];
+
+    // Group household members by household ID
+    const householdMembers: Record<string, string[]> = {};
+    const aiUsers: Record<string, string[]> = {};
+
+    for (const member of householdMembersData) {
+      const householdId = member.household_id;
+
+      if (!householdMembers[householdId]) {
+        householdMembers[householdId] = [];
+      }
+      if (!aiUsers[householdId]) {
+        aiUsers[householdId] = [];
+      }
+
+      householdMembers[householdId].push(member.id);
+
+      if (member.is_ai) {
+        aiUsers[householdId].push(member.id);
+      }
+    }
+
     const context: UserContext = {
       userId,
       households: householdRoles.map((role) => ({
         householdId: role.household_id,
         role: role.role as HouseholdRole,
       })),
+      managedUsers: managedUsers.map((user) => user.id),
+      householdMembers,
+      aiUsers,
     };
 
     const ability = AbilityFactory.createForUser(context);
@@ -123,90 +171,19 @@ export class PermissionServiceImpl implements PermissionService {
     return createMongoAbility(rules as any) as AppAbility;
   }
 
-  async canCreateHousehold(userId: string): Promise<boolean> {
+  /**
+   * Get a PermissionEvaluator for the specified user.
+   * This is the primary method for checking permissions throughout the application.
+   *
+   * @example
+   * const evaluator = await permissionService.getPermissionEvaluator(userId);
+   * if (evaluator.canUpdateUser(targetUserId)) {
+   *   // perform update
+   * }
+   */
+  async getPermissionEvaluator(userId: string): Promise<PermissionEvaluator> {
     const ability = await this.getOrComputeUserAbility(userId);
-    return ability.can('create', 'Household');
-  }
-
-  async canReadHousehold(
-    userId: string,
-    _householdId: string,
-  ): Promise<boolean> {
-    const ability = await this.getOrComputeUserAbility(userId);
-    // For CASL, we need to check if the user can read Household resources
-    // The conditions are already built into the ability rules during creation
-    // We check against a mock household object with the required id
-    return ability.can('read', 'Household');
-  }
-
-  async canManageHouseholdMember(
-    userId: string,
-    _householdId: string,
-  ): Promise<boolean> {
-    const ability = await this.getOrComputeUserAbility(userId);
-    // Check if user can manage HouseholdMember resources
-    // The household-specific conditions are built into the ability rules
-    return ability.can('manage', 'HouseholdMember');
-  }
-
-  async canViewUser(
-    currentUserId: string,
-    targetUserId: string,
-  ): Promise<boolean> {
-    // Users can always view their own profile
-    if (currentUserId === targetUserId) {
-      return true;
-    }
-
-    const ability = await this.getOrComputeUserAbility(currentUserId);
-    // Check if user can read the specific target User by creating a mock subject
-    // This checks conditions like household membership
-    const targetUser = { id: targetUserId };
-    return ability.can('read', subject('User', targetUser));
-  }
-
-  async canUpdateUser(
-    currentUserId: string,
-    targetUserId: string,
-  ): Promise<boolean> {
-    const ability = await this.getOrComputeUserAbility(currentUserId);
-
-    // Get the target user's data including household memberships for CASL evaluation
-    const targetUserWithHouseholds = await this.db
-      .selectFrom('user')
-      .leftJoin('household_member', 'user.id', 'household_member.user_id')
-      .select([
-        'user.id',
-        'user.managed_by',
-        'user.is_ai',
-        'household_member.household_id',
-      ])
-      .where('user.id', '=', targetUserId)
-      .execute();
-
-    if (targetUserWithHouseholds.length === 0) {
-      return false;
-    }
-
-    // Build user object with household membership data for CASL
-    const targetUser = {
-      id: targetUserWithHouseholds[0].id,
-      managed_by: targetUserWithHouseholds[0].managed_by,
-      is_ai: targetUserWithHouseholds[0].is_ai,
-      household_members: targetUserWithHouseholds
-        .filter((row) => row.household_id !== null)
-        .map((row) => ({
-          household_id: row.household_id,
-        })),
-    };
-
-    return ability.can('update', subject('User', targetUser));
-  }
-
-  async canListHouseholds(_userId: string): Promise<boolean> {
-    // Any authenticated user can list their own households
-    // This is a basic permission that all users should have
-    return true;
+    return new PermissionEvaluator(ability);
   }
 
   /**

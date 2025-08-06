@@ -68,12 +68,10 @@ export class GuardedUserService {
     }
 
     // Check if user has permission to view other users
-    const canViewUser = await this.permissionService.canViewUser(
+    const evaluator = await this.permissionService.getPermissionEvaluator(
       currentUser.id,
-      userId,
     );
-
-    if (!canViewUser) {
+    if (!evaluator.canReadUser(userId)) {
       throw new ForbiddenException(
         'You do not have permission to view this user',
       );
@@ -142,12 +140,10 @@ export class GuardedUserService {
     }
 
     // Check if user has permission to update other users
-    const canUpdateUser = await this.permissionService.canUpdateUser(
+    const evaluator = await this.permissionService.getPermissionEvaluator(
       currentUser.id,
-      input.id,
     );
-
-    if (!canUpdateUser) {
+    if (!evaluator.canUpdateUser(input.id)) {
       throw new ForbiddenException(
         'You do not have permission to update this user',
       );
