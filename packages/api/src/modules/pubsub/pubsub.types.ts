@@ -1,5 +1,9 @@
 import type { UserRecord } from '../user/user.types.js';
 
+export interface UserUpdatedEvent {
+  userUpdated: UserRecord;
+}
+
 export interface PubSubService {
   /**
    * Publishes a user update event when user data (especially permissions) changes
@@ -13,5 +17,5 @@ export interface PubSubService {
    * @param userId - The ID of the user to subscribe to
    * @returns AsyncIterator for the user update events
    */
-  getUserUpdatedIterator(userId: string): AsyncIterator<any>;
+  getUserUpdatedIterator(userId: string): AsyncIterator<UserUpdatedEvent>;
 }

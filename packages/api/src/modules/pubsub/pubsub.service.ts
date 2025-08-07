@@ -3,7 +3,7 @@ import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { TOKENS } from '../../common/tokens.js';
 import type { ConfigService } from '../config/config.types.js';
 import type { UserRecord } from '../user/user.types.js';
-import type { PubSubService } from './pubsub.types.js';
+import type { PubSubService, UserUpdatedEvent } from './pubsub.types.js';
 
 @Injectable()
 export class PubSubServiceImpl implements PubSubService {
@@ -42,7 +42,7 @@ export class PubSubServiceImpl implements PubSubService {
     }
   }
 
-  getUserUpdatedIterator(userId: string): AsyncIterator<any> {
+  getUserUpdatedIterator(userId: string): AsyncIterator<UserUpdatedEvent> {
     const eventName = this.getUserUpdatedEventName(userId);
     return this.pubsub.asyncIterator(eventName);
   }

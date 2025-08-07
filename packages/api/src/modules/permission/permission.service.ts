@@ -3,7 +3,7 @@ import { Kysely } from 'kysely';
 import { createMongoAbility } from '@casl/ability';
 import { packRules, unpackRules } from '@casl/ability/extra';
 import type { Cache } from 'cache-manager';
-import { DB, Json } from '../../generated/database.js';
+import { DB } from '../../generated/database.js';
 import { TOKENS } from '../../common/tokens.js';
 import { HouseholdRole } from '../../common/enums.js';
 import {
