@@ -77,9 +77,11 @@ describe('PermissionService', () => {
 
       // Verify database calls were made
       expect(mockDb.selectFrom).toHaveBeenCalledWith('household_member');
-      expect(mockUserService.updateUserPermissions).toHaveBeenCalledWith(
+      expect(mockUserService.updateUser).toHaveBeenCalledWith(
         userId,
-        expect.any(String),
+        expect.objectContaining({
+          permissions: expect.any(String),
+        }),
       );
     });
 

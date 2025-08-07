@@ -68,15 +68,4 @@ export interface UserService {
    * @returns Promise with updated user record
    */
   setPrimaryHousehold(userId: string, householdId: string): Promise<UserRecord>;
-
-  /**
-   * Update user permissions and emit subscription event
-   * @param userId - User ID
-   * @param permissions - New permissions data
-   * @returns Promise with updated user record
-   */
-  updateUserPermissions(
-    userId: string,
-    permissions: UserPermissions,
-  ): Promise<UserRecord>;
 }

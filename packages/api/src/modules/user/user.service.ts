@@ -5,12 +5,7 @@ import { TOKENS } from '../../common/tokens.js';
 import { AIPersonality } from '../../common/enums.js';
 import type { User } from '../../generated/database.js';
 import type { Insertable, Updateable } from 'kysely';
-import type {
-  UserService,
-  UserRecord,
-  UserRepository,
-  UserPermissions,
-} from './user.types.js';
+import type { UserService, UserRecord, UserRepository } from './user.types.js';
 import type { PubSubService } from '../pubsub/pubsub.types.js';
 
 @Injectable()
@@ -157,32 +152,6 @@ export class UserServiceImpl implements UserService {
     } catch (error) {
       this.logger.error(
         `Error setting primary household for user ${userId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async updateUserPermissions(
-    userId: string,
-    permissions: UserPermissions,
-  ): Promise<UserRecord> {
-    this.logger.log(`Updating permissions for user ${userId}`);
-
-    try {
-      // Update user permissions in database
-      const user = await this.userRepository.updateUser(userId, {
-        permissions: permissions,
-        updated_at: new Date(),
-      });
-
-      // Call centralized post-update hook
-      await this.afterUserUpdated(userId, user);
-
-      return user;
-    } catch (error) {
-      this.logger.error(
-        `Error updating permissions for user ${userId}:`,
         error,
       );
       throw error;

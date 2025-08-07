@@ -108,10 +108,9 @@ export class PermissionServiceImpl implements PermissionService {
 
     // Use UserService to update permissions and emit subscription event
     // PostgreSQL JSON columns expect stringified JSON, not JavaScript objects
-    await this.userService.updateUserPermissions(
-      userId,
-      JSON.stringify(packedRules),
-    );
+    await this.userService.updateUser(userId, {
+      permissions: JSON.stringify(packedRules),
+    });
   }
 
   async getUserPermissions(userId: string): Promise<AppAbility | null> {

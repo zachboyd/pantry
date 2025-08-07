@@ -9,7 +9,6 @@ export type UserServiceMockType = {
   createUser: ReturnType<typeof vi.fn>;
   createAIUser: ReturnType<typeof vi.fn>;
   setPrimaryHousehold: ReturnType<typeof vi.fn>;
-  updateUserPermissions: ReturnType<typeof vi.fn>;
 };
 
 /**
@@ -29,7 +28,6 @@ export class UserServiceMock {
       createUser: vi.fn().mockResolvedValue(null),
       createAIUser: vi.fn().mockResolvedValue(null),
       setPrimaryHousehold: vi.fn().mockResolvedValue(null),
-      updateUserPermissions: vi.fn().mockResolvedValue(null),
     } as UserServiceMockType;
 
     return mockService;
@@ -71,7 +69,6 @@ export class UserServiceMock {
     mockService.createUser.mockResolvedValue(user);
     mockService.createAIUser.mockResolvedValue(user);
     mockService.setPrimaryHousehold.mockResolvedValue(user);
-    mockService.updateUserPermissions.mockResolvedValue(user);
 
     return mockService;
   }
@@ -90,7 +87,6 @@ export class UserServiceMock {
     mockService.createUser.mockRejectedValue(defaultError);
     mockService.createAIUser.mockRejectedValue(defaultError);
     mockService.setPrimaryHousehold.mockRejectedValue(defaultError);
-    mockService.updateUserPermissions.mockRejectedValue(defaultError);
 
     return mockService;
   }
