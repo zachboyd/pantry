@@ -14,6 +14,7 @@ import {
 import { AbilityFactory } from './abilities/ability-factory.js';
 import { PermissionEvaluator } from './permission-evaluator.js';
 import type { CacheHelper } from '../cache/cache.helper.js';
+import type { UserService } from '../user/user.types.js';
 
 @Injectable()
 export class PermissionServiceImpl implements PermissionService {
@@ -24,6 +25,8 @@ export class PermissionServiceImpl implements PermissionService {
     private readonly cache: Cache,
     @Inject(TOKENS.CACHE.HELPER)
     private readonly cacheHelper: CacheHelper,
+    @Inject(TOKENS.USER.SERVICE)
+    private readonly userService: UserService,
   ) {}
 
   async computeUserPermissions(userId: string): Promise<AppAbility> {
@@ -103,14 +106,12 @@ export class PermissionServiceImpl implements PermissionService {
   ): Promise<void> {
     const packedRules = packRules(ability.rules);
 
-    await this.db
-      .updateTable('user')
-      .set({
-        permissions: JSON.stringify(packedRules) as Json,
-        updated_at: new Date(),
-      })
-      .where('id', '=', userId)
-      .execute();
+    // Use UserService to update permissions and emit subscription event
+    // PostgreSQL JSON columns expect stringified JSON, not JavaScript objects
+    await this.userService.updateUserPermissions(
+      userId,
+      JSON.stringify(packedRules),
+    );
   }
 
   async getUserPermissions(userId: string): Promise<AppAbility | null> {

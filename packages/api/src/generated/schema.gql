@@ -111,3 +111,11 @@ input ChangeHouseholdMemberRoleInput {
   userId: String!
   newRole: String!
 }
+
+type Subscription {
+  userUpdated(input: UserUpdatedSubscriptionInput!): User!
+}
+
+input UserUpdatedSubscriptionInput {
+  userId: String!
+}

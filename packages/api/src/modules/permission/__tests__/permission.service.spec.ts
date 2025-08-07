@@ -8,22 +8,26 @@ import { HouseholdRole } from '../../../common/enums.js';
 import { DatabaseMock } from '../../../test/utils/database-mock.js';
 import { CacheManagerMock } from '../../../test/mocks/cache-manager.mock.js';
 import { CacheHelperMock } from '../../../test/mocks/cache-helper.mock.js';
+import { UserServiceMock } from '../../../test/mocks/user-service.mock.js';
 import { PermissionFixtures } from '../../../test/fixtures/permission-fixtures.js';
 import type { KyselyMock } from '../../../test/utils/database-mock.js';
 import type { CacheManagerMockType } from '../../../test/mocks/cache-manager.mock.js';
 import type { CacheHelperMockType } from '../../../test/mocks/cache-helper.mock.js';
+import type { UserServiceMockType } from '../../../test/mocks/user-service.mock.js';
 
 describe('PermissionService', () => {
   let service: PermissionServiceImpl;
   let mockDb: KyselyMock;
   let mockCache: CacheManagerMockType;
   let mockCacheHelper: CacheHelperMockType;
+  let mockUserService: UserServiceMockType;
 
   beforeEach(async () => {
     // Create reusable mocks
     mockDb = DatabaseMock.createKyselyMock();
     mockCache = CacheManagerMock.createCacheManagerMock();
     mockCacheHelper = CacheHelperMock.createCacheHelperMock();
+    mockUserService = UserServiceMock.createUserServiceMock();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -39,6 +43,10 @@ describe('PermissionService', () => {
         {
           provide: TOKENS.CACHE.HELPER,
           useValue: mockCacheHelper,
+        },
+        {
+          provide: TOKENS.USER.SERVICE,
+          useValue: mockUserService,
         },
       ],
     }).compile();
@@ -69,7 +77,10 @@ describe('PermissionService', () => {
 
       // Verify database calls were made
       expect(mockDb.selectFrom).toHaveBeenCalledWith('household_member');
-      expect(mockDb.updateTable).toHaveBeenCalledWith('user');
+      expect(mockUserService.updateUserPermissions).toHaveBeenCalledWith(
+        userId,
+        expect.any(String),
+      );
     });
 
     it('should compute permissions for user with no household roles', async () => {

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TOKENS } from '../../common/tokens.js';
 import { UserRepositoryModule } from './user-repository.module.js';
 import { UserServiceImpl } from './user.service.js';
@@ -8,7 +8,7 @@ import { UserController } from './api/user.controller.js';
 import { PermissionModule } from '../permission/permission.module.js';
 
 @Module({
-  imports: [UserRepositoryModule, PermissionModule],
+  imports: [UserRepositoryModule, forwardRef(() => PermissionModule)],
   controllers: [UserController],
   providers: [
     {

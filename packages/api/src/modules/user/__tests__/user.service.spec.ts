@@ -9,15 +9,21 @@ import {
   UserRepositoryMock,
   type UserRepositoryMockType,
 } from '../../../test/mocks/user-repository.mock.js';
+import {
+  PubSubServiceMock,
+  type PubSubServiceMockType,
+} from '../../../test/mocks/pubsub-service.mock.js';
 import { DatabaseFixtures } from '../../../test/fixtures/database-fixtures.js';
 
 describe('UserService', () => {
   let userService: UserServiceImpl;
   let mockUserRepository: UserRepositoryMockType;
+  let mockPubSubService: PubSubServiceMockType;
 
   beforeEach(async () => {
     // Create mocks
     mockUserRepository = UserRepositoryMock.createUserRepositoryMock();
+    mockPubSubService = PubSubServiceMock.createPubSubServiceMock();
 
     // Create test module
     const module = await Test.createTestingModule({
@@ -26,6 +32,10 @@ describe('UserService', () => {
         {
           provide: TOKENS.USER.REPOSITORY,
           useValue: mockUserRepository,
+        },
+        {
+          provide: TOKENS.PUBSUB.SERVICE,
+          useValue: mockPubSubService,
         },
       ],
     }).compile();

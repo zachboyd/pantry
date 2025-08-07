@@ -13,6 +13,9 @@ import { join } from 'path';
       introspection: true,
       path: '/graphql',
       context: ({ req, res }) => ({ req, res }),
+      subscriptions: {
+        'graphql-ws': true,
+      },
       formatError: (error) => {
         // Log errors in development
         if (process.env.NODE_ENV === 'development') {

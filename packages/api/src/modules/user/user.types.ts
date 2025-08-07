@@ -1,4 +1,4 @@
-import type { User } from '../../generated/database.js';
+import type { User, Json } from '../../generated/database.js';
 import type { Insertable, Selectable, Updateable } from 'kysely';
 
 // Runtime type for User queries - what Kysely actually returns
@@ -7,8 +7,8 @@ export type UserRecord = Selectable<User>;
 // Server-side type for user preferences (flexible JSON)
 export type UserPreferences = Record<string, unknown>;
 
-// Server-side type for user permissions (flexible JSON)
-export type UserPermissions = Record<string, unknown>;
+// Server-side type for user permissions (stored as stringified JSON)
+export type UserPermissions = string;
 
 /**
  * Interface for User repository operations (pure data access)
@@ -68,4 +68,15 @@ export interface UserService {
    * @returns Promise with updated user record
    */
   setPrimaryHousehold(userId: string, householdId: string): Promise<UserRecord>;
+
+  /**
+   * Update user permissions and emit subscription event
+   * @param userId - User ID
+   * @param permissions - New permissions data
+   * @returns Promise with updated user record
+   */
+  updateUserPermissions(
+    userId: string,
+    permissions: UserPermissions,
+  ): Promise<UserRecord>;
 }
