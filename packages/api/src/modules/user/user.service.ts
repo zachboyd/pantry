@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import type { Cache } from 'cache-manager';
 import { TOKENS } from '../../common/tokens.js';
 import { AIPersonality } from '../../common/enums.js';
 import type { User } from '../../generated/database.js';
 import type { Insertable, Updateable } from 'kysely';
 import type { UserService, UserRecord, UserRepository } from './user.types.js';
 import type { PubSubService } from '../pubsub/pubsub.types.js';
+import type { CacheHelper } from '../cache/cache.helper.js';
 
 @Injectable()
 export class UserServiceImpl implements UserService {
@@ -17,13 +19,33 @@ export class UserServiceImpl implements UserService {
     private readonly userRepository: UserRepository,
     @Inject(TOKENS.PUBSUB.SERVICE)
     private readonly pubsubService: PubSubService,
+    @Inject(TOKENS.CACHE.MANAGER)
+    private readonly cache: Cache,
+    @Inject(TOKENS.CACHE.HELPER)
+    private readonly cacheHelper: CacheHelper,
   ) {}
 
   async getUserByAuthId(authUserId: string): Promise<UserRecord | null> {
     this.logger.log(`Getting user by auth ID: ${authUserId}`);
 
+    const { key, ttl } = this.cacheHelper.getCacheConfig(
+      'users',
+      `auth:${authUserId}`,
+    );
+
     try {
+      // Try to get from cache first
+      const cachedUser = await this.cache.get<UserRecord | null>(key);
+      if (cachedUser !== undefined) {
+        this.logger.debug(`Cache hit for auth_user_id: ${authUserId}`);
+        return cachedUser;
+      }
+
+      // Cache miss - get from database
       const user = await this.userRepository.getUserByAuthId(authUserId);
+
+      // Cache the result (including null results to avoid repeated DB queries)
+      await this.cache.set(key, user, ttl);
 
       if (!user) {
         this.logger.debug(`No user found for auth_user_id: ${authUserId}`);
@@ -40,8 +62,21 @@ export class UserServiceImpl implements UserService {
   async getUserById(id: string): Promise<UserRecord | null> {
     this.logger.log(`Getting user by ID: ${id}`);
 
+    const { key, ttl } = this.cacheHelper.getCacheConfig('users', `id:${id}`);
+
     try {
+      // Try to get from cache first
+      const cachedUser = await this.cache.get<UserRecord | null>(key);
+      if (cachedUser !== undefined) {
+        this.logger.debug(`Cache hit for user_id: ${id}`);
+        return cachedUser;
+      }
+
+      // Cache miss - get from database
       const user = await this.userRepository.getUserById(id);
+
+      // Cache the result (including null results to avoid repeated DB queries)
+      await this.cache.set(key, user, ttl);
 
       if (!user) {
         this.logger.debug(`No user found for id: ${id}`);
@@ -167,6 +202,9 @@ export class UserServiceImpl implements UserService {
     user: UserRecord,
   ): Promise<void> {
     try {
+      // Invalidate user cache entries
+      await this.invalidateUserCache(userId, user.auth_user_id);
+
       // Emit subscription event
       await this.pubsubService.publishUserUpdated(userId, user);
 
@@ -177,6 +215,36 @@ export class UserServiceImpl implements UserService {
         `Post-update processing failed for user ${userId}:`,
         error,
       );
+    }
+  }
+
+  /**
+   * Invalidate cache entries for a user
+   * Clears both getUserById and getUserByAuthId caches
+   */
+  private async invalidateUserCache(
+    userId: string,
+    authUserId: string,
+  ): Promise<void> {
+    try {
+      // Invalidate getUserById cache
+      const userIdCacheConfig = this.cacheHelper.getCacheConfig(
+        'users',
+        `id:${userId}`,
+      );
+      await this.cache.del(userIdCacheConfig.key);
+
+      // Invalidate getUserByAuthId cache
+      const authIdCacheConfig = this.cacheHelper.getCacheConfig(
+        'users',
+        `auth:${authUserId}`,
+      );
+      await this.cache.del(authIdCacheConfig.key);
+
+      this.logger.debug(`Cache invalidated for user ${userId}`);
+    } catch (error) {
+      this.logger.warn(`Failed to invalidate cache for user ${userId}:`, error);
+      // Don't throw - cache invalidation failures shouldn't break user updates
     }
   }
 }

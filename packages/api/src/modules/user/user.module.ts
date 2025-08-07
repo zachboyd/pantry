@@ -6,9 +6,14 @@ import { GuardedUserService } from './api/guarded-user.service.js';
 import { UserResolver } from './api/user.resolver.js';
 import { UserController } from './api/user.controller.js';
 import { PermissionModule } from '../permission/permission.module.js';
+import { CacheModule } from '../cache/cache.module.js';
 
 @Module({
-  imports: [UserRepositoryModule, forwardRef(() => PermissionModule)],
+  imports: [
+    UserRepositoryModule,
+    CacheModule,
+    forwardRef(() => PermissionModule),
+  ],
   controllers: [UserController],
   providers: [
     {

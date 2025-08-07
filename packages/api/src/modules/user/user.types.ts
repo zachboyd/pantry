@@ -1,4 +1,4 @@
-import type { User, Json } from '../../generated/database.js';
+import type { User } from '../../generated/database.js';
 import type { Insertable, Selectable, Updateable } from 'kysely';
 
 // Runtime type for User queries - what Kysely actually returns
