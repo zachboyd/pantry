@@ -52,6 +52,7 @@ public final class AppState {
     // MARK: - Services
 
     public let container = DependencyContainer()
+    
 
     public var authService: (any AuthServiceProtocol)? {
         container.authService
@@ -67,10 +68,6 @@ public final class AppState {
 
     public var shoppingListService: (any ShoppingListServiceProtocol)? {
         container.shoppingListService
-    }
-
-    public var recipeService: (any RecipeServiceProtocol)? {
-        container.recipeService
     }
 
     public var notificationService: (any NotificationServiceProtocol)? {
@@ -151,6 +148,7 @@ public final class AppState {
         defer {
             // Clear user data
             currentHousehold = nil
+            currentUser = nil
             needsOnboarding = false
             
             // Always go to unauthenticated state - user should be able to sign in again
@@ -222,13 +220,36 @@ public final class AppState {
         Self.logger.info("✅ Household switch complete")
     }
 
+    /// Refresh the current user from the backend
+    public func refreshCurrentUser() async {
+        Self.logger.info("🔄 Refreshing current user")
+        
+        if let userService = userService {
+            do {
+                if let refreshedUser = try await userService.getCurrentUser() {
+                    Self.logger.info("✅ User refreshed: \(refreshedUser.name ?? "Unknown")")
+                    currentUser = refreshedUser
+                }
+            } catch {
+                Self.logger.error("❌ Failed to refresh user: \(error)")
+            }
+        }
+    }
+    
     /// Complete onboarding with a selected household
     public func completeOnboarding(householdId: String) async {
         Self.logger.info("🎉 Completing onboarding with household: \(householdId)")
 
         // Get the household
-        if let householdService = householdService {
+        if let householdService = householdService,
+           let userService = userService {
             do {
+                // Refresh the current user to get updated name
+                if let refreshedUser = try await userService.getCurrentUser() {
+                    Self.logger.info("🔄 Refreshed user after onboarding: \(refreshedUser.name ?? "Unknown")")
+                    currentUser = refreshedUser
+                }
+                
                 let household = try await householdService.getHousehold(id: householdId)
                 currentHousehold = household
                 needsOnboarding = false
@@ -267,12 +288,25 @@ public final class AppState {
             try await container.initializeForUser(userId)
             Self.logger.info("✅ All services initialized successfully")
             
+            // Don't setup cache observers yet - wait until after hydration
+            // so we have initial data to observe
+            
+            // Load user permissions
+            Self.logger.info("🔐 Loading user permissions")
+            await authService.loadUserPermissions()
+            Self.logger.info("✅ User permissions loaded")
+            
             // Execute the hydrate query
             try await hydrateUserData()
+            
             
             // Transition to hydrated phase
             phase = .hydrated
             Self.logger.info("✅ Hydration complete, app ready")
+        } catch ServiceError.unauthorized {
+            // Handle authentication errors by signing out
+            Self.logger.error("🔐 Authentication error during hydration - signing out")
+            await signOut()
         } catch {
             Self.logger.error("❌ Hydration failed: \(error)")
             self.error = error
@@ -285,12 +319,19 @@ public final class AppState {
         Self.logger.info("💧 Hydrating user data")
 
         // Use HydrationService with the actual hydrate query
-        guard let apolloClient = container.apolloClient else {
-            Self.logger.warning("⚠️ Apollo client not available for hydration")
-            throw ServiceError.operationFailed("Apollo client not available")
+        guard let apolloClientService = container.apolloClientService else {
+            Self.logger.warning("⚠️ Apollo client service not available for hydration")
+            throw ServiceError.operationFailed("Apollo client service not available")
         }
 
-        let hydrationService = HydrationService(apolloClient: apolloClient)
+        // Create a GraphQLService instance for HydrationService
+        let graphQLService = await MainActor.run {
+            GraphQLService(apolloClientService: apolloClientService)
+        }
+        
+        let hydrationService = await MainActor.run {
+            HydrationService(graphQLService: graphQLService)
+        }
         let result = try await hydrationService.hydrateUserData()
         
         Self.logger.info("✅ Hydrated user data")
@@ -302,6 +343,8 @@ public final class AppState {
         
         // Store current user
         self.currentUser = currentUser
+        Self.logger.info("📊 Initial user from hydration: \(currentUser.name ?? "Unknown")")
+        Self.logger.info("   First: '\(currentUser.firstName)', Last: '\(currentUser.lastName)', Display: '\(currentUser.displayName ?? "nil")'")
         
         // Check if user needs onboarding based on missing user info OR no households
         let needsUserInfo = currentUser.firstName.isEmpty || currentUser.lastName.isEmpty

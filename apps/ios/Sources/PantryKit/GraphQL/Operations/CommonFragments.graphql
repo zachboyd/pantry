@@ -1,0 +1,41 @@
+# Common Fragments
+
+# User fragment containing all user fields
+fragment UserFields on User {
+  id
+  auth_user_id
+  email
+  first_name
+  last_name
+  display_name
+  avatar_url
+  phone
+  birth_date
+  managed_by
+  relationship_to_manager
+  primary_household_id
+  permissions
+  preferences
+  is_ai
+  created_at
+  updated_at
+}
+
+# Household fragment containing all household fields
+fragment HouseholdFields on Household {
+  id
+  name
+  description
+  created_by
+  created_at
+  updated_at
+}
+
+# HouseholdMember fragment containing all member fields
+fragment HouseholdMemberFields on HouseholdMember {
+  id
+  household_id
+  user_id
+  role
+  joined_at
+}

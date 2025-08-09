@@ -2,30 +2,61 @@ import SwiftUI
 
 /// User profile view that displays user information and allows household switching
 public struct UserProfileView: View {
-    @Environment(\.appState) private var appState
+    @Environment(\.safeViewModelFactory) private var viewModelFactory
     @Environment(\.dismiss) private var dismiss
-    @State private var viewModel = UserProfileViewModel()
+    @State private var viewModel: UserSettingsViewModel?
     
-    @State private var showingSignOutConfirmation = false
+    let currentUser: User?
+    let currentHousehold: Household?
+    let households: [Household]
+    let onSignOut: () async -> Void
+    let onSelectHousehold: (Household) -> Void
+    
     @State private var showingCreateHousehold = false
     @State private var showingJoinHousehold = false
     
-    public init() {}
+    public init(
+        currentUser: User? = nil,
+        currentHousehold: Household? = nil,
+        households: [Household] = [],
+        onSignOut: @escaping () async -> Void = { },
+        onSelectHousehold: @escaping (Household) -> Void = { _ in }
+    ) {
+        self.currentUser = currentUser
+        self.currentHousehold = currentHousehold
+        self.households = households
+        self.onSignOut = onSignOut
+        self.onSelectHousehold = onSelectHousehold
+    }
     
     public var body: some View {
         NavigationStack {
-            List {
-                // User Info Section
-                userInfoSection
-                
-                // Households Section
-                householdsSection
-                
-                // App Settings Section
-                appSettingsSection
-                
-                // Sign Out Section
-                signOutSection
+            Group {
+                if let viewModel = viewModel {
+                    // Check watched data loading state
+                    if viewModel.currentUserWatch.isLoading && viewModel.currentUserWatch.value == nil {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .scaleEffect(1.5)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let error = viewModel.watchedDataError {
+                        ProfileErrorView(
+                            error: error,
+                            onRetry: {
+                                Task {
+                                    await viewModel.retryFailedWatches()
+                                }
+                            }
+                        )
+                    } else {
+                        profileContent
+                    }
+                } else {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .scaleEffect(1.5)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
             .navigationTitle(L("settings.profile"))
             .navigationBarTitleDisplayMode(.inline)
@@ -38,8 +69,14 @@ public struct UserProfileView: View {
             }
         }
         .task {
-            if let appState = appState {
-                await viewModel.onAppear(appState: appState)
+            if viewModel == nil {
+                viewModel = try? viewModelFactory?.makeUserSettingsViewModel()
+            }
+            await viewModel?.onAppear()
+        }
+        .onDisappear {
+            Task {
+                await viewModel?.onDisappear()
             }
         }
         .sheet(isPresented: $showingCreateHousehold) {
@@ -51,10 +88,8 @@ public struct UserProfileView: View {
                     onBack: { showingJoinHousehold = false },
                     onComplete: { householdId in
                         showingJoinHousehold = false
-                        if let appState = appState {
-                            Task {
-                                await viewModel.loadHouseholds(appState: appState)
-                            }
+                        Task {
+                            await viewModel?.refresh()
                         }
                     }
                 )
@@ -62,14 +97,17 @@ public struct UserProfileView: View {
         }
         .confirmationDialog(
             L("sign.out"),
-            isPresented: $showingSignOutConfirmation,
+            isPresented: Binding(
+                get: { viewModel?.showingSignOutConfirmation ?? false },
+                set: { _ in viewModel?.hideSignOutConfirmation() }
+            ),
             titleVisibility: .hidden
         ) {
             Button(L("sign.out"), role: .destructive) {
                 Task {
-                    if let appState = appState {
-                        await viewModel.signOut(appState: appState)
-                    }
+                    Logger.app.info("🚪 UserProfileView sign out button pressed")
+                    await onSignOut()
+                    Logger.app.info("✅ UserProfileView onSignOut callback completed")
                     dismiss()
                 }
             }
@@ -77,7 +115,30 @@ public struct UserProfileView: View {
         } message: {
             Text(L("profile.signout.confirmation"))
         }
-        .errorAlert(error: $viewModel.currentError)
+    }
+    
+    // MARK: - Profile Content
+    
+    @ViewBuilder
+    private var profileContent: some View {
+        List {
+            // User Info Section
+            userInfoSection
+            
+            // Households Section
+            householdsSection
+            
+            // App Settings Section
+            appSettingsSection
+            
+            // Debug Section (only shown in debug builds)
+            #if DEBUG
+            debugSection
+            #endif
+            
+            // Sign Out Section
+            signOutSection
+        }
     }
     
     // MARK: - User Info Section
@@ -87,20 +148,27 @@ public struct UserProfileView: View {
         Section {
             HStack(spacing: 16) {
                 AvatarView(
-                    user: appState?.currentUser,
+                    user: viewModel?.currentUser ?? currentUser,
                     size: .large
                 )
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(appState?.currentUser?.name ?? L("user.unknown"))
+                    // Use watched data
+                    Text(viewModel?.currentUser?.name ?? currentUser?.name ?? L("user.unknown"))
                         .font(.headline)
                     
-                    Text(appState?.currentUser?.email ?? "")
+                    Text(viewModel?.currentUser?.email ?? currentUser?.email ?? "")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 
                 Spacer()
+                
+                // Show loading indicator if user data is being refreshed
+                if viewModel?.currentUserWatch.isLoading == true {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
             }
             .padding(.vertical, 8)
         }
@@ -111,7 +179,8 @@ public struct UserProfileView: View {
     @ViewBuilder
     private var householdsSection: some View {
         Section {
-            if viewModel.isLoadingHouseholds {
+            // Show loading state for households
+            if viewModel?.householdsWatch.isLoading == true && viewModel?.householdsWatch.value == nil {
                 HStack {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -120,20 +189,35 @@ public struct UserProfileView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-            } else {
-                ForEach(viewModel.households) { household in
+            } else if let displayHouseholds = viewModel?.userHouseholds ?? (households.isEmpty ? nil : households), !displayHouseholds.isEmpty {
+                ForEach(displayHouseholds) { household in
                     HouseholdRow(
                         household: household,
-                        isSelected: household.id == appState?.currentHousehold?.id,
+                        isSelected: household.id == currentHousehold?.id,
                         onTap: {
-                            Task {
-                                await switchHousehold(to: household)
-                            }
+                            onSelectHousehold(household)
+                            dismiss()
                         }
                     )
                 }
                 
-                // Create/Join Household Buttons
+                
+                // Create/Join buttons
+                Button(action: { showingCreateHousehold = true }) {
+                    Label(L("household.create_new"), systemImage: "plus.circle")
+                        .foregroundColor(.accentColor)
+                }
+                
+                Button(action: { showingJoinHousehold = true }) {
+                    Label(L("household.join_existing"), systemImage: "person.badge.plus")
+                        .foregroundColor(.accentColor)
+                }
+            } else {
+                // Empty state
+                Text(L("household.no_households"))
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 8)
+                
                 Button(action: { showingCreateHousehold = true }) {
                     Label(L("household.create_new"), systemImage: "plus.circle")
                         .foregroundColor(.accentColor)
@@ -145,10 +229,17 @@ public struct UserProfileView: View {
                 }
             }
         } header: {
-            Text(L("household.title"))
+            HStack {
+                Text(L("household.title"))
+                Spacer()
+                if viewModel?.householdsWatch.isLoading == true {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
+            }
         } footer: {
-            if let currentHousehold = appState?.currentHousehold {
-                Text(L("profile.current_household", currentHousehold.name))
+            if let household = currentHousehold {
+                Text(L("profile.current_household", household.name))
                     .font(.caption)
             }
         }
@@ -174,12 +265,25 @@ public struct UserProfileView: View {
         }
     }
     
+    // MARK: - Debug Section
+    
+    #if DEBUG
+    @ViewBuilder
+    private var debugSection: some View {
+        Section("Debug Tools") {
+            NavigationLink(destination: PermissionDebugView()) {
+                Label("Permission Debug", systemImage: "lock.shield")
+            }
+        }
+    }
+    #endif
+    
     // MARK: - Sign Out Section
     
     @ViewBuilder
     private var signOutSection: some View {
         Section {
-            Button(action: { showingSignOutConfirmation = true }) {
+            Button(action: { viewModel?.showSignOutConfirmation() }) {
                 HStack {
                     Spacer()
                     Label(L("sign.out"), systemImage: "rectangle.portrait.and.arrow.right")
@@ -190,14 +294,6 @@ public struct UserProfileView: View {
         }
     }
     
-    // MARK: - Helper Methods
-    
-    private func switchHousehold(to household: Household) async {
-        if let appState = appState {
-            await viewModel.switchHousehold(to: household, appState: appState)
-        }
-        dismiss()
-    }
 }
 
 // MARK: - Household Row
@@ -233,41 +329,32 @@ private struct HouseholdRow: View {
     }
 }
 
-// MARK: - View Model
+// MARK: - Profile Error View
 
-import Observation
-
-@Observable
-@MainActor
-private final class UserProfileViewModel {
-    var households: [Household] = []
-    var isLoadingHouseholds = false
-    var currentError: ViewModelError?
+private struct ProfileErrorView: View {
+    let error: Error
+    let onRetry: () -> Void
     
-    func onAppear(appState: AppState) async {
-        await loadHouseholds(appState: appState)
-    }
-    
-    func loadHouseholds(appState: AppState) async {
-        guard let householdService = appState.householdService else { return }
-        
-        isLoadingHouseholds = true
-        defer { isLoadingHouseholds = false }
-        
-        do {
-            households = try await householdService.getUserHouseholds()
-        } catch {
-            self.currentError = .operationFailed(L("household.load.error"))
-            Logger.app.error("Failed to load households: \(error)")
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundColor(.orange)
+            
+            Text(L("error.generic_title"))
+                .font(.headline)
+            
+            Text(error.localizedDescription)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Button(action: onRetry) {
+                Label(L("retry"), systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(.borderedProminent)
         }
-    }
-    
-    func switchHousehold(to household: Household, appState: AppState) async {
-        await appState.switchHousehold(to: household)
-    }
-    
-    func signOut(appState: AppState) async {
-        await appState.signOut()
+        .padding()
     }
 }
 

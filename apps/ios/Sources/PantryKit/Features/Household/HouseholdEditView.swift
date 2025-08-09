@@ -9,88 +9,124 @@ import SwiftUI
 
 /// View for editing household information
 public struct HouseholdEditView: View {
+    private static let logger = Logger.household
+    
     let householdId: String
+    let isReadOnly: Bool
 
     @Environment(\.dismiss) private var dismiss
-    @State private var householdName = "The Smith Family"
-    @State private var description = "Our family household"
-    @State private var isLoading = false
-    @State private var showingAlert = false
-    @State private var alertMessage = ""
+    @Environment(\.safeViewModelFactory) private var factory
+    @State private var viewModel: HouseholdEditViewModel?
 
-    public init(householdId: String) {
+    public init(householdId: String, isReadOnly: Bool = false) {
         self.householdId = householdId
-    }
-
-    private var isFormValid: Bool {
-        !householdName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private var hasChanges: Bool {
-        // Mock comparison - in real app, compare with original values
-        true
+        self.isReadOnly = isReadOnly
     }
 
     public var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField(L("household.name"), text: $householdName)
-                        .textInputAutocapitalization(.words)
+            if let viewModel = viewModel {
+                Form {
+                    Section {
+                        if viewModel.isReadOnly {
+                            // Read-only mode - show as text
+                            HStack {
+                                Text(L("household.name"))
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text(viewModel.name)
+                            }
+                            
+                            if !viewModel.description.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(L("household.description"))
+                                        .foregroundColor(.secondary)
+                                    Text(viewModel.description)
+                                }
+                            }
+                        } else {
+                            // Edit mode - show text fields
+                            TextField(L("household.name"), text: Binding(
+                                get: { viewModel.name },
+                                set: { viewModel.name = $0 }
+                            ))
+                            .textInputAutocapitalization(.words)
 
-                    TextField(L("household.description"), text: $description, axis: .vertical)
-                        .textInputAutocapitalization(.sentences)
-                        .lineLimit(3, reservesSpace: true)
-                } header: {
-                    Text(L("household.edit.section_title"))
-                } footer: {
-                    Text(L("household.edit.section_footer"))
-                }
+                            TextField(L("household.description"), text: Binding(
+                                get: { viewModel.description },
+                                set: { viewModel.description = $0 }
+                            ), axis: .vertical)
+                            .textInputAutocapitalization(.sentences)
+                            .lineLimit(3, reservesSpace: true)
+                        }
+                    } header: {
+                        Text(L("household.edit.section_title"))
+                    } footer: {
+                        if !viewModel.isReadOnly {
+                            Text(L("household.edit.section_footer"))
+                        }
+                    }
 
-                Section {
-                    Button(L("household.delete"), role: .destructive) {
-                        // TODO: Implement household deletion
-                    }
-                } footer: {
-                    Text(L("household.delete.warning"))
                 }
-            }
-            .navigationTitle(L("household.edit.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(L("save")) {
-                        saveChanges()
+                .navigationTitle(viewModel.isReadOnly ? L("household.view.title") : L("household.edit.title"))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    if !viewModel.isReadOnly {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(L("save")) {
+                                Task {
+                                    if await viewModel.save() {
+                                        dismiss()
+                                    }
+                                }
+                            }
+                            .disabled(!viewModel.canSave)
+                        }
                     }
-                    .disabled(!isFormValid || !hasChanges || isLoading)
                 }
-            }
-            .alert(L("error"), isPresented: $showingAlert) {
-                Button(L("ok")) {}
-            } message: {
-                Text(alertMessage)
+                .alert(L("error"), isPresented: Binding(
+                    get: { viewModel.showingError },
+                    set: { _ in viewModel.dismissError() }
+                )) {
+                    Button(L("ok")) {
+                        viewModel.dismissError()
+                    }
+                } message: {
+                    Text(viewModel.errorMessage ?? L("error.generic"))
+                }
+                .alert(L("household.edit.coming_soon.title"), isPresented: Binding(
+                    get: { viewModel.showingComingSoon },
+                    set: { _ in viewModel.dismissComingSoon() }
+                )) {
+                    Button(L("ok")) {
+                        viewModel.dismissComingSoon()
+                    }
+                } message: {
+                    Text(L("household.edit.coming_soon.message"))
+                }
+                .overlay {
+                    if viewModel.showLoadingIndicator {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.black.opacity(0.3))
+                    }
+                }
+            } else {
+                ProgressView()
+                    .navigationTitle(isReadOnly ? L("household.view.title") : L("household.edit.title"))
+                    .navigationBarTitleDisplayMode(.inline)
             }
         }
-    }
-
-    private func saveChanges() {
-        isLoading = true
-
-        Task {
+        .task {
             do {
-                // TODO: Implement actual household update
-                try await Task.sleep(for: .seconds(1))
-
-                await MainActor.run {
-                    isLoading = false
-                    dismiss()
-                }
+                viewModel = try factory?.makeHouseholdEditViewModel(
+                    householdId: householdId,
+                    mode: .edit,
+                    isReadOnly: isReadOnly
+                )
+                await viewModel?.onAppear()
             } catch {
-                await MainActor.run {
-                    isLoading = false
-                    alertMessage = L("household.edit.save_error")
-                    showingAlert = true
-                }
+                Self.logger.error("Failed to create HouseholdEditViewModel: \(error)")
             }
         }
     }

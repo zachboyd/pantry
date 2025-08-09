@@ -3,7 +3,7 @@
  PantryKit
 
  Reusable button components with consistent styling across the app
- 
+
  Architecture:
  - BaseButton: Core button implementation with common functionality
  - PrimaryButton: Prominent button style (filled background)
@@ -19,7 +19,7 @@ import SwiftUI
 public enum ButtonStyleVariant {
     case primary
     case secondary
-    
+
     var backgroundColor: Color {
         switch self {
         case .primary:
@@ -28,7 +28,7 @@ public enum ButtonStyleVariant {
             return Color(UIColor.secondarySystemBackground)
         }
     }
-    
+
     var foregroundColor: Color {
         switch self {
         case .primary:
@@ -37,7 +37,7 @@ public enum ButtonStyleVariant {
             return .accentColor
         }
     }
-    
+
     var strokeColor: Color? {
         switch self {
         case .primary:
@@ -46,13 +46,13 @@ public enum ButtonStyleVariant {
             return .accentColor
         }
     }
-    
+
     var strokeWidth: CGFloat {
         switch self {
         case .primary:
             return 0
         case .secondary:
-            return 1.5
+            return 1.0
         }
     }
 }
@@ -62,26 +62,26 @@ public enum ButtonStyleVariant {
 /// Base button component that provides common functionality for all button styles
 struct BaseButton: View {
     // MARK: - Constants
-    
+
     private enum Constants {
-        static let height: CGFloat = 50
+        static let height: CGFloat = 44
         static let cornerRadius: CGFloat = 10
         static let contentSpacing: CGFloat = 8
         static let disabledOpacity: CGFloat = 0.6
         static let loadingScaleFactor: CGFloat = 0.8
     }
-    
+
     // MARK: - Properties
-    
+
     private let title: String
     private let icon: String?
     private let style: ButtonStyleVariant
     private let isLoading: Bool
     private let isDisabled: Bool
     private let action: () -> Void
-    
+
     // MARK: - Initialization
-    
+
     init(
         _ title: String,
         icon: String? = nil,
@@ -97,9 +97,9 @@ struct BaseButton: View {
         self.isDisabled = isDisabled
         self.action = action
     }
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         Button(action: action) {
             ZStack {
@@ -110,22 +110,22 @@ struct BaseButton: View {
         .disabled(isDisabled || isLoading)
         .opacity((isDisabled || isLoading) ? Constants.disabledOpacity : 1.0)
     }
-    
+
     // MARK: - View Components
-    
+
     @ViewBuilder
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: Constants.cornerRadius)
             .fill(style.backgroundColor)
             .frame(height: Constants.height)
-        
+
         if let strokeColor = style.strokeColor {
             RoundedRectangle(cornerRadius: Constants.cornerRadius)
                 .stroke(strokeColor, lineWidth: style.strokeWidth)
                 .frame(height: Constants.height)
         }
     }
-    
+
     private var contentLayer: some View {
         HStack(spacing: Constants.contentSpacing) {
             if isLoading && style == .primary {
@@ -136,13 +136,13 @@ struct BaseButton: View {
                 Image(systemName: icon)
                     .foregroundColor(style.foregroundColor)
             }
-            
+
             Text(displayTitle)
                 .font(.system(.callout, design: .default, weight: .semibold))
                 .foregroundColor(style.foregroundColor)
         }
     }
-    
+
     private var displayTitle: String {
         isLoading && icon == nil && style == .primary ? "\(title)..." : title
     }
@@ -157,7 +157,7 @@ public struct PrimaryButton: View {
     private let action: () -> Void
     private let isLoading: Bool
     private let isDisabled: Bool
-    
+
     /// Creates a primary button with the specified configuration
     /// - Parameters:
     ///   - title: The button's title text
@@ -178,7 +178,7 @@ public struct PrimaryButton: View {
         self.isDisabled = isDisabled
         self.action = action
     }
-    
+
     public var body: some View {
         BaseButton(
             title,
@@ -197,7 +197,7 @@ public struct SecondaryButton: View {
     private let icon: String?
     private let action: () -> Void
     private let isDisabled: Bool
-    
+
     /// Creates a secondary button with the specified configuration
     /// - Parameters:
     ///   - title: The button's title text
@@ -215,7 +215,7 @@ public struct SecondaryButton: View {
         self.isDisabled = isDisabled
         self.action = action
     }
-    
+
     public var body: some View {
         BaseButton(
             title,
@@ -231,7 +231,7 @@ public struct SecondaryButton: View {
 public struct TextButton: View {
     private let title: String
     private let action: () -> Void
-    
+
     /// Creates a text button with the specified configuration
     /// - Parameters:
     ///   - title: The button's title text
@@ -243,7 +243,7 @@ public struct TextButton: View {
         self.title = title
         self.action = action
     }
-    
+
     public var body: some View {
         Button(title, action: action)
             .buttonStyle(.plain)
@@ -256,41 +256,41 @@ public struct TextButton: View {
         // Primary buttons
         Text("Primary Buttons")
             .font(DesignTokens.Typography.Semantic.sectionHeader())
-        
+
         PrimaryButton("Sign In") {
             print("Sign in tapped")
         }
-        
+
         PrimaryButton("Create Account", icon: "plus.circle.fill") {
             print("Create account tapped")
         }
-        
+
         PrimaryButton("Loading", isLoading: true) {
             print("Loading button tapped")
         }
-        
+
         PrimaryButton("Disabled", isDisabled: true) {
             print("Disabled button tapped")
         }
-        
+
         // Secondary buttons
         Text("Secondary Buttons")
             .font(DesignTokens.Typography.Semantic.sectionHeader())
             .padding(.top)
-        
+
         SecondaryButton("Join Household", icon: "person.2") {
             print("Join household tapped")
         }
-        
+
         SecondaryButton("Secondary Action") {
             print("Secondary action tapped")
         }
-        
+
         // Text button
         Text("Text Button")
             .font(DesignTokens.Typography.Semantic.sectionHeader())
             .padding(.top)
-        
+
         TextButton("Sign Up") {
             print("Sign up tapped")
         }

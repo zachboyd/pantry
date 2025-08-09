@@ -8,28 +8,25 @@ import SwiftUI
 @MainActor
 @Observable
 public final class DependencyContainer {
-    private static let logger = Logger.app
+    private static let logger = Logger.di
 
     // MARK: - Core Services
 
     private var _authService: AuthService?
     private var _apolloClientService: ApolloClientService?
     private var _graphQLService: GraphQLService?
+    private var _watchManager: WatchManager?
+    private var _hydrationService: HydrationService?
     private var _householdService: HouseholdService?
     private var _userService: UserService?
     private var _userPreferencesService: UserPreferencesService?
     private var _pantryItemService: PantryItemServiceProtocol?
     private var _shoppingListService: ShoppingListServiceProtocol?
-    private var _recipeService: RecipeServiceProtocol?
     private var _notificationService: NotificationServiceProtocol?
 
-    // MARK: - Repositories
-
-    private var _authRepository: AuthRepositoryProtocol?
-    private var _householdRepository: HouseholdRepositoryProtocol?
-    private var _pantryItemRepository: PantryItemRepositoryProtocol?
-    private var _shoppingListRepository: ShoppingListRepositoryProtocol?
-    private var _recipeRepository: RecipeRepositoryProtocol?
+    // MARK: - Repositories (Removed)
+    // The repository pattern has been removed.
+    // Services now interact directly with GraphQL through GraphQLService.
 
     // MARK: - Utility Services
 
@@ -58,27 +55,26 @@ public final class DependencyContainer {
         Self.logger.info("🚀 Initializing services for userId: \(userId)")
 
         // Check if we need to upgrade from basic to full initialization
-        let needsFullInit = _householdService == nil || 
-                           _userService == nil || 
-                           _pantryItemService == nil ||
-                           _shoppingListService == nil ||
-                           _recipeService == nil ||
-                           _notificationService == nil
-        
-        if !needsFullInit && isInitialized {
+        let needsFullInit = _householdService == nil ||
+            _userService == nil ||
+            _pantryItemService == nil ||
+            _shoppingListService == nil ||
+            _notificationService == nil
+
+        if !needsFullInit, isInitialized {
             Self.logger.info("✅ Services already fully initialized")
             return
         }
 
         do {
-            Self.logger.info("🔧 Initializing missing repositories and services...")
-            
+            Self.logger.info("🔧 Initializing missing services...")
+
             // Only initialize what's missing
             if needsFullInit {
                 try await initializeMissingServices(userId: userId)
             }
-            
-            Self.logger.info("✅ All repositories and services initialization completed")
+
+            Self.logger.info("✅ All services initialization completed")
 
             isInitialized = true
             isConnected = true
@@ -109,12 +105,21 @@ public final class DependencyContainer {
 
         let apiClient = AuthClient(authEndpoint: authEndpoint)
         let authTokenManager = AuthTokenManager()
-        Self.logger.info("🔑 Creating AuthService...")
-        _authService = AuthService(apiClient: apiClient, authTokenManager: authTokenManager)
+
+        // Initialize Apollo Client service first (needed for permissions)
+        let apolloClientService = ApolloClientService(authService: nil)
+        _apolloClientService = apolloClientService
+
+        Self.logger.info("🔑 Creating AuthService with Apollo client...")
+        _authService = AuthService(
+            apiClient: apiClient,
+            authTokenManager: authTokenManager,
+            apolloClient: apolloClientService.apolloClient
+        )
         Self.logger.info("✅ AuthService created")
 
-        // Initialize Apollo Client service
-        _apolloClientService = ApolloClientService(authService: _authService)
+        // Update Apollo client service with auth service
+        apolloClientService.updateAuthService(_authService)
 
         // Initialize GraphQL service
         guard let apolloClientService = _apolloClientService else {
@@ -134,22 +139,18 @@ public final class DependencyContainer {
     public func shutdown() async {
         Self.logger.info("🔄 Shutting down services")
 
-        // Clear all services and repositories
+        // Clear all services
         _authService = nil
         _apolloClientService = nil
         _graphQLService = nil
+        _watchManager = nil
+        _hydrationService = nil
         _householdService = nil
         _userService = nil
         _userPreferencesService = nil
         _pantryItemService = nil
         _shoppingListService = nil
-        _recipeService = nil
         _notificationService = nil
-        _authRepository = nil
-        _householdRepository = nil
-        _pantryItemRepository = nil
-        _shoppingListRepository = nil
-        _recipeRepository = nil
 
         isInitialized = false
         isConnected = false
@@ -177,31 +178,20 @@ public final class DependencyContainer {
     /// Initialize only the missing services (for upgrading from basic to full initialization)
     private func initializeMissingServices(userId _: String) async throws {
         Self.logger.info("🔧 Checking for missing services...")
-        
+
         // Validate we have the basic services first
         guard let authService = _authService else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "AuthService")
         }
-        guard let apolloClientService = _apolloClientService else {
+        guard _apolloClientService != nil else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "ApolloClientService")
         }
         guard let graphQLService = _graphQLService else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "GraphQLService")
         }
-        
-        // Initialize repositories if they don't exist
-        if _authRepository == nil || _householdRepository == nil || 
-           _pantryItemRepository == nil || _shoppingListRepository == nil || 
-           _recipeRepository == nil {
-            Self.logger.info("📦 Creating repositories...")
-            let repositories = try ServiceFactory.createRepositories()
-            _authRepository = repositories.auth
-            _householdRepository = repositories.household
-            _pantryItemRepository = repositories.pantryItem
-            _shoppingListRepository = repositories.shoppingList
-            _recipeRepository = repositories.recipe
-        }
-        
+
+        // Repository pattern has been removed - services use GraphQL directly
+
         // Initialize missing services
         if _householdService == nil {
             Self.logger.info("🏠 Creating HouseholdService...")
@@ -210,95 +200,74 @@ public final class DependencyContainer {
                 authService: authService
             )
         }
-        
+
         if _userService == nil {
             Self.logger.info("👤 Creating UserService...")
             _userService = try ServiceFactory.createUserService(
                 authService: authService,
-                apolloClient: apolloClientService.apollo
+                graphQLService: graphQLService,
+                watchManager: _watchManager
             )
         }
-        
+
         if _userPreferencesService == nil {
             Self.logger.info("⚙️ Creating UserPreferencesService...")
             _userPreferencesService = try ServiceFactory.createUserPreferencesService(
                 authService: authService
             )
         }
-        
+
         if _pantryItemService == nil {
             Self.logger.info("🥫 Creating PantryItemService...")
-            guard let pantryItemRepository = _pantryItemRepository else {
-                throw DependencyContainerError.serviceNotInitialized(serviceName: "PantryItemRepository")
-            }
             guard let householdService = _householdService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _pantryItemService = try ServiceFactory.createPantryItemService(
-                pantryItemRepository: pantryItemRepository,
                 householdService: householdService
             )
         }
-        
+
         if _shoppingListService == nil {
             Self.logger.info("🛒 Creating ShoppingListService...")
-            guard let shoppingListRepository = _shoppingListRepository else {
-                throw DependencyContainerError.serviceNotInitialized(serviceName: "ShoppingListRepository")
-            }
             guard let householdService = _householdService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _shoppingListService = try ServiceFactory.createShoppingListService(
-                shoppingListRepository: shoppingListRepository,
                 householdService: householdService
             )
         }
-        
-        if _recipeService == nil {
-            Self.logger.info("🍳 Creating RecipeService...")
-            guard let recipeRepository = _recipeRepository else {
-                throw DependencyContainerError.serviceNotInitialized(serviceName: "RecipeRepository")
-            }
-            _recipeService = try ServiceFactory.createRecipeService(
-                recipeRepository: recipeRepository
-            )
-        }
-        
+
+
         if _notificationService == nil {
             Self.logger.info("🔔 Creating NotificationService...")
             _notificationService = try ServiceFactory.createNotificationService()
         }
-        
+
         Self.logger.info("✅ All missing services created successfully")
     }
-    
-    private func initializeRepositoriesAndServices(userId _: String) async throws {
+
+    private func initializeServices(userId _: String) async throws {
         do {
             // Validate configuration before proceeding
             try ServiceFactory.validateServiceConfiguration()
 
-            // Initialize repositories using factory
-            let repositories = try ServiceFactory.createRepositories()
+            // Repository pattern has been removed - services use GraphQL directly
 
-            // Assign repositories
-            _authRepository = repositories.auth
-            _householdRepository = repositories.household
-            _pantryItemRepository = repositories.pantryItem
-            _shoppingListRepository = repositories.shoppingList
-            _recipeRepository = repositories.recipe
+            // Initialize Apollo Client service first (needed for permissions)
+            _apolloClientService = ApolloClientService(authService: nil)
 
             // Initialize services in dependency order using factory
             _authService = try ServiceFactory.createAuthService(
-                authRepository: repositories.auth,
-                authEndpoint: getAuthEndpoint()
+                authEndpoint: getAuthEndpoint(),
+                apolloClient: _apolloClientService?.apolloClient
             )
 
-            // Initialize Apollo Client service after auth service
-            _apolloClientService = ApolloClientService(authService: _authService)
-            
+            // Update Apollo client service with auth service
+            _apolloClientService?.updateAuthService(_authService)
+
             // Enable verbose GraphQL logging in debug builds
             #if DEBUG
-            _apolloClientService?.setVerboseLogging(true)
+                _apolloClientService?.setVerboseLogging(true)
             #endif
 
             // Initialize GraphQL service after Apollo Client service
@@ -308,27 +277,37 @@ public final class DependencyContainer {
             _graphQLService = try ServiceFactory.createGraphQLService(
                 apolloClientService: apolloClientService
             )
+            
+            // Initialize WatchManager after Apollo Client service
+            _watchManager = WatchManager(apollo: apolloClientService.apollo)
+            Self.logger.info("👁️ WatchManager initialized")
 
             guard let graphQLService = _graphQLService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "GraphQLService")
             }
+            
+            // Initialize HydrationService with WatchManager
+            _hydrationService = try ServiceFactory.createHydrationService(
+                graphQLService: graphQLService,
+                watchManager: _watchManager
+            )
+            Self.logger.info("💧 HydrationService initialized")
             guard let authService = _authService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "AuthService")
             }
             _householdService = try ServiceFactory.createHouseholdService(
                 graphQLService: graphQLService,
-                authService: authService
+                authService: authService,
+                watchManager: _watchManager
             )
 
             guard let authServiceForUser = _authService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "AuthService")
             }
-            guard let apolloClient = _apolloClientService?.apollo else {
-                throw DependencyContainerError.serviceNotInitialized(serviceName: "ApolloClient")
-            }
             _userService = try ServiceFactory.createUserService(
                 authService: authServiceForUser,
-                apolloClient: apolloClient
+                graphQLService: graphQLService,
+                watchManager: _watchManager
             )
 
             guard let authServiceForPrefs = _authService else {
@@ -342,7 +321,6 @@ public final class DependencyContainer {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _pantryItemService = try ServiceFactory.createPantryItemService(
-                pantryItemRepository: repositories.pantryItem,
                 householdService: householdServiceForPantry
             )
 
@@ -350,19 +328,14 @@ public final class DependencyContainer {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _shoppingListService = try ServiceFactory.createShoppingListService(
-                shoppingListRepository: repositories.shoppingList,
                 householdService: householdServiceForShopping
-            )
-
-            _recipeService = try ServiceFactory.createRecipeService(
-                recipeRepository: repositories.recipe
             )
 
             _notificationService = try ServiceFactory.createNotificationService()
 
-            Self.logger.info("✅ All repositories and services initialized using ServiceFactory")
+            Self.logger.info("✅ All services initialized using ServiceFactory")
         } catch {
-            Self.logger.error("❌ Repository/Service initialization failed: \(error)")
+            Self.logger.error("❌ Service initialization failed: \(error)")
             throw DependencyContainerError.serviceInitializationFailed(
                 serviceName: "Multiple Services",
                 underlying: error
@@ -396,13 +369,6 @@ public final class DependencyContainer {
     public func makeShoppingListService() throws -> ShoppingListServiceProtocol {
         guard let service = _shoppingListService else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "ShoppingListService")
-        }
-        return service
-    }
-
-    public func makeRecipeService() throws -> RecipeServiceProtocol {
-        guard let service = _recipeService else {
-            throw DependencyContainerError.serviceNotInitialized(serviceName: "RecipeService")
         }
         return service
     }
@@ -472,13 +438,6 @@ public final class DependencyContainer {
         return service
     }
 
-    public func getRecipeService() throws -> RecipeServiceProtocol {
-        guard let service = _recipeService else {
-            throw DependencyContainerError.serviceNotInitialized(serviceName: "RecipeService")
-        }
-        return service
-    }
-
     public func getNotificationService() throws -> NotificationServiceProtocol {
         guard let service = _notificationService else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "NotificationService")
@@ -496,6 +455,13 @@ public final class DependencyContainer {
     public func getGraphQLService() throws -> GraphQLService {
         guard let service = _graphQLService else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "GraphQLService")
+        }
+        return service
+    }
+    
+    public func getHydrationService() throws -> HydrationService {
+        guard let service = _hydrationService else {
+            throw DependencyContainerError.serviceNotInitialized(serviceName: "HydrationService")
         }
         return service
     }
@@ -630,11 +596,6 @@ public final class DependencyContainer {
         return try? getShoppingListService()
     }
 
-    /// Get recipe service - only available when authenticated
-    public var recipeService: RecipeServiceProtocol? {
-        return try? getRecipeService()
-    }
-
     /// Get notification service - only available when authenticated
     public var notificationService: NotificationServiceProtocol? {
         return try? getNotificationService()
@@ -649,6 +610,11 @@ public final class DependencyContainer {
     public var graphQLService: GraphQLService? {
         return try? getGraphQLService()
     }
+    
+    /// Get hydration service - available after initialization
+    public var hydrationService: HydrationService? {
+        return try? getHydrationService()
+    }
 
     /// Get user service - available after initialization
     public var userService: UserServiceProtocol? {
@@ -659,7 +625,7 @@ public final class DependencyContainer {
     public var userPreferencesService: UserPreferencesServiceProtocol? {
         return try? getUserPreferencesService()
     }
-    
+
     /// Get Apollo client directly - available after initialization
     public var apolloClient: ApolloClient? {
         return apolloClientService?.apollo
@@ -733,23 +699,13 @@ public protocol ShoppingListServiceProtocol: Sendable {
 }
 
 @MainActor
-public protocol RecipeServiceProtocol: Sendable {
-    func getRecipes() async throws -> [Recipe]
-    func searchRecipes(query: String) async throws -> [Recipe]
-    func getRecipe(id: String) async throws -> Recipe?
-}
-
-@MainActor
 public protocol NotificationServiceProtocol: Sendable {
     func scheduleExpirationNotification(for item: PantryItem) async throws
     func cancelNotification(for itemId: String) async throws
 }
 
-public protocol AuthRepositoryProtocol: Sendable {}
-public protocol HouseholdRepositoryProtocol: Sendable {}
-public protocol PantryItemRepositoryProtocol: Sendable {}
-public protocol ShoppingListRepositoryProtocol: Sendable {}
-public protocol RecipeRepositoryProtocol: Sendable {}
+// Repository protocols have been removed.
+// Services now interact directly with GraphQL through GraphQLService.
 
 // MARK: - Temporary Model Placeholders
 
@@ -802,29 +758,3 @@ public struct ShoppingListItem: Codable, Identifiable, Sendable {
     public let completedAt: Date?
 }
 
-public struct Recipe: Codable, Identifiable, Sendable {
-    public let id: String
-    public let name: String
-    public let description: String?
-    public let ingredients: [RecipeIngredient]
-    public let instructions: [String]
-    public let prepTime: Int?
-    public let cookTime: Int?
-    public let servings: Int?
-    public let difficulty: RecipeDifficulty
-    public let tags: [String]
-}
-
-public struct RecipeIngredient: Codable, Identifiable, Sendable {
-    public let id: String
-    public let name: String
-    public let quantity: Double
-    public let unit: String
-    public let notes: String?
-}
-
-public enum RecipeDifficulty: String, Codable, CaseIterable, Sendable {
-    case easy
-    case medium
-    case hard
-}

@@ -44,18 +44,8 @@ public struct AvatarView: View {
     }
     
     private var initials: String {
-        let name = user?.name ?? ""
-        let components = name.split(separator: " ")
-        
-        if components.count >= 2 {
-            let firstInitial = components[0].prefix(1).uppercased()
-            let lastInitial = components[1].prefix(1).uppercased()
-            return "\(firstInitial)\(lastInitial)"
-        } else if let firstComponent = components.first {
-            return String(firstComponent.prefix(2).uppercased())
-        } else {
-            return "?"
-        }
+        // Use the User model's built-in initials property
+        user?.initials ?? "?"
     }
     
     private var avatarUrl: String? {
@@ -89,7 +79,10 @@ public struct AvatarView: View {
     
     public var body: some View {
         let avatarContent = Group {
-            if let avatarUrl = avatarUrl,
+            if let user = user, user.isAi {
+                // Show AI avatar for AI users using the dedicated component
+                AIAvatarView(customSize: size.value)
+            } else if let avatarUrl = avatarUrl,
                !avatarUrl.isEmpty,
                let url = URL(string: avatarUrl) {
                 // Show async image

@@ -3,29 +3,12 @@
 # Main hydration query that fetches all necessary data for initial app state
 query Hydrate {
   currentUser {
-    id
-    auth_user_id
-    email
-    first_name
-    last_name
-    display_name
-    avatar_url
-    phone
-    birth_date
-    managed_by
-    relationship_to_manager
-    created_at
-    updated_at
+    ...UserFields
   }
   
   # Get all households the user belongs to
   households {
-    id
-    name
-    description
-    created_by
-    created_at
-    updated_at
+    ...HouseholdFields
   }
   
   # TODO: Add other hydration data as needed

@@ -1,0 +1,109 @@
+import Foundation
+
+/// Represents a value that can be either a single string or an array of strings
+/// This matches CASL's flexible format for actions, subjects, and fields
+public enum StringOrArray: Codable, Sendable {
+    case single(String)
+    case array([String])
+    
+    /// Get all string values as an array
+    public var values: [String] {
+        switch self {
+        case .single(let value):
+            return [value]
+        case .array(let values):
+            return values
+        }
+    }
+    
+    /// Get the first value (useful for conversion)
+    public var first: String? {
+        switch self {
+        case .single(let value):
+            return value
+        case .array(let values):
+            return values.first
+        }
+    }
+    
+    /// Check if this represents a single value
+    public var isSingle: Bool {
+        switch self {
+        case .single:
+            return true
+        case .array:
+            return false
+        }
+    }
+    
+    // MARK: - Codable
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        
+        if let single = try? container.decode(String.self) {
+            self = .single(single)
+        } else if let array = try? container.decode([String].self) {
+            self = .array(array)
+        } else {
+            throw DecodingError.typeMismatch(
+                StringOrArray.self,
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Expected String or [String]"
+                )
+            )
+        }
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        
+        switch self {
+        case .single(let value):
+            try container.encode(value)
+        case .array(let values):
+            try container.encode(values)
+        }
+    }
+}
+
+// MARK: - Convenience Initializers
+
+extension StringOrArray {
+    /// Initialize from a single string
+    public init(_ string: String) {
+        self = .single(string)
+    }
+    
+    /// Initialize from an array of strings
+    public init(_ array: [String]) {
+        self = .array(array)
+    }
+    
+    /// Initialize from an optional array (nil becomes empty array)
+    public init(array: [String]?) {
+        if let array = array, !array.isEmpty {
+            self = .array(array)
+        } else {
+            self = .array([])
+        }
+    }
+}
+
+// MARK: - Equatable
+
+extension StringOrArray: Equatable {
+    public static func == (lhs: StringOrArray, rhs: StringOrArray) -> Bool {
+        switch (lhs, rhs) {
+        case (.single(let l), .single(let r)):
+            return l == r
+        case (.array(let l), .array(let r)):
+            return l == r
+        case (.single(let l), .array(let r)):
+            return r.count == 1 && r.first == l
+        case (.array(let l), .single(let r)):
+            return l.count == 1 && l.first == r
+        }
+    }
+}

@@ -17,8 +17,8 @@ public final class ServiceFactory {
 
     /// Create AuthService with all required dependencies
     public static func createAuthService(
-        authRepository _: AuthRepositoryProtocol,
-        authEndpoint: String = getAuthEndpoint()
+        authEndpoint: String = getAuthEndpoint(),
+        apolloClient: ApolloClient? = nil
     ) throws -> AuthService {
         logger.info("🏭 Creating AuthService")
 
@@ -27,7 +27,8 @@ public final class ServiceFactory {
 
         let service = AuthService(
             apiClient: apiClient,
-            authTokenManager: authTokenManager
+            authTokenManager: authTokenManager,
+            apolloClient: apolloClient
         )
 
         logger.info("✅ AuthService created successfully")
@@ -62,13 +63,15 @@ public final class ServiceFactory {
     /// Create HouseholdService with all required dependencies
     public static func createHouseholdService(
         graphQLService: GraphQLServiceProtocol,
-        authService: any AuthServiceProtocol
+        authService: any AuthServiceProtocol,
+        watchManager: WatchManager? = nil
     ) throws -> HouseholdService {
         logger.info("🏭 Creating HouseholdService")
 
         let service = HouseholdService(
             graphQLService: graphQLService,
-            authService: authService
+            authService: authService,
+            watchManager: watchManager
         )
 
         logger.info("✅ HouseholdService created successfully")
@@ -78,11 +81,16 @@ public final class ServiceFactory {
     /// Create UserService with all required dependencies
     public static func createUserService(
         authService: any AuthServiceProtocol,
-        apolloClient: ApolloClient
+        graphQLService: GraphQLServiceProtocol,
+        watchManager: WatchManager? = nil
     ) throws -> UserService {
         logger.info("🏭 Creating UserService with GraphQL")
 
-        let service = UserService(authService: authService, apolloClient: apolloClient)
+        let service = UserService(
+            authService: authService, 
+            graphQLService: graphQLService,
+            watchManager: watchManager
+        )
 
         logger.info("✅ UserService created successfully")
         return service
@@ -106,7 +114,6 @@ public final class ServiceFactory {
 
     /// Create PantryItemService with all required dependencies
     public static func createPantryItemService(
-        pantryItemRepository _: PantryItemRepositoryProtocol,
         householdService: HouseholdServiceProtocol
     ) throws -> PantryItemServiceProtocol {
         logger.info("🏭 Creating PantryItemService")
@@ -121,7 +128,6 @@ public final class ServiceFactory {
 
     /// Create ShoppingListService with all required dependencies
     public static func createShoppingListService(
-        shoppingListRepository _: ShoppingListRepositoryProtocol,
         householdService: HouseholdServiceProtocol
     ) throws -> ShoppingListServiceProtocol {
         logger.info("🏭 Creating ShoppingListService")
@@ -134,18 +140,6 @@ public final class ServiceFactory {
         return service
     }
 
-    /// Create RecipeService with all required dependencies
-    public static func createRecipeService(
-        recipeRepository _: RecipeRepositoryProtocol
-    ) throws -> RecipeServiceProtocol {
-        logger.info("🏭 Creating RecipeService")
-
-        let service = RecipeService()
-
-        logger.info("✅ RecipeService created successfully")
-        return service
-    }
-
     /// Create NotificationService - stateless service, no dependencies needed
     public static func createNotificationService() throws -> NotificationServiceProtocol {
         logger.info("🏭 Creating NotificationService")
@@ -155,24 +149,26 @@ public final class ServiceFactory {
         logger.info("✅ NotificationService created successfully")
         return service
     }
-
-    // MARK: - Repository Creation
-
-    /// Create all repositories with proper configuration
-    public static func createRepositories() throws -> RepositorySet {
-        logger.info("🏭 Creating repository set")
-
-        let repositories = RepositorySet(
-            auth: MockAuthRepository(),
-            household: MockHouseholdRepository(),
-            pantryItem: MockPantryItemRepository(),
-            shoppingList: MockShoppingListRepository(),
-            recipe: MockRecipeRepository()
+    
+    /// Create HydrationService with all required dependencies
+    public static func createHydrationService(
+        graphQLService: GraphQLServiceProtocol,
+        watchManager: WatchManager? = nil
+    ) throws -> HydrationService {
+        logger.info("🏭 Creating HydrationService")
+        
+        let service = HydrationService(
+            graphQLService: graphQLService,
+            watchManager: watchManager
         )
-
-        logger.info("✅ Repository set created successfully")
-        return repositories
+        
+        logger.info("✅ HydrationService created successfully")
+        return service
     }
+
+    // MARK: - Repository Creation (Removed)
+    // The repository pattern has been removed in favor of direct GraphQL service usage.
+    // Services now interact directly with GraphQL through Apollo Client.
 
     // MARK: - Configuration Validation
 
@@ -185,17 +181,6 @@ public final class ServiceFactory {
 
         logger.info("✅ Service configuration validation passed")
     }
-}
-
-// MARK: - Supporting Types
-
-/// Container for all repository instances
-public struct RepositorySet {
-    public let auth: AuthRepositoryProtocol
-    public let household: HouseholdRepositoryProtocol
-    public let pantryItem: PantryItemRepositoryProtocol
-    public let shoppingList: ShoppingListRepositoryProtocol
-    public let recipe: RecipeRepositoryProtocol
 }
 
 // MARK: - Temporary Service Implementations
@@ -212,26 +197,7 @@ public struct RepositorySet {
 // - RecipeService.swift
 // - NotificationService.swift
 
-// MARK: - Mock Repository Implementations
-
-// These will be replaced with actual implementations in future phases
-
-public final class MockAuthRepository: AuthRepositoryProtocol, Sendable {
-    public init() {}
-}
-
-public final class MockHouseholdRepository: HouseholdRepositoryProtocol, Sendable {
-    public init() {}
-}
-
-public final class MockPantryItemRepository: PantryItemRepositoryProtocol, Sendable {
-    public init() {}
-}
-
-public final class MockShoppingListRepository: ShoppingListRepositoryProtocol, Sendable {
-    public init() {}
-}
-
-public final class MockRecipeRepository: RecipeRepositoryProtocol, Sendable {
-    public init() {}
-}
+// MARK: - Repository Pattern Removed
+// The repository pattern has been removed from this architecture.
+// All services now interact directly with GraphQL through the GraphQLService,
+// which provides a cleaner and more direct data access pattern.

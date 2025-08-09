@@ -8,24 +8,60 @@ import SwiftUI
 public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserInfoDependencies> {
     private static let logger = Logger(category: "UserInfoViewModel")
     
+    // MARK: - Watched Data
+    
+    /// Watched current user data that updates reactively
+    public let currentUser: WatchedResult<User>
+    
     // MARK: - Initialization
     
     public init(dependencies: UserInfoDependencies, currentUser: User?) {
+        // Start watching current user immediately
+        self.currentUser = dependencies.userService.watchCurrentUser()
+        
+        // Use provided currentUser or watched value for initial state
+        let user = currentUser ?? self.currentUser.value
         let initialState = UserInfoState(
-            firstName: currentUser?.firstName ?? "",
-            lastName: currentUser?.lastName ?? ""
+            firstName: user?.firstName ?? "",
+            lastName: user?.lastName ?? ""
         )
         super.init(dependencies: dependencies, initialState: initialState)
+        
+        // Register watch for automatic cleanup
+        registerWatch(self.currentUser)
+        
+        // Update state when watched user changes
+        Task { @MainActor in
+            await self.observeCurrentUser()
+        }
     }
     
     // Required by BaseReactiveViewModel
     public required init(dependencies: UserInfoDependencies) {
+        self.currentUser = dependencies.userService.watchCurrentUser()
         super.init(dependencies: dependencies, initialState: UserInfoState())
+        
+        // Register watch for automatic cleanup
+        registerWatch(self.currentUser)
+        
+        // Update state when watched user changes
+        Task { @MainActor in
+            await self.observeCurrentUser()
+        }
     }
     
     // Required by BaseReactiveViewModel
     public required init(dependencies: UserInfoDependencies, initialState: UserInfoState) {
+        self.currentUser = dependencies.userService.watchCurrentUser()
         super.init(dependencies: dependencies, initialState: initialState)
+        
+        // Register watch for automatic cleanup
+        registerWatch(self.currentUser)
+        
+        // Update state when watched user changes
+        Task { @MainActor in
+            await self.observeCurrentUser()
+        }
     }
     
     // MARK: - Public Methods
@@ -53,8 +89,8 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
             let trimmedFirstName = self.state.firstName.trimmingCharacters(in: .whitespacesAndNewlines)
             let trimmedLastName = self.state.lastName.trimmingCharacters(in: .whitespacesAndNewlines)
             
-            // Get the current user to update
-            guard let currentUser = try await self.dependencies.userService.getCurrentUser() else {
+            // Get the current user to update from watched data
+            guard let currentUser = self.currentUser.value else {
                 Self.logger.error("No current user found to update")
                 throw ServiceError.notAuthenticated
             }
@@ -72,6 +108,10 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
                 birthDate: currentUser.birthDate,
                 managedBy: currentUser.managedBy,
                 relationshipToManager: currentUser.relationshipToManager,
+                primaryHouseholdId: currentUser.primaryHouseholdId,
+                permissions: currentUser.permissions,
+                preferences: currentUser.preferences,
+                isAi: currentUser.isAi,
                 createdAt: currentUser.createdAt,
                 updatedAt: DateUtilities.graphQLStringFromDate(Date())
             )
@@ -80,6 +120,9 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
             do {
                 let returnedUser = try await self.dependencies.userService.updateUser(updatedUser)
                 Self.logger.info("✅ User info updated successfully: \(returnedUser.name ?? "Unknown")")
+                
+                // Note: The parent view (OnboardingContainerView) should handle updating AppState
+                // after this completes. We just return success here.
                 return true
             } catch {
                 Self.logger.error("❌ Failed to update user info: \(error)")
@@ -105,7 +148,32 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
     
     /// Check if either loading state is active
     public var isLoading: Bool {
-        loadingStates.isLoading(.save) || loadingStates.isLoading(.initial)
+        loadingStates.isLoading(.save) || loadingStates.isLoading(.initial) || currentUser.isLoading
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Observe changes to the current user
+    private func observeCurrentUser() async {
+        // This method would normally use Combine or async sequences
+        // For now, we'll rely on SwiftUI's @Observable to handle updates
+        // The WatchedResult is @Observable, so changes will trigger UI updates
+    }
+    
+    // MARK: - WatchedResult Helpers Override
+    
+    override public var isWatchedDataLoading: Bool {
+        currentUser.isLoading
+    }
+    
+    override public var watchedDataError: Error? {
+        currentUser.error
+    }
+    
+    override public func retryFailedWatches() async {
+        if currentUser.error != nil {
+            await currentUser.retry()
+        }
     }
 }
 

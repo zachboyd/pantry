@@ -74,34 +74,49 @@ public final class LocalizationManager: Sendable {
         }
     }
     
-    /// Gets a localized string with plural support
+    /// Gets a localized string with plural support using pipe-separated format
+    /// 
+    /// Supports plural strings in the format: "singular|plural"
+    /// Example in Localizable.strings: "items.count" = "%d item|%d items"
+    /// 
+    /// - Parameters:
+    ///   - key: The localization key
+    ///   - count: The count to determine singular (1) or plural (all other values)
+    ///   - args: Additional format arguments after the count
+    /// - Returns: The formatted localized string with proper plural form
     public func localizedPlural(for key: String, count: Int, args: CVarArg...) -> String {
         let bundle = getLocalizedBundle()
         
-        // Create a format key for pluralization
-        let formatKey = key
-        
-        // Use NSLocalizedString with plural rule
-        let format = bundle.localizedString(forKey: formatKey, value: nil, table: nil)
+        // Get the format string
+        let format = bundle.localizedString(forKey: key, value: nil, table: nil)
         
         // If translation not found in current language, try English fallback
-        if format == formatKey && currentLanguage != "en" {
+        var finalFormat = format
+        if format == key && currentLanguage != "en" {
             if let englishPath = Bundle.module.path(forResource: "en", ofType: "lproj"),
                let englishBundle = Bundle(path: englishPath) {
-                let englishFormat = englishBundle.localizedString(forKey: formatKey, value: nil, table: nil)
-                if englishFormat != formatKey {
-                    // Combine count with other args
-                    let allArgs = [count] + args
-                    return String.localizedStringWithFormat(englishFormat, allArgs as [CVarArg])
+                let englishFormat = englishBundle.localizedString(forKey: key, value: nil, table: nil)
+                if englishFormat != key {
+                    finalFormat = englishFormat
                 }
             }
         }
         
-        // If we have a valid format string, use it
-        if format != formatKey {
-            // Combine count with other args
+        // Check if the format contains pipe separator for plurals
+        if finalFormat.contains("|") {
+            let parts = finalFormat.split(separator: "|", maxSplits: 1).map(String.init)
+            if parts.count == 2 {
+                // Use singular for count == 1, plural otherwise
+                let selectedFormat = count == 1 ? parts[0] : parts[1]
+                let allArgs = [count] + args
+                return String(format: selectedFormat, arguments: allArgs as [CVarArg])
+            }
+        }
+        
+        // If we have a valid format string without pipe, use it as-is
+        if finalFormat != key {
             let allArgs = [count] + args
-            return String.localizedStringWithFormat(format, allArgs as [CVarArg])
+            return String(format: finalFormat, arguments: allArgs as [CVarArg])
         }
         
         // Fallback to non-plural version

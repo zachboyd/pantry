@@ -193,6 +193,34 @@ struct MyView: View {
 ./apollo-ios-cli fetch-schema
 ```
 
+### Navigation Components
+⚠️ **CRITICAL: NEVER use NavigationView - it's deprecated in iOS 16+**
+- **ALWAYS use NavigationStack** for all navigation, including:
+  - Main navigation hierarchies
+  - Modal sheet presentations
+  - Any view that needs navigation capabilities
+- Example:
+  ```swift
+  // ✅ CORRECT - Always use NavigationStack
+  NavigationStack {
+      ContentView()
+  }
+  
+  .sheet(isPresented: $showingModal) {
+      NavigationStack {  // ✅ Use NavigationStack in sheets too
+          ModalContentView()
+      }
+  }
+  
+  // ❌ WRONG - Never use NavigationView
+  NavigationView {  // ❌ Deprecated, DO NOT USE
+      ContentView()
+  }
+  ```
+- NavigationStack is the modern replacement that provides better performance and programmatic navigation
+- All navigation should use the type-safe `NavigationDestination` enum with `.navigationDestination(for:)`
+- Use `NavigationSplitView` for iPad sidebar layouts (not NavigationView)
+
 ### Testing
 - Use iOS simulators for testing
 - Available schemes: Pantry, PantryKit

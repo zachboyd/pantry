@@ -10,57 +10,66 @@ import SwiftUI
 /// Appearance settings view
 public struct AppearanceSettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("appearance_mode") private var appearanceMode: AppearanceMode = .system
+    @Environment(\.themeManager) private var themeManager
+    @Environment(\.colorScheme) private var systemColorScheme
 
-    public init() {}
+    @State private var selectedTheme: ThemePreference
+    @State private var originalTheme: ThemePreference
+
+    public init() {
+        // Initialize with the saved theme from ThemeManager, fallback to system
+        let savedTheme = ThemeManager.shared.userSavedTheme ?? .system
+        _selectedTheme = State(initialValue: savedTheme)
+        _originalTheme = State(initialValue: savedTheme)
+    }
 
     public var body: some View {
+        let osColorScheme: ColorScheme = systemColorScheme
+        let selectedColorScheme: ColorScheme = selectedTheme == .light ? .light : .dark
+
         NavigationStack {
             List {
                 Section {
-                    ForEach(AppearanceMode.allCases, id: \.self) { mode in
-                        Button(action: {
-                            appearanceMode = mode
-                        }) {
-                            HStack {
-                                Image(systemName: mode.iconName)
-                                    .foregroundColor(mode.color)
-                                    .frame(width: 24)
+                    ForEach(ThemePreference.allCases, id: \.self) { theme in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(theme.displayName)
+                                    .foregroundColor(DesignTokens.Colors.Text.primary)
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(mode.displayName)
-                                        .font(DesignTokens.Typography.Semantic.body())
-                                        .foregroundColor(DesignTokens.Colors.Text.primary)
+                                Text(themeDescription(for: theme))
+                                    .font(DesignTokens.Typography.Semantic.caption())
+                                    .foregroundColor(DesignTokens.Colors.Text.secondary)
+                            }
 
-                                    Text(mode.description)
-                                        .font(DesignTokens.Typography.Semantic.caption())
-                                        .foregroundColor(DesignTokens.Colors.Text.secondary)
-                                }
+                            Spacer()
 
-                                Spacer()
-
-                                if appearanceMode == mode {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(DesignTokens.Colors.Primary.base)
-                                }
+                            if selectedTheme == theme {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(DesignTokens.Colors.Primary.base)
                             }
                         }
-                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedTheme = theme
+                            // Apply theme temporarily for preview
+                            themeManager.updateTheme(theme)
+                        }
+                        .padding(.vertical, 4)
                     }
                 } header: {
-                    Text(L("settings.appearance.theme"))
+                    Text(L("settings.appearance.theme")).textCase(.uppercase).font(.caption).foregroundColor(.secondary)
                 } footer: {
                     Text(L("settings.appearance.theme.description"))
                 }
 
                 Section {
-                    // Preview section
+                    // Preview section showing how the theme looks
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
                         Text(L("settings.appearance.preview"))
                             .font(DesignTokens.Typography.Semantic.cardTitle())
                             .foregroundColor(DesignTokens.Colors.Text.primary)
 
-                        // Mock UI preview
+                        // Mock UI preview that updates with theme changes
                         VStack(spacing: DesignTokens.Spacing.sm) {
                             HStack {
                                 Circle()
@@ -68,11 +77,11 @@ public struct AppearanceSettingsView: View {
                                     .frame(width: 20, height: 20)
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Sample Text")
+                                    Text(L("settings.appearance.preview.sample_text"))
                                         .font(DesignTokens.Typography.Semantic.body())
                                         .foregroundColor(DesignTokens.Colors.Text.primary)
 
-                                    Text("Secondary text")
+                                    Text(L("settings.appearance.preview.secondary_text"))
                                         .font(DesignTokens.Typography.Semantic.caption())
                                         .foregroundColor(DesignTokens.Colors.Text.secondary)
                                 }
@@ -80,7 +89,7 @@ public struct AppearanceSettingsView: View {
                                 Spacer()
                             }
 
-                            Button("Sample Button") {
+                            Button(L("settings.appearance.preview.sample_button")) {
                                 // No action needed for preview
                             }
                             .buttonStyle(.borderedProminent)
@@ -99,61 +108,37 @@ public struct AppearanceSettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(L("done")) {
-                        dismiss()
+                        saveAppearanceSettings()
                     }
+                    .disabled(selectedTheme == originalTheme)
+                }
+            }
+            .onDisappear {
+                // If the theme wasn't saved, revert to original theme
+                if themeManager.currentTheme != originalTheme {
+                    themeManager.updateTheme(originalTheme)
                 }
             }
         }
-        .preferredColorScheme(appearanceMode.colorScheme)
+        .preferredColorScheme(selectedTheme == .system ? osColorScheme : selectedColorScheme)
     }
-}
 
-/// Appearance mode options
-public enum AppearanceMode: String, CaseIterable, Codable {
-    case light
-    case dark
-    case system
-
-    @MainActor
-    public var displayName: String {
-        switch self {
-        case .light: return L("settings.appearance.theme.light")
-        case .dark: return L("settings.appearance.theme.dark")
-        case .system: return L("settings.appearance.theme.system")
+    private func themeDescription(for theme: ThemePreference) -> String {
+        switch theme {
+        case .system:
+            return L("settings.appearance.theme.system.description")
+        case .light:
+            return L("settings.appearance.theme.light.description")
+        case .dark:
+            return L("settings.appearance.theme.dark.description")
         }
     }
 
-    @MainActor
-    public var description: String {
-        switch self {
-        case .light: return L("settings.appearance.theme.light.description")
-        case .dark: return L("settings.appearance.theme.dark.description")
-        case .system: return L("settings.appearance.theme.system.description")
-        }
-    }
-
-    public var iconName: String {
-        switch self {
-        case .light: return "sun.max"
-        case .dark: return "moon"
-        case .system: return "gear"
-        }
-    }
-
-    public var color: Color {
-        switch self {
-        case .light: return .orange
-        case .dark: return .indigo
-        case .system: return DesignTokens.Colors.Text.secondary
-        }
-    }
-
-    public var colorScheme: ColorScheme? {
-        switch self {
-        case .light: return .light
-        case .dark: return .dark
-        case .system: return nil
-        }
+    private func saveAppearanceSettings() {
+        // Save theme to persistent storage
+        themeManager.setUserSavedTheme(selectedTheme)
+        originalTheme = selectedTheme
+        dismiss()
     }
 }
 

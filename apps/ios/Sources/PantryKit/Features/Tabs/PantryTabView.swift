@@ -134,7 +134,7 @@ public struct PantryTabView: View {
 
     @ViewBuilder
     private func addIngredientSheet() -> some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 Text(L("pantry.add_item"))
                     .font(DesignTokens.Typography.Semantic.pageTitle())

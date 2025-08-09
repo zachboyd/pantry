@@ -9,5 +9,5 @@ import ApolloAPI
 
 public extension PantryGraphQL {
   /// A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-  public typealias DateTime = String
+  typealias DateTime = String
 }

@@ -260,7 +260,7 @@ public final class SignUpViewModel: BaseReactiveViewModel<SignUpViewModel.State,
 
         } catch {
             Self.logger.error("❌ Sign up failed: \(error)")
-            let errorMessage = (error as? AuthServiceError)?.errorDescription ?? error.localizedDescription
+            let errorMessage = (error as? AuthServiceError)?.localizedMessage() ?? error.localizedDescription
             updateState {
                 $0.viewState = .error(ViewModelError.operationFailed(errorMessage))
                 $0.showingError = true

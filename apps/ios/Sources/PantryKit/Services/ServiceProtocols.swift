@@ -32,12 +32,13 @@ public protocol HouseholdServiceProtocol: Sendable {
     func updateMemberRole(householdId: String, userId: String, role: MemberRole) async throws -> HouseholdMember
     func removeMember(from householdId: String, userId: String) async throws
 
-    // Reactive streams for real-time updates
-    func watchHousehold(id: String) -> AsyncStream<Household?>
-    func watchUserHouseholds() -> AsyncStream<[Household]>
+    // Reactive watch methods
+    func watchHousehold(id: String) -> WatchedResult<Household>
+    func watchUserHouseholds() -> WatchedResult<[Household]>
+    func watchHouseholdMembers(householdId: String) -> WatchedResult<[HouseholdMember]>
 }
 
-/// User Service Protocol - Mocked implementation only
+/// User Service Protocol
 @MainActor
 public protocol UserServiceProtocol: Sendable {
     func getCurrentUser() async throws -> User?
@@ -49,8 +50,9 @@ public protocol UserServiceProtocol: Sendable {
     // Cache management
     func clearCurrentUserCache()
 
-    // Reactive streams
-    func watchUser(id: String) -> AsyncStream<User?>
+    // Reactive watch methods
+    func watchCurrentUser() -> WatchedResult<User>
+    func watchUser(id: String) -> WatchedResult<User>
 }
 
 /// User Preferences Service Protocol

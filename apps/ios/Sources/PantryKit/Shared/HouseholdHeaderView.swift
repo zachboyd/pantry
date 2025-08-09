@@ -46,7 +46,7 @@ public struct HouseholdHeaderView: View {
         .padding(.vertical, DesignTokens.Spacing.sm)
         .background(DesignTokens.Colors.Surface.secondary)
         .sheet(isPresented: $showingHouseholdSwitcher) {
-            NavigationView {
+            NavigationStack {
                 HouseholdSwitcherView(
                     currentHouseholdId: household.id,
                     onSelectHousehold: { selectedHousehold in

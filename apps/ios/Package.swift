@@ -11,6 +11,10 @@ let package = Package(
         .library(
             name: "PantryKit",
             targets: ["PantryKit"]
+        ),
+        .library(
+            name: "CASLSwift",
+            targets: ["CASLSwift"]
         )
     ],
     dependencies: [
@@ -18,15 +22,37 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "CASLSwift",
+            dependencies: [],
+            path: "Sources/CASLSwift",
+            exclude: [
+                "Serialization/PermissionFormat.md",
+                "README.md",
+                "Examples",
+                "Tests",
+                "Package.swift"
+            ],
+            sources: [
+                "Core",
+                "Conditions",
+                "Rules",
+                "Builders",
+                "Extensions",
+                "Serialization"
+            ]
+        ),
+        .target(
             name: "PantryKit",
             dependencies: [
                 .product(name: "Apollo", package: "apollo-ios"),
-                .product(name: "ApolloWebSocket", package: "apollo-ios")
+                .product(name: "ApolloWebSocket", package: "apollo-ios"),
+                "CASLSwift"
             ],
             path: "Sources",
             exclude: [
                 "PantryKit/GraphQL/README.md",
-                "PantryKit/Localization/README.md"
+                "PantryKit/Localization/README.md",
+                "CASLSwift"
             ],
             resources: [
                 .process("PantryKit/Localization"),
@@ -39,6 +65,11 @@ let package = Package(
                 "PantryKit"
             ],
             path: "Tests"
+        ),
+        .testTarget(
+            name: "CASLSwiftTests",
+            dependencies: ["CASLSwift"],
+            path: "Sources/CASLSwift/Tests"
         )
     ]
 )

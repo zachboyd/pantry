@@ -143,7 +143,8 @@ public struct SafeViewModelFactory {
     /// Create HouseholdEditViewModel
     public func makeHouseholdEditViewModel(
         householdId: String? = nil,
-        mode: HouseholdEditMode = .create
+        mode: HouseholdEditMode = .create,
+        isReadOnly: Bool = false
     ) throws -> HouseholdEditViewModel {
         let householdService = try container.getHouseholdService()
         let authService = try container.getAuthService()
@@ -156,7 +157,8 @@ public struct SafeViewModelFactory {
         return HouseholdEditViewModel(
             dependencies: dependencies,
             householdId: householdId,
-            mode: mode
+            mode: mode,
+            isReadOnly: isReadOnly
         )
     }
 
@@ -165,11 +167,15 @@ public struct SafeViewModelFactory {
         let householdService = try container.getHouseholdService()
         let userService = try container.getUserService()
         let authService = try container.getAuthService()
+        
+        // Create permission provider from auth service's permission service
+        let permissionProvider = PermissionProvider(permissionService: authService.permissionService)
 
         let dependencies = HouseholdMembersDependencies(
             householdService: householdService,
             userService: userService,
-            authService: authService
+            authService: authService,
+            permissionProvider: permissionProvider
         )
 
         return HouseholdMembersViewModel(dependencies: dependencies, householdId: householdId)
@@ -229,21 +235,25 @@ public struct SafeViewModelFactory {
 
     // MARK: - Settings ViewModels
 
-    /// Create SettingsViewModel
-    public func makeSettingsViewModel() throws -> SettingsViewModel {
+    /// Create UserSettingsViewModel
+    public func makeUserSettingsViewModel() throws -> UserSettingsViewModel {
         let authService = try container.getAuthService()
         let userService = try container.getUserService()
         let userPreferencesService = try container.getUserPreferencesService()
         let householdService = try container.getHouseholdService()
+        
+        // Create permission provider from auth service's permission service
+        let permissionProvider = PermissionProvider(permissionService: authService.permissionService)
 
-        let dependencies = SettingsDependencies(
+        let dependencies = UserSettingsDependencies(
             authService: authService,
             userService: userService,
             userPreferencesService: userPreferencesService,
-            householdService: householdService
+            householdService: householdService,
+            permissionProvider: permissionProvider
         )
 
-        return SettingsViewModel(dependencies: dependencies)
+        return UserSettingsViewModel(dependencies: dependencies)
     }
 }
 

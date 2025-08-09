@@ -9,49 +9,86 @@ import SwiftUI
 
 /// View for displaying household members
 public struct HouseholdMembersView: View {
+    @Environment(\.safeViewModelFactory) private var factory
+    @State private var viewModel: HouseholdMembersViewModel?
+    @State private var membersWatch: WatchedResult<[HouseholdMember]>?
+    
     let householdId: String
-    @State private var members: [HouseholdMember] = [
-        // Mock data for development
-        HouseholdMember(id: "1", userId: "user1", householdId: "household1", role: .owner, joinedAt: Date()),
-        HouseholdMember(id: "2", userId: "user2", householdId: "household1", role: .member, joinedAt: Date().addingTimeInterval(-86400 * 7)),
-        HouseholdMember(id: "3", userId: "user3", householdId: "household1", role: .member, joinedAt: Date().addingTimeInterval(-86400 * 14)),
-        HouseholdMember(id: "4", userId: "user4", householdId: "household1", role: .member, joinedAt: Date().addingTimeInterval(-86400 * 30)),
-    ]
 
     public init(householdId: String) {
         self.householdId = householdId
     }
 
     public var body: some View {
-        List {
-            ForEach(members) { member in
-                HouseholdMemberRowView(member: member)
+        Group {
+            if let membersWatch = membersWatch {
+                if membersWatch.isLoading && membersWatch.value == nil {
+                    // Initial loading state
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let members = membersWatch.value {
+                    // Show members list
+                    List {
+                        ForEach(members) { member in
+                            HouseholdMemberRowView(member: member, viewModel: viewModel)
+                        }
+                    }
+                } else {
+                    // Empty state
+                    ContentUnavailableView(
+                        L("household.members.empty.title"),
+                        systemImage: "person.2.slash",
+                        description: Text(L("household.members.empty.description"))
+                    )
+                }
+            } else {
+                // Loading initial state
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .navigationTitle(L("household.members"))
         .navigationBarTitleDisplayMode(.large)
+        .task {
+            // Create ViewModel if needed
+            if viewModel == nil {
+                viewModel = try? factory?.makeHouseholdMembersViewModel(householdId: householdId)
+            }
+            
+            // Set up watch for household members
+            if let householdService = viewModel?.dependencies.householdService {
+                membersWatch = householdService.watchHouseholdMembers(householdId: householdId)
+            }
+            
+            // Load initial data
+            await viewModel?.onAppear()
+        }
+        .onDisappear {
+            Task {
+                await viewModel?.onDisappear()
+            }
+        }
     }
 }
 
 /// Row view for displaying a household member
 struct HouseholdMemberRowView: View {
     let member: HouseholdMember
+    let viewModel: HouseholdMembersViewModel?
+    
+    @State private var userInfo: User?
 
     var body: some View {
         HStack {
-            // Avatar
-            Circle()
-                .fill(member.role == .owner ? DesignTokens.Colors.Primary.base : DesignTokens.Colors.Secondary.base)
-                .frame(width: DesignTokens.ComponentSize.Avatar.medium, height: DesignTokens.ComponentSize.Avatar.medium)
-                .overlay {
-                    Text(member.initials)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
-                }
+            // Avatar using shared component
+            AvatarView(
+                user: userInfo,
+                size: .medium
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
-                    Text(member.name)
+                    Text(displayName)
                         .font(DesignTokens.Typography.Semantic.cardTitle())
                         .foregroundColor(DesignTokens.Colors.Text.primary)
 
@@ -63,12 +100,28 @@ struct HouseholdMemberRowView: View {
                             .padding(.vertical, 2)
                             .background(DesignTokens.Colors.Primary.light)
                             .cornerRadius(4)
+                    } else if member.role == .admin {
+                        Text(L("household.role.admin"))
+                            .font(DesignTokens.Typography.Semantic.caption())
+                            .foregroundColor(DesignTokens.Colors.Secondary.base)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(DesignTokens.Colors.Secondary.light)
+                            .cornerRadius(4)
                     }
                 }
 
-                Text(member.email)
-                    .font(DesignTokens.Typography.Semantic.caption())
-                    .foregroundColor(DesignTokens.Colors.Text.secondary)
+                // Only show email for non-AI users
+                if let userInfo = userInfo, !userInfo.isAi, let email = displayEmail {
+                    Text(email)
+                        .font(DesignTokens.Typography.Semantic.caption())
+                        .foregroundColor(DesignTokens.Colors.Text.secondary)
+                } else if userInfo == nil, let email = displayEmail {
+                    // Show email if we don't have user info (can't determine if AI)
+                    Text(email)
+                        .font(DesignTokens.Typography.Semantic.caption())
+                        .foregroundColor(DesignTokens.Colors.Text.secondary)
+                }
 
                 Text(L("household.member.joined_date", member.joinedDate.formatted(date: .abbreviated, time: .omitted)))
                     .font(DesignTokens.Typography.Semantic.caption())
@@ -78,6 +131,25 @@ struct HouseholdMemberRowView: View {
             Spacer()
         }
         .padding(.vertical, DesignTokens.Spacing.xs)
+        .task {
+            // Try to load user info if we have a viewModel
+            if let userService = viewModel?.dependencies.userService {
+                do {
+                    userInfo = try await userService.getUser(id: member.userId)
+                } catch {
+                    // User info not available, will use fallback display
+                }
+            }
+        }
+    }
+    
+    // Computed properties for display
+    private var displayName: String {
+        userInfo?.name ?? member.name
+    }
+    
+    private var displayEmail: String? {
+        userInfo?.email ?? member.email
     }
 }
 

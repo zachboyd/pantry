@@ -136,7 +136,9 @@ public extension Logger {
     static let pantry = Logger(category: "Pantry")
     static let notification = Logger(category: "Notification")
     static let graphql = Logger(category: "GraphQL")
-    static let recipe = Logger(category: "Recipe")
     static let shopping = Logger(category: "Shopping")
     static let app = Logger(category: "App")
+    static let di = Logger(category: "DI")
+    static let permissions = Logger(category: "Permissions")
+    static let cache = Logger(category: "Cache")
 }

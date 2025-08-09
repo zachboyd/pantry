@@ -145,11 +145,6 @@ public final class PantryTabViewModel: BaseReactiveViewModel<PantryTabViewModel.
     override public func onAppear() async {
         Self.logger.debug("👁️ PantryTabViewModel appeared")
         await super.onAppear()
-
-        // Items will be loaded when household is set via setHousehold()
-        if let householdId = state.selectedHouseholdId {
-            await loadPantryItems(for: householdId)
-        }
     }
 
     override public func refresh() async {

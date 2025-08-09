@@ -4,7 +4,7 @@
 import ApolloAPI
 
 public extension PantryGraphQL {
-  public struct UpdateUserInput: InputObject {
+  struct UpdateUserInput: InputObject {
     public private(set) var __data: InputDict
 
     public init(_ data: InputDict) {
@@ -19,7 +19,9 @@ public extension PantryGraphQL {
       avatarUrl: GraphQLNullable<String> = nil,
       phone: GraphQLNullable<String> = nil,
       birthDate: GraphQLNullable<DateTime> = nil,
-      email: GraphQLNullable<String> = nil
+      email: GraphQLNullable<String> = nil,
+      primaryHouseholdId: GraphQLNullable<String> = nil,
+      preferences: GraphQLNullable<JSON> = nil
     ) {
       __data = InputDict([
         "id": id,
@@ -29,7 +31,9 @@ public extension PantryGraphQL {
         "avatar_url": avatarUrl,
         "phone": phone,
         "birth_date": birthDate,
-        "email": email
+        "email": email,
+        "primary_household_id": primaryHouseholdId,
+        "preferences": preferences
       ])
     }
 
@@ -71,6 +75,16 @@ public extension PantryGraphQL {
     public var email: GraphQLNullable<String> {
       get { __data["email"] }
       set { __data["email"] = newValue }
+    }
+
+    public var primaryHouseholdId: GraphQLNullable<String> {
+      get { __data["primary_household_id"] }
+      set { __data["primary_household_id"] = newValue }
+    }
+
+    public var preferences: GraphQLNullable<JSON> {
+      get { __data["preferences"] }
+      set { __data["preferences"] = newValue }
     }
   }
 

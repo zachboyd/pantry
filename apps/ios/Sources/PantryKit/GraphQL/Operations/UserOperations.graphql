@@ -3,56 +3,20 @@
 # Get the currently authenticated user
 query GetCurrentUser {
   currentUser {
-    id
-    auth_user_id
-    email
-    first_name
-    last_name
-    display_name
-    avatar_url
-    phone
-    birth_date
-    managed_by
-    relationship_to_manager
-    created_at
-    updated_at
+    ...UserFields
   }
 }
 
 # Get a specific user by ID
 query GetUser($input: GetUserInput!) {
   user(input: $input) {
-    id
-    auth_user_id
-    email
-    first_name
-    last_name
-    display_name
-    avatar_url
-    phone
-    birth_date
-    managed_by
-    relationship_to_manager
-    created_at
-    updated_at
+    ...UserFields
   }
 }
 
 # Update user profile
 mutation UpdateUser($input: UpdateUserInput!) {
   updateUser(input: $input) {
-    id
-    auth_user_id
-    email
-    first_name
-    last_name
-    display_name
-    avatar_url
-    phone
-    birth_date
-    managed_by
-    relationship_to_manager
-    created_at
-    updated_at
+    ...UserFields
   }
 }

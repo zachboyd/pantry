@@ -16,6 +16,7 @@ public struct AppRootView: View {
     private static let logger = Logger.app
 
     @Environment(\.appState) private var appState
+    @Environment(\.themeManager) private var themeManager
 
     public init() {
         Self.logger.debug("🏁 AppRootView initialized")
@@ -24,8 +25,10 @@ public struct AppRootView: View {
     public var body: some View {
         if let appState = appState {
             AppRootContentView(appState: appState)
+                .preferredColorScheme(themeManager.colorScheme)
         } else {
             StandardLoadingView(showLogo: true)
+                .preferredColorScheme(themeManager.colorScheme)
         }
     }
 }
@@ -99,6 +102,7 @@ struct AppRootContentView: View {
         }
         .animation(TransitionConstants.standardEasing(duration: TransitionConstants.totalTransitionDuration), value: appState.phase)
         .tint(DesignTokens.Colors.Primary.base)
+        .preferredColorScheme(ThemeManager.shared.colorScheme)
     }
 }
 

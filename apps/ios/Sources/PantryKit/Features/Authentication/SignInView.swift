@@ -41,8 +41,13 @@ public struct SignInView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: DesignTokens.Spacing.lg) {
+        ZStack {
+            // Consistent background color
+            DesignTokens.Colors.systemBackground()
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.lg) {
             // Header with greeting
             VStack(spacing: DesignTokens.Spacing.sm) {
                 Image(systemName: "fork.knife")
@@ -103,15 +108,19 @@ public struct SignInView: View {
                 TextButton(L("auth.button.signup"), action: onSignUpTap)
             }
             .padding(.top, DesignTokens.Spacing.sm)
-            
             }
             .padding(.horizontal, DesignTokens.Spacing.xl)
             .padding(.bottom, DesignTokens.Spacing.xxl)
-        }
-        .scrollDismissesKeyboard(.interactively)
-        .errorAlert(isPresented: $showingAlert, error: alertMessage)
-        .onAppear {
-            Self.logger.info("📱 SignInView appeared")
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .alert(L("error"), isPresented: $showingAlert) {
+                Button(L("ok"), role: .cancel) { }
+            } message: {
+                Text(alertMessage)
+            }
+            .onAppear {
+                Self.logger.info("📱 SignInView appeared")
+            }
         }
     }
 
@@ -144,7 +153,15 @@ public struct SignInView: View {
                 Self.logger.error("❌ Sign in failed: \(error)")
                 await MainActor.run {
                     isLoading = false
-                    alertMessage = error.localizedDescription
+                    
+                    // Use localized message for AuthServiceError
+                    if let authError = error as? AuthServiceError {
+                        alertMessage = authError.localizedMessage()
+                    } else {
+                        // Fallback for non-AuthServiceError errors
+                        alertMessage = error.localizedDescription
+                    }
+                    
                     showingAlert = true
                 }
             }

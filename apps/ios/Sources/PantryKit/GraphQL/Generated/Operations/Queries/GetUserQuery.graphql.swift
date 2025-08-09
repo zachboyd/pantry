@@ -4,11 +4,12 @@
 @_exported import ApolloAPI
 
 public extension PantryGraphQL {
-  public class GetUserQuery: GraphQLQuery {
+  class GetUserQuery: GraphQLQuery {
     public static let operationName: String = "GetUser"
     public static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query GetUser($input: GetUserInput!) { user(input: $input) { __typename id auth_user_id email first_name last_name display_name avatar_url phone birth_date managed_by relationship_to_manager created_at updated_at } }"#
+        #"query GetUser($input: GetUserInput!) { user(input: $input) { __typename ...UserFields } }"#,
+        fragments: [UserFields.self]
       ))
 
     public var input: GetUserInput
@@ -40,19 +41,7 @@ public extension PantryGraphQL {
         public static var __parentType: any ApolloAPI.ParentType { PantryGraphQL.Objects.User }
         public static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
-          .field("id", String.self),
-          .field("auth_user_id", String?.self),
-          .field("email", String?.self),
-          .field("first_name", String.self),
-          .field("last_name", String.self),
-          .field("display_name", String?.self),
-          .field("avatar_url", String?.self),
-          .field("phone", String?.self),
-          .field("birth_date", PantryGraphQL.DateTime?.self),
-          .field("managed_by", String?.self),
-          .field("relationship_to_manager", String?.self),
-          .field("created_at", PantryGraphQL.DateTime.self),
-          .field("updated_at", PantryGraphQL.DateTime.self),
+          .fragment(UserFields.self),
         ] }
 
         public var id: String { __data["id"] }
@@ -66,8 +55,19 @@ public extension PantryGraphQL {
         public var birth_date: PantryGraphQL.DateTime? { __data["birth_date"] }
         public var managed_by: String? { __data["managed_by"] }
         public var relationship_to_manager: String? { __data["relationship_to_manager"] }
+        public var primary_household_id: String? { __data["primary_household_id"] }
+        public var permissions: PantryGraphQL.JSON? { __data["permissions"] }
+        public var preferences: PantryGraphQL.JSON? { __data["preferences"] }
+        public var is_ai: Bool { __data["is_ai"] }
         public var created_at: PantryGraphQL.DateTime { __data["created_at"] }
         public var updated_at: PantryGraphQL.DateTime { __data["updated_at"] }
+
+        public struct Fragments: FragmentContainer {
+          public let __data: DataDict
+          public init(_dataDict: DataDict) { __data = _dataDict }
+
+          public var userFields: UserFields { _toFragment() }
+        }
       }
     }
   }

@@ -64,10 +64,13 @@ All ViewModels follow the BaseReactiveViewModel pattern with:
 ## Dependencies
 
 ### ViewModelDependencies.swift
-Defines dependency structs for each ViewModel with clean service injection.
+Defines dependency structs for each ViewModel with clean service injection, including PermissionProvider for reactive permission-based UI.
 
 ### ViewModelFactory.swift
 SafeViewModelFactory provides type-safe ViewModel creation with dependency injection from DependencyContainer.
+
+### Permission System
+ViewModels integrate with the reactive permission system through PermissionProvider. See [Services/PERMISSION_PATTERN.md](../Services/PERMISSION_PATTERN.md) for implementation details.
 
 ## Usage Examples
 
@@ -120,6 +123,7 @@ All ViewModels integrate with services through DependencyContainer:
 - UserService: User profile management
 - PantryItemService: Pantry item operations
 - ShoppingListService: Shopping list operations
+- PermissionService: CASL-based permission management with reactive UI updates
 
 ### State Coordination
 - Household selection persisted in UserDefaults

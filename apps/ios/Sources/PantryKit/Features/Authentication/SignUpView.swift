@@ -50,8 +50,13 @@ public struct SignUpView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: DesignTokens.Spacing.lg) {
+        ZStack {
+            // Consistent background color
+            DesignTokens.Colors.systemBackground()
+                .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: DesignTokens.Spacing.lg) {
                 // Header with icon
                 VStack(spacing: DesignTokens.Spacing.sm) {
                     Image(systemName: "fork.knife")
@@ -131,11 +136,16 @@ public struct SignUpView: View {
             }
             .padding(.horizontal, DesignTokens.Spacing.xl)
             .padding(.bottom, DesignTokens.Spacing.xxl)
-        }
-        .scrollDismissesKeyboard(.interactively)
-        .errorAlert(isPresented: $showingAlert, error: alertMessage)
-        .onAppear {
-            Self.logger.info("📱 SignUpView appeared")
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .alert(L("error"), isPresented: $showingAlert) {
+                Button(L("ok"), role: .cancel) { }
+            } message: {
+                Text(alertMessage)
+            }
+            .onAppear {
+                Self.logger.info("📱 SignUpView appeared")
+            }
         }
     }
 
@@ -169,7 +179,15 @@ public struct SignUpView: View {
                 Self.logger.error("❌ Sign up failed: \(error)")
                 await MainActor.run {
                     isLoading = false
-                    alertMessage = error.localizedDescription
+                    
+                    // Use localized message for AuthServiceError
+                    if let authError = error as? AuthServiceError {
+                        alertMessage = authError.localizedMessage()
+                    } else {
+                        // Fallback for non-AuthServiceError errors
+                        alertMessage = error.localizedDescription
+                    }
+                    
                     showingAlert = true
                 }
             }

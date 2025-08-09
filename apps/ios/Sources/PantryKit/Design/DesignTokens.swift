@@ -7,6 +7,7 @@
  */
 
 import SwiftUI
+import UIKit
 
 /// Central design token system for consistent visual language
 public enum DesignTokens {
@@ -31,7 +32,7 @@ public enum DesignTokens {
         /// Surface colors for containers and backgrounds
         public enum Surface {
             public static let primary = Colors.secondarySystemBackground()
-            public static let secondary = Colors.secondarySystemBackground()
+            public static let secondary = Color(UIColor.systemGray6)
             public static let tertiary = Colors.systemBackground().opacity(0.95)
             public static let elevated: Color = Colors.systemBackground()
         }
@@ -44,6 +45,16 @@ public enum DesignTokens {
             public static let disabled = Color.primary.opacity(0.3)
             public static let inverse = Color.white
             public static let link = Color.accentColor
+        }
+        
+        /// AI-specific colors
+        public enum AI {
+            public static let gradient = LinearGradient(
+                colors: [Secondary.base, Primary.base],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            public static let icon = Color.white
         }
 
         /// Interactive element colors

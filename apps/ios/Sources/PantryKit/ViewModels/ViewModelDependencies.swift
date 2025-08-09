@@ -1,6 +1,7 @@
 @preconcurrency import Apollo
 import Foundation
 import SwiftUI
+import CASLSwift
 
 // MARK: - ViewModel Dependencies
 
@@ -12,8 +13,15 @@ public struct ViewModelDependencies {
     public let userPreferencesService: UserPreferencesServiceProtocol
     public let pantryItemService: PantryItemServiceProtocol
     public let shoppingListService: ShoppingListServiceProtocol
-    public let recipeService: RecipeServiceProtocol
     public let notificationService: NotificationServiceProtocol
+    public let permissionProvider: PermissionProvider?
+    
+    /// Current user's ability for permission checking (deprecated - use permissionProvider)
+    /// Note: This must be accessed from MainActor context (which ViewModels are)
+    @MainActor
+    public var ability: PantryAbility? {
+        authService.currentAbility
+    }
 
     public init(
         authService: AuthServiceProtocol,
@@ -22,8 +30,8 @@ public struct ViewModelDependencies {
         userPreferencesService: UserPreferencesServiceProtocol,
         pantryItemService: PantryItemServiceProtocol,
         shoppingListService: ShoppingListServiceProtocol,
-        recipeService: RecipeServiceProtocol,
-        notificationService: NotificationServiceProtocol
+        notificationService: NotificationServiceProtocol,
+        permissionProvider: PermissionProvider? = nil
     ) {
         self.authService = authService
         self.householdService = householdService
@@ -31,8 +39,8 @@ public struct ViewModelDependencies {
         self.userPreferencesService = userPreferencesService
         self.pantryItemService = pantryItemService
         self.shoppingListService = shoppingListService
-        self.recipeService = recipeService
         self.notificationService = notificationService
+        self.permissionProvider = permissionProvider
     }
 }
 
@@ -103,35 +111,41 @@ public struct HouseholdMembersDependencies: Sendable {
     public let householdService: HouseholdServiceProtocol
     public let userService: UserServiceProtocol
     public let authService: AuthServiceProtocol
+    public let permissionProvider: PermissionProvider?
 
     public init(
         householdService: HouseholdServiceProtocol,
         userService: UserServiceProtocol,
-        authService: AuthServiceProtocol
+        authService: AuthServiceProtocol,
+        permissionProvider: PermissionProvider? = nil
     ) {
         self.householdService = householdService
         self.userService = userService
         self.authService = authService
+        self.permissionProvider = permissionProvider
     }
 }
 
 /// Dependencies for SettingsViewModel
-public struct SettingsDependencies: Sendable {
+public struct UserSettingsDependencies: Sendable {
     public let authService: AuthServiceProtocol
     public let userService: UserServiceProtocol
     public let userPreferencesService: UserPreferencesServiceProtocol
     public let householdService: HouseholdServiceProtocol
+    public let permissionProvider: PermissionProvider?
 
     public init(
         authService: AuthServiceProtocol,
         userService: UserServiceProtocol,
         userPreferencesService: UserPreferencesServiceProtocol,
-        householdService: HouseholdServiceProtocol
+        householdService: HouseholdServiceProtocol,
+        permissionProvider: PermissionProvider? = nil
     ) {
         self.authService = authService
         self.userService = userService
         self.userPreferencesService = userPreferencesService
         self.householdService = householdService
+        self.permissionProvider = permissionProvider
     }
 }
 

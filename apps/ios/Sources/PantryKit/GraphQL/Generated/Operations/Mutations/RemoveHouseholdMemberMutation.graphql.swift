@@ -4,7 +4,7 @@
 @_exported import ApolloAPI
 
 public extension PantryGraphQL {
-  public class RemoveHouseholdMemberMutation: GraphQLMutation {
+  class RemoveHouseholdMemberMutation: GraphQLMutation {
     public static let operationName: String = "RemoveHouseholdMember"
     public static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(

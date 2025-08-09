@@ -8,7 +8,7 @@ The localization system provides:
 - **Simple function-based API** using `L("key")` for strings
 - **Runtime language switching** via LocalizationManager
 - **Automatic English fallback** for missing translations
-- **Pluralization support** using `Lp("key", count)`
+- **Pluralization support** using `Lp("key", count)` with pipe-separated format
 - **String extensions** for convenience (`.localized`)
 - **Multiple language support** with easy expansion
 
@@ -65,6 +65,29 @@ let itemCount = Lp("items.count", 5) // "5 items"
 let title = "profile.title".localized
 ```
 
+### Pluralization Support
+
+The system supports pluralization using a pipe-separated format in the `.strings` file:
+
+```swift
+// In Localizable.strings:
+"household.members.count" = "%d member|%d members";
+"items.count" = "%d item|%d items";
+"days.remaining" = "%d day remaining|%d days remaining";
+
+// Usage in code:
+Text(Lp("household.members.count", 0))  // "0 members"
+Text(Lp("household.members.count", 1))  // "1 member"
+Text(Lp("household.members.count", 5))  // "5 members"
+```
+
+**Format Rules:**
+- Use pipe `|` to separate singular and plural forms
+- Left side of pipe: singular form (used when count == 1)
+- Right side of pipe: plural form (used for all other counts including 0)
+- Include `%d` placeholder where the count should appear
+- Additional arguments can follow the count if needed
+
 ### SwiftUI Integration
 
 ```swift
@@ -104,24 +127,16 @@ Text(L("new_feature.title"))
 Text(L("new_feature.description"))
 ```
 
-3. **For plurals, add to `.stringsdict` file** (when needed):
-```xml
-<key>items.count</key>
-<dict>
-    <key>NSStringLocalizedFormatKey</key>
-    <string>%#@items@</string>
-    <key>items</key>
-    <dict>
-        <key>NSStringFormatSpecTypeKey</key>
-        <string>NSStringPluralRuleType</string>
-        <key>NSStringFormatValueTypeKey</key>
-        <string>d</string>
-        <key>one</key>
-        <string>%d item</string>
-        <key>other</key>
-        <string>%d items</string>
-    </dict>
-</dict>
+3. **For plurals, use pipe-separated format in `Localizable.strings`**:
+```
+"items.count" = "%d item|%d items";
+"notifications.unread" = "%d unread notification|%d unread notifications";
+```
+
+Then use with `Lp()`:
+```swift
+Text(Lp("items.count", itemCount))
+Text(Lp("notifications.unread", unreadCount))
 ```
 
 ## Localization Guidelines

@@ -16,15 +16,15 @@ public protocol PantryGraphQL_MutableInlineFragment: ApolloAPI.MutableSelectionS
 where Schema == PantryGraphQL.SchemaMetadata {}
 
 public extension PantryGraphQL {
-  public typealias SelectionSet = PantryGraphQL_SelectionSet
+  typealias SelectionSet = PantryGraphQL_SelectionSet
 
-  public typealias InlineFragment = PantryGraphQL_InlineFragment
+  typealias InlineFragment = PantryGraphQL_InlineFragment
 
-  public typealias MutableSelectionSet = PantryGraphQL_MutableSelectionSet
+  typealias MutableSelectionSet = PantryGraphQL_MutableSelectionSet
 
-  public typealias MutableInlineFragment = PantryGraphQL_MutableInlineFragment
+  typealias MutableInlineFragment = PantryGraphQL_MutableInlineFragment
 
-  public enum SchemaMetadata: ApolloAPI.SchemaMetadata {
+  enum SchemaMetadata: ApolloAPI.SchemaMetadata {
     public static let configuration: any ApolloAPI.SchemaConfiguration.Type = SchemaConfiguration.self
 
     public static func objectType(forTypename typename: String) -> ApolloAPI.Object? {
@@ -39,8 +39,8 @@ public extension PantryGraphQL {
     }
   }
 
-  public enum Objects {}
-  public enum Interfaces {}
-  public enum Unions {}
+  enum Objects {}
+  enum Interfaces {}
+  enum Unions {}
 
 }

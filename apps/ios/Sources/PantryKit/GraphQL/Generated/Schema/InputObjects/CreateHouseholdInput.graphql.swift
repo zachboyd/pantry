@@ -4,7 +4,7 @@
 import ApolloAPI
 
 public extension PantryGraphQL {
-  public struct CreateHouseholdInput: InputObject {
+  struct CreateHouseholdInput: InputObject {
     public private(set) var __data: InputDict
 
     public init(_ data: InputDict) {

@@ -6,7 +6,7 @@ Smart kitchen management iOS application built with SwiftUI and Swift Package Ma
 
 - **Xcode 26** (Beta) - [Download from Apple Developer](https://developer.apple.com/xcode/)
   - Sign in with your Apple Account at [developer.apple.com](https://developer.apple.com) to access beta downloads
-  - The latest version is Xcode 26 beta 4 (17A5285i)
+  - The latest version is Xcode 26 beta 5
   - Includes SDKs for iOS 26, iPadOS 26, tvOS 26, watchOS 26, macOS Tahoe 26, and visionOS 26
 - iOS 18.0+
 - Swift 6.0
@@ -18,16 +18,15 @@ For the best development experience, install these extensions:
 1. **Sweetpad** - Run iOS simulator directly from VS Code/Cursor
    - Extension ID: `sweetpad.sweetpad`
    - Allows running and debugging iOS apps without leaving the editor
-   
 2. **Swift Language Support**
    - Extension ID: `sswg.swift-lang`
    - Provides syntax highlighting, code completion, and diagnostics
-   
 3. **SwiftFormat**
    - Extension ID: `vknabel.vscode-swiftformat`
    - Automatic code formatting for Swift files
 
 ### Quick Setup
+
 ```bash
 # Install extensions via command palette (Cmd+P)
 ext install sweetpad.sweetpad
@@ -36,6 +35,7 @@ ext install vknabel.vscode-swiftformat
 ```
 
 After installing Sweetpad, you can:
+
 - Press `Cmd+Shift+R` to run the app in simulator
 - Use the Sweetpad panel in the sidebar to select devices
 - View build logs directly in VS Code
@@ -91,11 +91,13 @@ Open `Pantry.xcworkspace` in Xcode to work with the project.
 ## Architecture
 
 This project uses:
+
 - **SwiftUI** for the user interface
 - **Swift Package Manager** for dependency management
-- **Apollo GraphQL** for API communication
+- **Apollo GraphQL** for API communication (direct service-to-GraphQL pattern)
 - **Better-Auth** for authentication
 - **MVVM + Observable** architecture pattern
+- **No Repository Pattern** - Services interact directly with GraphQL for cleaner architecture
 
 ## Documentation
 
@@ -132,6 +134,7 @@ swift test
 ```
 
 Key test files:
+
 - `Tests/PantryKitTests/` - Unit tests
 - `Tests/PantryKitTests/Mocks/` - Mock implementations
 

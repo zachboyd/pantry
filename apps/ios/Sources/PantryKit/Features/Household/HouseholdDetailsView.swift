@@ -152,7 +152,7 @@ public struct HouseholdDetailsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingEdit) {
             if let household = household {
-                NavigationView {
+                NavigationStack {
                     HouseholdEditView(householdId: household.id)
                 }
             }
@@ -169,7 +169,7 @@ struct InviteCodeSheet: View {
     let inviteCode: String
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: DesignTokens.Spacing.xl) {
                 VStack(spacing: DesignTokens.Spacing.lg) {
                     Image(systemName: "qrcode")

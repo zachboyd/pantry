@@ -4,12 +4,14 @@ This guide explains how to work with services in the Pantry iOS app.
 
 ## Overview
 
-Services handle business logic and external communication. They sit between ViewModels and data sources (GraphQL, local storage).
+Services handle business logic and external communication. They sit between ViewModels and GraphQL, providing a clean abstraction for data operations.
+
+**Important**: This app does NOT use the Repository pattern. Services interact directly with GraphQL through the `GraphQLService`, which provides a cleaner and more maintainable architecture.
 
 ```mermaid
 graph LR
     A[ViewModel] -->|uses| B[Service]
-    B -->|queries| C[GraphQL]
+    B -->|queries| C[GraphQL via Apollo]
     B -->|maps| D[Domain Models]
     B -->|caches| E[Memory/Storage]
 ```
@@ -144,6 +146,18 @@ await userPreferencesService.setLastSelectedHouseholdId(householdId)
 - Token management via Keychain
 - Session persistence
 - Sign in/out operations
+
+### PermissionService
+
+**Purpose**: CASL-based permission management with reactive UI updates
+
+**Features**:
+- Extracts permissions from GraphQL User data
+- Builds CASL Ability instances from permission rules
+- Watches Apollo cache for permission updates
+- Reactive UI updates through `@Observable` chain
+
+**Implementation Pattern**: See [PERMISSION_PATTERN.md](PERMISSION_PATTERN.md) for the reactive permission pattern used in ViewModels
 
 ## Creating a New Service
 
@@ -326,25 +340,25 @@ public func operation() async throws {
 }
 ```
 
-### Reactive Streams Pattern
+### Reactive Watch Pattern (Apollo Cache Observation)
 
 ```swift
-public func watchData(id: String) -> AsyncStream<Data?> {
-    AsyncStream { continuation in
-        Task {
-            do {
-                // Initial data
-                let data = try await getData(id: id)
-                continuation.yield(data)
-                
-                // In production, subscribe to updates
-                // For now, just complete
-                continuation.finish()
-            } catch {
-                continuation.yield(nil)
-                continuation.finish()
-            }
-        }
+// Services return WatchedResult for reactive updates
+public func watchUser(id: String) -> WatchedResult<User> {
+    // Returns immediately with WatchedResult
+    // Apollo watcher observes cache changes
+    // Updates trigger automatically when cache changes
+}
+
+// ViewModels consume watched results
+class ProfileViewModel {
+    let currentUser: WatchedResult<User>
+    
+    init(userService: UserServiceProtocol) {
+        // Watch returns immediately
+        // Value populated from cache if available
+        // Updates automatically on mutations
+        self.currentUser = userService.watchCurrentUser()
     }
 }
 ```

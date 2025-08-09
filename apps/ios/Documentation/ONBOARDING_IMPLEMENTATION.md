@@ -61,8 +61,6 @@ mutation UpdateUser($input: UpdateUserInput!) {
 }
 ```
 
-See `TODO_UpdateUserMutation.md` for full details.
-
 ## Testing Scenarios
 
 1. **New user signup**: Should see both UserInfo and HouseholdCreation steps

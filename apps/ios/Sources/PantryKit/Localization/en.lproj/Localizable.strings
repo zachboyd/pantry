@@ -1,6 +1,18 @@
 /* 
    Localizable.strings (English)
    PantryKit
+   
+   PLURALIZATION FORMAT:
+   For strings that need plural support, use pipe-separated format:
+   "key" = "singular form|plural form";
+   
+   Example:
+   "items.count" = "%d item|%d items";
+   
+   The singular form (left of |) is used when count == 1
+   The plural form (right of |) is used for all other counts (0, 2, 3, etc.)
+   
+   Use with Lp() function: Lp("items.count", 5) → "5 items"
 */
 
 // MARK: - App General
@@ -26,6 +38,11 @@
 "coming.soon" = "Coming Soon";
 "common.optional" = "(Optional)";
 "common.not_set" = "Not Set";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.ok" = "OK";
+"common.copy" = "Copy";
+"common.copied" = "Copied!";
 "user.generic" = "User";
 "user.unknown" = "Unknown";
 "loading.message" = "Please wait while we fetch your data";
@@ -109,7 +126,6 @@
 "household.members" = "Members";
 "household.invite_members" = "Invite Members";
 "household.leave" = "Leave Household";
-"household.delete" = "Delete Household";
 "household.settings" = "Household Settings";
 "household.no_households" = "No households yet";
 "household.create_first" = "Create your first household to get started";
@@ -133,6 +149,8 @@
 "household.invite_code.share_message" = "Share this code with people you want to add to your household";
 "household.invite_code.copy" = "Copy Code";
 "household.members.count" = "%d member|%d members";
+"household.members.empty.title" = "No Members Yet";
+"household.members.empty.description" = "Invite people to join your household";
 "household.member.joined_date" = "Joined %@";
 "household.creation.title" = "Create your household";
 "household.creation.subtitle" = "A household lets you share pantry items, shopping lists, and recipes with others";
@@ -145,11 +163,20 @@
 "household.switcher.title" = "Switch Household";
 "household.edit.section_title" = "Household Information";
 "household.edit.section_footer" = "This information will be visible to all household members.";
-"household.delete.warning" = "Deleting the household will remove all data and cannot be undone. All members will lose access.";
 "household.edit.title" = "Edit Household";
+"household.view.title" = "View Household";
 "household.edit.save_error" = "Failed to save changes. Please try again.";
+"household.edit.coming_soon.title" = "Coming Soon";
+"household.edit.coming_soon.message" = "Editing household details will be available in a future update.";
 "household.members.subtitle" = "View and manage household members";
 "household.invite_members.subtitle" = "Share invite code with new members";
+"household.invite_code" = "Invite Code";
+"household.generate_invite_code" = "Generate Invite Code";
+"household.invite_instructions" = "How to invite members:";
+"household.invite_step1" = "Share the invite code with family members";
+"household.invite_step2" = "They enter the code when joining";
+"household.invite_step3" = "They're added to your household";
+"household.invite_code_copied" = "The invite code has been copied to your clipboard.";
 "household.management" = "Management";
 "household.edit" = "Edit Household";
 "household.details.title" = "Household Details";
@@ -158,6 +185,7 @@
 "household.created" = "Created";
 "household.information" = "Household Information";
 "household.manage_members" = "Manage Members";
+"household.invite_member" = "Invite Member";
 "household.shopping_day" = "Shopping Day";
 "household.default_store" = "Default Store";
 "household.meal_planning" = "Meal Planning";
@@ -225,6 +253,9 @@
 "settings.appearance.app_icon" = "App Icon";
 "settings.appearance.theme.description" = "Choose how Pantry looks. System will match your device's appearance settings.";
 "settings.appearance.preview" = "Preview";
+"settings.appearance.preview.sample_text" = "Sample Text";
+"settings.appearance.preview.secondary_text" = "Secondary text";
+"settings.appearance.preview.sample_button" = "Sample Button";
 "settings.appearance.theme.light.description" = "Always use light appearance";
 "settings.appearance.theme.dark.description" = "Always use dark appearance";
 "settings.appearance.theme.system.description" = "Match system setting";
@@ -328,4 +359,7 @@
 "error.recovery.member_not_found" = "The member may have left the household.";
 "error.recovery.insufficient_permissions" = "Contact your household administrator.";
 "error.recovery.unknown" = "Please restart the app and try again.";
+
+// MARK: - Accessibility
+"accessibility.avatar.ai" = "AI Assistant Avatar";
 

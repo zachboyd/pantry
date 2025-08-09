@@ -16,6 +16,10 @@ private struct UserPreferencesManagerKey: EnvironmentKey {
     static let defaultValue: UserPreferencesManager? = nil
 }
 
+private struct ThemeManagerKey: EnvironmentKey {
+    static let defaultValue: ThemeManager? = nil
+}
+
 private struct AuthServiceKey: EnvironmentKey {
     static let defaultValue: (any AuthServiceProtocol)? = nil
 }
@@ -30,10 +34,6 @@ private struct PantryItemServiceKey: EnvironmentKey {
 
 private struct ShoppingListServiceKey: EnvironmentKey {
     static let defaultValue: (any ShoppingListServiceProtocol)? = nil
-}
-
-private struct RecipeServiceKey: EnvironmentKey {
-    static let defaultValue: (any RecipeServiceProtocol)? = nil
 }
 
 private struct NotificationServiceKey: EnvironmentKey {
@@ -83,6 +83,18 @@ public extension EnvironmentValues {
         }
         set { self[UserPreferencesManagerKey.self] = newValue }
     }
+    
+    /// Theme manager for centralized theme management
+    var themeManager: ThemeManager {
+        get {
+            guard let manager = self[ThemeManagerKey.self] else {
+                // Fallback to shared instance if not injected
+                return ThemeManager.shared
+            }
+            return manager
+        }
+        set { self[ThemeManagerKey.self] = newValue }
+    }
 
     /// Authentication service for user authentication (optional for safe access)
     var authService: (any AuthServiceProtocol)? {
@@ -106,12 +118,6 @@ public extension EnvironmentValues {
     var shoppingListService: (any ShoppingListServiceProtocol)? {
         get { self[ShoppingListServiceKey.self] }
         set { self[ShoppingListServiceKey.self] = newValue }
-    }
-
-    /// Recipe service for recipe management (optional for safe access)
-    var recipeService: (any RecipeServiceProtocol)? {
-        get { self[RecipeServiceKey.self] }
-        set { self[RecipeServiceKey.self] = newValue }
     }
 
     /// Notification service for notifications (optional for safe access)
@@ -165,10 +171,10 @@ private struct AppStateProviderView<Content: View>: View {
                     .environment(\.householdService, appState.householdService)
                     .environment(\.pantryItemService, appState.pantryItemService)
                     .environment(\.shoppingListService, appState.shoppingListService)
-                    .environment(\.recipeService, appState.recipeService)
                     .environment(\.notificationService, appState.notificationService)
                     .environment(\.localizationManager, LocalizationManager())
                     .environment(\.userPreferencesManager, UserPreferencesManager())
+                    .environment(\.themeManager, ThemeManager.shared)
                     .environment(\.safeViewModelFactory, SafeViewModelFactory(container: appState.container))
                     .task(id: "appStateInit") {
                         await appState.initialize()
@@ -223,15 +229,10 @@ private struct AppStateProviderView<Content: View>: View {
 public final class UserPreferencesManager {
     public static let shared = UserPreferencesManager()
 
-    public var theme: AppTheme = .system
     public var notifications: Bool = true
     public var useBiometrics: Bool = false
 
     public nonisolated init() {}
-
-    public func setTheme(_ theme: AppTheme) {
-        self.theme = theme
-    }
 
     public func setNotifications(enabled: Bool) {
         notifications = enabled
@@ -239,19 +240,5 @@ public final class UserPreferencesManager {
 
     public func setBiometrics(enabled: Bool) {
         useBiometrics = enabled
-    }
-}
-
-public enum AppTheme: String, CaseIterable, Sendable {
-    case system
-    case light
-    case dark
-
-    public var displayName: String {
-        switch self {
-        case .system: return "System"
-        case .light: return "Light"
-        case .dark: return "Dark"
-        }
     }
 }

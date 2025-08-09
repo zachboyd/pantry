@@ -13,7 +13,6 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
     public init(householdService: HouseholdServiceProtocol) {
         self.householdService = householdService
         Self.logger.info("🛒 ShoppingListService initialized")
-        seedMockData()
     }
 
     // MARK: - Public Methods

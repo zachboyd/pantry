@@ -13,7 +13,6 @@ public final class PantryItemService: PantryItemServiceProtocol {
     public init(householdService: HouseholdServiceProtocol) {
         self.householdService = householdService
         Self.logger.info("🥫 PantryItemService initialized")
-        seedMockData()
     }
 
     // MARK: - Public Methods

@@ -27,7 +27,8 @@ public struct OnboardingContainerView: View {
     public var body: some View {
         NavigationStack {
             ZStack {
-                DesignTokens.Colors.Surface.primary
+                // Consistent background color with sign in/up views
+                DesignTokens.Colors.systemBackground()
                     .ignoresSafeArea()
 
                 Group {

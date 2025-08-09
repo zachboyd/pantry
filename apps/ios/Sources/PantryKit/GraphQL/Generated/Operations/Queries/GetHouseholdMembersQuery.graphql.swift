@@ -4,11 +4,12 @@
 @_exported import ApolloAPI
 
 public extension PantryGraphQL {
-  public class GetHouseholdMembersQuery: GraphQLQuery {
+  class GetHouseholdMembersQuery: GraphQLQuery {
     public static let operationName: String = "GetHouseholdMembers"
     public static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query GetHouseholdMembers($input: GetHouseholdMembersInput!) { householdMembers(input: $input) { __typename id household_id user_id role joined_at } }"#
+        #"query GetHouseholdMembers($input: GetHouseholdMembersInput!) { householdMembers(input: $input) { __typename ...HouseholdMemberFields } }"#,
+        fragments: [HouseholdMemberFields.self]
       ))
 
     public var input: GetHouseholdMembersInput
@@ -40,11 +41,7 @@ public extension PantryGraphQL {
         public static var __parentType: any ApolloAPI.ParentType { PantryGraphQL.Objects.HouseholdMember }
         public static var __selections: [ApolloAPI.Selection] { [
           .field("__typename", String.self),
-          .field("id", String.self),
-          .field("household_id", String.self),
-          .field("user_id", String.self),
-          .field("role", String.self),
-          .field("joined_at", PantryGraphQL.DateTime.self),
+          .fragment(HouseholdMemberFields.self),
         ] }
 
         public var id: String { __data["id"] }
@@ -52,6 +49,13 @@ public extension PantryGraphQL {
         public var user_id: String { __data["user_id"] }
         public var role: String { __data["role"] }
         public var joined_at: PantryGraphQL.DateTime { __data["joined_at"] }
+
+        public struct Fragments: FragmentContainer {
+          public let __data: DataDict
+          public init(_dataDict: DataDict) { __data = _dataDict }
+
+          public var householdMemberFields: HouseholdMemberFields { _toFragment() }
+        }
       }
     }
   }

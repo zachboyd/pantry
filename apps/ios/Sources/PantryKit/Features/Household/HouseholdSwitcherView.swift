@@ -81,7 +81,7 @@ public struct HouseholdSwitcherView: View {
             }
         }
         .sheet(isPresented: $showingCreateHousehold) {
-            NavigationView {
+            NavigationStack {
                 HouseholdCreationView(
                     onBack: { showingCreateHousehold = false },
                     onComplete: { _ in
@@ -92,7 +92,7 @@ public struct HouseholdSwitcherView: View {
             }
         }
         .sheet(isPresented: $showingJoinHousehold) {
-            NavigationView {
+            NavigationStack {
                 HouseholdJoinView(
                     onBack: { showingJoinHousehold = false },
                     onComplete: { _ in

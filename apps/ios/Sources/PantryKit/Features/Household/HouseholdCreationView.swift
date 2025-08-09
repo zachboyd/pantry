@@ -13,8 +13,14 @@ public struct HouseholdCreationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.safeViewModelFactory) private var viewModelFactory
     @State private var viewModel: HouseholdCreationViewModel?
+    @FocusState private var focusedField: Field?
     let onBack: (() -> Void)?
     let onComplete: ((String) -> Void)?
+    
+    enum Field: Hashable {
+        case householdName
+        case description
+    }
     
     public init(viewModel: HouseholdCreationViewModel? = nil, onBack: (() -> Void)? = nil, onComplete: ((String) -> Void)? = nil) {
         self._viewModel = State(initialValue: viewModel)
@@ -23,7 +29,8 @@ public struct HouseholdCreationView: View {
     }
 
     public var body: some View {
-        VStack(spacing: DesignTokens.Spacing.xxl) {
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.xxl) {
             VStack(spacing: DesignTokens.Spacing.md) {
                 Text(L("household.creation.title"))
                     .font(DesignTokens.Typography.Semantic.pageTitle())
@@ -47,6 +54,10 @@ public struct HouseholdCreationView: View {
                     ),
                     autocorrectionDisabled: true
                 )
+                .focused($focusedField, equals: .householdName)
+                .onSubmit {
+                    focusedField = .description
+                }
                 
                 // Description Field (Optional)
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
@@ -69,6 +80,7 @@ public struct HouseholdCreationView: View {
                         .background(DesignTokens.Colors.Surface.secondary)
                         .cornerRadius(DesignTokens.BorderRadius.sm)
                         .lineLimit(3...6)
+                        .focused($focusedField, equals: .description)
                 }
             }
             
@@ -115,8 +127,10 @@ public struct HouseholdCreationView: View {
                     }
                 }
             )
+            }
+            .padding(DesignTokens.Spacing.lg)
         }
-        .padding(DesignTokens.Spacing.lg)
+        .scrollDismissesKeyboard(.interactively)
         .navigationBarBackButtonHidden(true)
         .onAppear {
             if viewModel == nil, let factory = viewModelFactory {
@@ -125,6 +139,10 @@ public struct HouseholdCreationView: View {
                 } catch {
                     Logger.ui.error("Failed to create HouseholdCreationViewModel: \(error)")
                 }
+            }
+            // Auto-focus the household name field after a brief delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                focusedField = .householdName
             }
         }
     }

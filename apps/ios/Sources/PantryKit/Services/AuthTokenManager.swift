@@ -96,76 +96,77 @@ public final class AuthTokenManager {
     private static let expirationKey = "auth_expiration"
     private static let userDataKey = "auth_user_data"
 
+    // In-memory cache to avoid repeated keychain reads
+    private var cachedToken: AuthToken?
+    private var cachedUserData: AuthUserData?
+
     public init() {
         Self.logger.info("🔐 AuthTokenManager initialized")
+        // Load token from keychain on initialization
+        self.cachedToken = loadTokenFromKeychain()
+        self.cachedUserData = try? loadUserDataFromKeychain()
     }
 
     // MARK: - Public Methods
 
     /// Save authentication token securely to Keychain
     public func saveToken(_ token: AuthToken) throws {
-        Self.logger.info("💾 KEYCHAIN SAVE: Saving auth token to Keychain")
+        Self.logger.debug("💾 Saving auth token")
 
         // Save access token
-        let accessTokenPreview = String(token.accessToken.prefix(20)) + "..."
-        Self.logger.info("💾 KEYCHAIN SAVE: Access Token: \(accessTokenPreview)")
         try saveToKeychain(token.accessToken, key: Self.accessTokenKey)
 
         // Save refresh token if available
         if let refreshToken = token.refreshToken {
-            let refreshTokenPreview = String(refreshToken.prefix(20)) + "..."
-            Self.logger.info("💾 KEYCHAIN SAVE: Refresh Token: \(refreshTokenPreview)")
             try saveToKeychain(refreshToken, key: Self.refreshTokenKey)
-        } else {
-            Self.logger.info("💾 KEYCHAIN SAVE: No refresh token provided")
         }
 
         // Save user ID if available
         if let userId = token.userId {
-            Self.logger.info("💾 KEYCHAIN SAVE: User ID: \(userId.uuidString)")
             try saveToKeychain(userId.uuidString, key: Self.userIdKey)
-        } else {
-            Self.logger.info("💾 KEYCHAIN SAVE: No user ID provided")
         }
 
         // Save expiration date if available
         if let expiresAt = token.expiresAt {
             let timeInterval = expiresAt.timeIntervalSince1970
-            Self.logger.info("💾 KEYCHAIN SAVE: Expires At: \(expiresAt.description)")
             try saveToKeychain(String(timeInterval), key: Self.expirationKey)
-        } else {
-            Self.logger.info("💾 KEYCHAIN SAVE: No expiration date provided")
         }
 
-        Self.logger.info("✅ KEYCHAIN SAVE: Auth token saved successfully")
+        // Update in-memory cache
+        self.cachedToken = token
+        Self.logger.debug("✅ Auth token saved")
     }
 
-    /// Load authentication token from Keychain
+    /// Load authentication token from cache (or Keychain if not cached)
     public func loadToken() -> AuthToken? {
-        Self.logger.info("📖 KEYCHAIN LOAD: Loading auth token from Keychain")
+        // Return cached token if available
+        if let cached = cachedToken {
+            Self.logger.debug("📖 Returning cached auth token (valid: \(cached.isValid))")
+            return cached
+        }
+        
+        // Otherwise load from keychain and cache it
+        Self.logger.debug("📖 Cache miss - loading auth token from Keychain")
+        let token = loadTokenFromKeychain()
+        self.cachedToken = token
+        return token
+    }
+    
+    /// Load authentication token directly from Keychain (bypasses cache)
+    private func loadTokenFromKeychain() -> AuthToken? {
+        Self.logger.debug("🔑 Loading auth token from Keychain")
 
         guard let accessToken = loadFromKeychain(key: Self.accessTokenKey) else {
-            Self.logger.info("📖 KEYCHAIN LOAD: No access token found in Keychain")
+            Self.logger.debug("🔑 No access token found in Keychain")
             return nil
         }
 
-        let accessTokenPreview = String(accessToken.prefix(20)) + "..."
-        Self.logger.info("📖 KEYCHAIN LOAD: Access Token: \(accessTokenPreview)")
-
         let refreshToken = loadFromKeychain(key: Self.refreshTokenKey)
-        if let refreshToken = refreshToken {
-            let refreshTokenPreview = String(refreshToken.prefix(20)) + "..."
-            Self.logger.info("📖 KEYCHAIN LOAD: Refresh Token: \(refreshTokenPreview)")
-        } else {
-            Self.logger.info("📖 KEYCHAIN LOAD: No refresh token found in Keychain")
-        }
-
+        
         let userId: LowercaseUUID? = {
             guard let userIdString = loadFromKeychain(key: Self.userIdKey) else {
-                Self.logger.info("📖 KEYCHAIN LOAD: No user ID found in Keychain")
                 return nil
             }
-            Self.logger.info("📖 KEYCHAIN LOAD: User ID: \(userIdString)")
             return LowercaseUUID(uuidString: userIdString)
         }()
 
@@ -173,12 +174,9 @@ public final class AuthTokenManager {
             guard let expirationString = loadFromKeychain(key: Self.expirationKey),
                   let timeInterval = Double(expirationString)
             else {
-                Self.logger.info("📖 KEYCHAIN LOAD: No expiration date found in Keychain")
                 return nil
             }
-            let expirationDate = Date(timeIntervalSince1970: timeInterval)
-            Self.logger.info("📖 KEYCHAIN LOAD: Expires At: \(expirationDate.description)")
-            return expirationDate
+            return Date(timeIntervalSince1970: timeInterval)
         }()
 
         let token = AuthToken(
@@ -188,26 +186,30 @@ public final class AuthTokenManager {
             expiresAt: expiresAt
         )
 
-        Self.logger.info("✅ KEYCHAIN LOAD: Auth token loaded successfully (valid: \(token.isValid), needs refresh: \(token.needsRefresh))")
+        Self.logger.debug("✅ Auth token loaded from Keychain")
         return token
     }
 
     /// Clear all authentication data from Keychain
     public func clearToken() throws {
-        Self.logger.info("🗑️ Clearing auth token from Keychain")
+        Self.logger.info("🗑️ Clearing auth token from Keychain and cache")
 
         try deleteFromKeychain(key: Self.accessTokenKey)
         try deleteFromKeychain(key: Self.refreshTokenKey)
         try deleteFromKeychain(key: Self.userIdKey)
         try deleteFromKeychain(key: Self.expirationKey)
         try deleteFromKeychain(key: Self.userDataKey)
+        
+        // Clear in-memory cache
+        self.cachedToken = nil
+        self.cachedUserData = nil
 
-        Self.logger.info("✅ Auth token cleared successfully")
+        Self.logger.info("✅ Auth token and cache cleared successfully")
     }
 
     /// Save user data for offline use
     public func saveUserData(_ userData: AuthUserData) throws {
-        Self.logger.info("💾 Saving user data for offline use")
+        Self.logger.debug("💾 Saving user data")
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(userData)
@@ -216,23 +218,41 @@ public final class AuthTokenManager {
         }
 
         try saveToKeychain(jsonString, key: Self.userDataKey)
-        Self.logger.info("✅ User data saved successfully")
+        
+        // Update in-memory cache
+        self.cachedUserData = userData
+        Self.logger.debug("✅ User data saved")
     }
 
-    /// Load user data from Keychain
+    /// Load user data from cache (or Keychain if not cached)
     public func loadUserData() throws -> AuthUserData? {
-        Self.logger.info("📖 Loading user data from Keychain")
+        // Return cached data if available
+        if let cached = cachedUserData {
+            Self.logger.debug("📖 Returning cached user data")
+            return cached
+        }
+        
+        // Otherwise load from keychain and cache it
+        Self.logger.debug("📖 Cache miss - loading user data from Keychain")
+        let userData = try loadUserDataFromKeychain()
+        self.cachedUserData = userData
+        return userData
+    }
+    
+    /// Load user data directly from Keychain (bypasses cache)
+    private func loadUserDataFromKeychain() throws -> AuthUserData? {
+        Self.logger.debug("🔑 Loading user data from Keychain")
 
         guard let jsonString = loadFromKeychain(key: Self.userDataKey),
               let data = jsonString.data(using: .utf8)
         else {
-            Self.logger.info("📖 No user data found in Keychain")
+            Self.logger.debug("🔑 No user data found in Keychain")
             return nil
         }
 
         let decoder = JSONDecoder()
         let userData = try decoder.decode(AuthUserData.self, from: data)
-        Self.logger.info("✅ User data loaded successfully: \(userData.email)")
+        Self.logger.debug("✅ User data loaded from Keychain")
         return userData
     }
 

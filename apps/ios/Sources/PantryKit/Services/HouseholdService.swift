@@ -35,21 +35,29 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
     private let graphQLService: GraphQLServiceProtocol
     private let authService: any AuthServiceProtocol
+    private let watchManager: WatchManager?
 
     /// Cache for current household to reduce network calls
     private var currentHouseholdCache: Household?
     private var householdsCache: [Household] = []
     private var lastCacheUpdate: Date?
     private let cacheTimeout: TimeInterval = 300 // 5 minutes
+    
+    /// Cached watched results for query deduplication
+    private var householdWatches: [String: WatchedResult<Household>] = [:]
+    private var householdsListWatch: WatchedResult<[Household]>?
+    private var memberWatches: [String: WatchedResult<[HouseholdMember]>] = [:]
 
     // MARK: - Initialization
 
     public init(
         graphQLService: GraphQLServiceProtocol,
-        authService: any AuthServiceProtocol
+        authService: any AuthServiceProtocol,
+        watchManager: WatchManager? = nil
     ) {
         self.graphQLService = graphQLService
         self.authService = authService
+        self.watchManager = watchManager
         Self.logger.info("🏠 HouseholdService initialized")
     }
 
@@ -119,7 +127,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             // Use the new ListHouseholds query
             let query = PantryGraphQL.ListHouseholdsQuery()
             let data = try await graphQLService.query(query)
-            
+
             // Map GraphQL households to domain models
             householdsCache = data.households.map { graphQLHousehold in
                 Household(
@@ -132,7 +140,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                     members: [] // Members will be loaded separately
                 )
             }
-            
+
             lastCacheUpdate = Date()
             Self.logger.info("✅ Retrieved \(householdsCache.count) household(s)")
             return householdsCache
@@ -313,9 +321,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
             let query = PantryGraphQL.GetHouseholdMembersQuery(
                 input: PantryGraphQL.GetHouseholdMembersInput(householdId: householdId)
             )
-            
+
             let data = try await graphQLService.query(query)
-            
+
             // Map GraphQL members to domain models
             let members = data.householdMembers.map { graphQLMember in
                 HouseholdMember(
@@ -326,10 +334,10 @@ public final class HouseholdService: HouseholdServiceProtocol {
                     joinedAt: DateUtilities.dateFromGraphQL(graphQLMember.joined_at) ?? Date()
                 )
             }
-            
+
             Self.logger.info("✅ Retrieved \(members.count) member(s) for household")
             return members
-            
+
         } catch {
             Self.logger.error("❌ Failed to get household members: \(error)")
             throw handleServiceError(error, operation: "getHouseholdMembers")
@@ -422,46 +430,267 @@ public final class HouseholdService: HouseholdServiceProtocol {
         }
     }
 
-    /// Watch household changes (reactive stream)
-    public func watchHousehold(id: String) -> AsyncStream<Household?> {
-        Self.logger.info("👀 Creating household watch stream for: \(id)")
-
-        return AsyncStream { continuation in
-            Task {
-                do {
-                    // For MVP, emit current household once
-                    // In a full implementation, you would use GraphQL subscriptions
-                    let household = try await getCurrentHousehold()
-                    continuation.yield(household)
-                    continuation.finish()
-                } catch {
-                    Self.logger.error("❌ Failed to watch household: \(error)")
-                    continuation.yield(nil)
-                    continuation.finish()
+    // MARK: - Reactive Watch Methods
+    
+    /// Apollo watchers for reactive updates (stored to allow cancellation)
+    private var apolloHouseholdWatchers: [String: GraphQLQueryWatcher<PantryGraphQL.GetHouseholdQuery>] = [:]
+    private var apolloHouseholdsListWatcher: GraphQLQueryWatcher<PantryGraphQL.ListHouseholdsQuery>?
+    private var apolloMemberWatchers: [String: GraphQLQueryWatcher<PantryGraphQL.GetHouseholdMembersQuery>] = [:]
+    
+    /// Watch specific household with reactive updates
+    public func watchHousehold(id: String) -> WatchedResult<Household> {
+        Self.logger.info("👁️ Creating watched result for household: \(id)")
+        
+        // Return existing watch if available
+        if let existing = householdWatches[id] {
+            Self.logger.debug("♻️ Reusing existing watch for household: \(id)")
+            return existing
+        }
+        
+        // Create the watched result
+        let result = WatchedResult<Household>()
+        result.setLoading(true)
+        
+        // Get the Apollo client directly
+        guard let graphQLService = graphQLService as? GraphQLService else {
+            Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
+            result.setError(ServiceError.serviceUnavailable("GraphQL"))
+            return result
+        }
+        
+        // Create the query for the specific household
+        let input = PantryGraphQL.GetHouseholdInput(id: id)
+        let query = PantryGraphQL.GetHouseholdQuery(input: input)
+        
+        // Create a REAL Apollo watcher that observes cache changes!
+        let watcher = graphQLService.apolloClientService.apollo.watch(
+            query: query,
+            cachePolicy: .returnCacheDataAndFetch
+        ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<PantryGraphQL.GetHouseholdQuery.Data>, Error>) in
+            guard let self = self, let result = result else { return }
+            
+            switch graphQLResult {
+            case let .success(data):
+                if let householdData = data.data?.household {
+                    // Transform GraphQL data to Household model
+                    let household = self.mapGraphQLHouseholdToDomain(householdData)
+                    
+                    // Update the watched result (this triggers view updates!)
+                    Task { @MainActor in
+                        let source: WatchedResult<Household>.DataSource = 
+                            data.source == .cache ? .cache : .server
+                        result.update(value: household, source: source)
+                        result.setLoading(false)
+                        
+                        // Also update our cache
+                        if household.id == self.currentHouseholdCache?.id {
+                            self.currentHouseholdCache = household
+                        }
+                        
+                        Self.logger.info("🔄 Household watch updated from \(source) for ID: \(id)")
+                    }
+                } else {
+                    Task { @MainActor in
+                        result.setError(ServiceError.notFound("Household with id \(id)"))
+                        result.setLoading(false)
+                    }
+                }
+                
+                if let errors = data.errors, !errors.isEmpty {
+                    Self.logger.warning("⚠️ Watch query returned errors for household ID: \(id)")
+                    for error in errors {
+                        Self.logger.warning("  - \(error.message ?? "Unknown error")")
+                    }
+                }
+                
+            case let .failure(error):
+                Task { @MainActor in
+                    result.setError(error)
+                    result.setLoading(false)
+                    Self.logger.error("❌ Household watch query failed for ID \(id): \(error)")
                 }
             }
         }
+        
+        // Store the watcher so we can cancel it later
+        apolloHouseholdWatchers[id] = watcher
+        
+        // Cache the watched result
+        householdWatches[id] = result
+        
+        Self.logger.info("✅ Household watch created with true reactive watching for ID: \(id)")
+        return result
     }
-
-    /// Watch user households changes (reactive stream)
-    public func watchUserHouseholds() -> AsyncStream<[Household]> {
-        Self.logger.info("👀 Creating user households watch stream")
-
-        return AsyncStream { continuation in
-            Task {
-                do {
-                    // For MVP, emit current households once
-                    // In a full implementation, you would use GraphQL subscriptions
-                    let households = try await getHouseholds()
-                    continuation.yield(households)
-                    continuation.finish()
-                } catch {
-                    Self.logger.error("❌ Failed to watch user households: \(error)")
-                    continuation.yield([])
-                    continuation.finish()
+    
+    /// Watch user's households list with reactive updates
+    public func watchUserHouseholds() -> WatchedResult<[Household]> {
+        Self.logger.info("👁️ Creating watched result for user households")
+        
+        // Return existing watch if available
+        if let existing = householdsListWatch {
+            Self.logger.debug("♻️ Reusing existing user households watch")
+            return existing
+        }
+        
+        // Create the watched result
+        let result = WatchedResult<[Household]>()
+        result.setLoading(true)
+        
+        // Get the Apollo client directly
+        guard let graphQLService = graphQLService as? GraphQLService else {
+            Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
+            result.setError(ServiceError.serviceUnavailable("GraphQL"))
+            return result
+        }
+        
+        // Create the query for user households
+        let query = PantryGraphQL.ListHouseholdsQuery()
+        
+        // Create a REAL Apollo watcher that observes cache changes!
+        let watcher = graphQLService.apolloClientService.apollo.watch(
+            query: query,
+            cachePolicy: .returnCacheDataAndFetch
+        ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<PantryGraphQL.ListHouseholdsQuery.Data>, Error>) in
+            guard let self = self, let result = result else { return }
+            
+            switch graphQLResult {
+            case let .success(data):
+                if let householdsData = data.data?.households {
+                    // Transform GraphQL data to Household models
+                    let households = householdsData.map { graphQLHousehold in
+                        Household(
+                            id: graphQLHousehold.id,
+                            name: graphQLHousehold.name,
+                            description: graphQLHousehold.description,
+                            createdBy: graphQLHousehold.created_by,
+                            createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
+                            updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
+                            members: [] // Members will be loaded separately
+                        )
+                    }
+                    
+                    // Update the watched result (this triggers view updates!)
+                    Task { @MainActor in
+                        let source: WatchedResult<[Household]>.DataSource = 
+                            data.source == .cache ? .cache : .server
+                        result.update(value: households, source: source)
+                        result.setLoading(false)
+                        
+                        // Also update our cache
+                        self.householdsCache = households
+                        self.lastCacheUpdate = Date()
+                        
+                        Self.logger.info("🔄 User households watch updated from \(source) with \(households.count) households")
+                    }
+                }
+                
+                if let errors = data.errors, !errors.isEmpty {
+                    Self.logger.warning("⚠️ Watch query returned errors for user households")
+                    for error in errors {
+                        Self.logger.warning("  - \(error.message ?? "Unknown error")")
+                    }
+                }
+                
+            case let .failure(error):
+                Task { @MainActor in
+                    result.setError(error)
+                    result.setLoading(false)
+                    Self.logger.error("❌ User households watch query failed: \(error)")
                 }
             }
         }
+        
+        // Store the watcher so we can cancel it later
+        apolloHouseholdsListWatcher = watcher
+        
+        // Cache the watched result
+        householdsListWatch = result
+        
+        Self.logger.info("✅ User households watch created with true reactive watching")
+        return result
+    }
+    
+    /// Watch household members with reactive updates
+    public func watchHouseholdMembers(householdId: String) -> WatchedResult<[HouseholdMember]> {
+        Self.logger.info("👁️ Creating watched result for household members: \(householdId)")
+        
+        // Return existing watch if available
+        if let existing = memberWatches[householdId] {
+            Self.logger.debug("♻️ Reusing existing members watch for household: \(householdId)")
+            return existing
+        }
+        
+        // Create the watched result
+        let result = WatchedResult<[HouseholdMember]>()
+        result.setLoading(true)
+        
+        // Get the Apollo client directly
+        guard let graphQLService = graphQLService as? GraphQLService else {
+            Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
+            result.setError(ServiceError.serviceUnavailable("GraphQL"))
+            return result
+        }
+        
+        // Create the query for household members
+        let input = PantryGraphQL.GetHouseholdMembersInput(householdId: householdId)
+        let query = PantryGraphQL.GetHouseholdMembersQuery(input: input)
+        
+        // Create a REAL Apollo watcher that observes cache changes!
+        let watcher = graphQLService.apolloClientService.apollo.watch(
+            query: query,
+            cachePolicy: .returnCacheDataAndFetch
+        ) { [weak result] (graphQLResult: Result<GraphQLResult<PantryGraphQL.GetHouseholdMembersQuery.Data>, Error>) in
+            guard let result = result else { return }
+            
+            switch graphQLResult {
+            case let .success(data):
+                if let membersData = data.data?.householdMembers {
+                    // Transform GraphQL data to HouseholdMember models
+                    let members = membersData.map { graphQLMember in
+                        HouseholdMember(
+                            id: graphQLMember.id,
+                            userId: graphQLMember.user_id,
+                            householdId: graphQLMember.household_id,
+                            role: MemberRole(rawValue: graphQLMember.role) ?? .member,
+                            joinedAt: DateUtilities.dateFromGraphQL(graphQLMember.joined_at) ?? Date()
+                        )
+                    }
+                    
+                    // Update the watched result (this triggers view updates!)
+                    Task { @MainActor in
+                        let source: WatchedResult<[HouseholdMember]>.DataSource = 
+                            data.source == .cache ? .cache : .server
+                        result.update(value: members, source: source)
+                        result.setLoading(false)
+                        
+                        Self.logger.info("🔄 Household members watch updated from \(source) with \(members.count) members for household: \(householdId)")
+                    }
+                }
+                
+                if let errors = data.errors, !errors.isEmpty {
+                    Self.logger.warning("⚠️ Watch query returned errors for household members: \(householdId)")
+                    for error in errors {
+                        Self.logger.warning("  - \(error.message ?? "Unknown error")")
+                    }
+                }
+                
+            case let .failure(error):
+                Task { @MainActor in
+                    result.setError(error)
+                    result.setLoading(false)
+                    Self.logger.error("❌ Household members watch query failed for household \(householdId): \(error)")
+                }
+            }
+        }
+        
+        // Store the watcher so we can cancel it later
+        apolloMemberWatchers[householdId] = watcher
+        
+        // Cache the watched result
+        memberWatches[householdId] = result
+        
+        Self.logger.info("✅ Household members watch created with true reactive watching for household: \(householdId)")
+        return result
     }
 
     // MARK: - Private Methods
@@ -548,6 +777,21 @@ public final class HouseholdService: HouseholdServiceProtocol {
         currentHouseholdCache = nil
         householdsCache = []
         lastCacheUpdate = nil
+        
+        // Clear watched results
+        householdWatches.removeAll()
+        householdsListWatch = nil
+        memberWatches.removeAll()
+        
+        // Cancel all Apollo watchers
+        apolloHouseholdWatchers.values.forEach { $0.cancel() }
+        apolloHouseholdWatchers.removeAll()
+        apolloHouseholdsListWatcher?.cancel()
+        apolloHouseholdsListWatcher = nil
+        apolloMemberWatchers.values.forEach { $0.cancel() }
+        apolloMemberWatchers.removeAll()
+        
+        Self.logger.info("✅ Household cache and watchers cleared")
     }
 }
 

@@ -1,5 +1,7 @@
+import Apollo
 import Combine
 import Foundation
+import CASLSwift
 
 /// Protocol defining authentication service interface
 @MainActor
@@ -9,6 +11,9 @@ public protocol AuthServiceProtocol: AnyObject, Sendable {
     var isLoading: Bool { get }
     var lastError: String? { get }
     var currentUser: User? { get }
+    var currentAbility: PantryAbility? { get }
+    var tokenManager: AuthTokenManager { get }
+    var permissionService: PermissionServiceProtocol { get }
 
     func signIn(email: String, password: String) async throws -> String
     func signUp(email: String, password: String) async throws -> String
@@ -17,6 +22,7 @@ public protocol AuthServiceProtocol: AnyObject, Sendable {
     func validateSession() async -> Bool
     func clearStoredSession() async
     func waitForSessionRestoration() async
+    func loadUserPermissions() async
 }
 
 /// Auth service implementation
@@ -30,15 +36,30 @@ public class AuthService: AuthServiceProtocol {
 
     private let apiClient: AuthClientProtocol
     private let authTokenManager: AuthTokenManager
+    private let _permissionService: PermissionServiceProtocol
+    private let apolloClient: ApolloClient?
 
     // Published state for SwiftUI integration
     public var currentAuthUser: APIUser?
     public var isAuthenticated = false
     public var isLoading = false
     public var lastError: String?
+    public var currentAbility: PantryAbility? {
+        _permissionService.currentAbility
+    }
 
     public var currentAuthUserId: String? {
         return currentAuthUser?.id
+    }
+    
+    /// Expose authTokenManager for other services that need it (e.g., ApolloClientService)
+    public var tokenManager: AuthTokenManager {
+        return authTokenManager
+    }
+    
+    /// Expose permissionService for creating PermissionProvider
+    public var permissionService: PermissionServiceProtocol {
+        return _permissionService
     }
 
     // Session validation (simplified)
@@ -50,9 +71,11 @@ public class AuthService: AuthServiceProtocol {
 
     // MARK: - Initialization
 
-    public init(apiClient: AuthClientProtocol, authTokenManager: AuthTokenManager) {
+    public init(apiClient: AuthClientProtocol, authTokenManager: AuthTokenManager, apolloClient: ApolloClient? = nil, permissionService: PermissionServiceProtocol? = nil) {
         self.apiClient = apiClient
         self.authTokenManager = authTokenManager
+        self.apolloClient = apolloClient
+        self._permissionService = permissionService ?? PermissionService()
 
         Self.logger.info("🔐 AuthService initializing...")
 
@@ -190,7 +213,7 @@ public class AuthService: AuthServiceProtocol {
         } catch {
             await MainActor.run {
                 // Use generic error message to avoid revealing if user exists
-                lastError = "Invalid email or password. Please try again."
+                lastError = L("auth.error.invalid_credentials")
                 isLoading = false
                 isAuthenticated = false
                 currentAuthUser = nil
@@ -254,9 +277,9 @@ public class AuthService: AuthServiceProtocol {
             await MainActor.run {
                 switch error {
                 case let .unknownError(message) where message.contains("already exists"):
-                    lastError = "An account with this email already exists."
+                    lastError = L("auth.error.email_exists")
                 default:
-                    lastError = "Account creation failed. Please try again."
+                    lastError = L("auth.error.general")
                 }
                 isLoading = false
             }
@@ -265,7 +288,7 @@ public class AuthService: AuthServiceProtocol {
             throw AuthServiceError.signUpFailed(error)
         } catch {
             await MainActor.run {
-                lastError = "Account creation failed. Please try again."
+                lastError = L("auth.error.general")
                 isLoading = false
             }
 
@@ -300,6 +323,9 @@ public class AuthService: AuthServiceProtocol {
                 isAuthenticated = false
                 isLoading = false
             }
+            
+            // Clear permissions
+            await _permissionService.clearPermissions()
 
             // Stop session validation
             stopSessionValidation()
@@ -323,6 +349,20 @@ public class AuthService: AuthServiceProtocol {
         }
     }
 
+    /// Load user permissions from backend
+    public func loadUserPermissions() async {
+        Self.logger.info("🔐 Loading user permissions")
+        
+        // Connect permission service to Apollo for automatic updates
+        if let apolloClient = apolloClient {
+            await _permissionService.subscribeToUserPermissions(apolloClient: apolloClient)
+            Self.logger.info("✅ Permission service connected to Apollo cache")
+            Self.logger.info("  - Current ability after subscription: \(_permissionService.currentAbility != nil ? "SET" : "NIL")")
+        } else {
+            Self.logger.warning("⚠️ No Apollo client available for permission updates")
+        }
+    }
+
     /// Clear stored session (used when session is invalid)
     public func clearStoredSession() async {
         Self.logger.info("🗑️ Clearing stored session due to validation failure")
@@ -337,6 +377,9 @@ public class AuthService: AuthServiceProtocol {
 
         // Clear API client state
         apiClient.clearAuthenticationState()
+        
+        // Clear permissions
+        await permissionService.clearPermissions()
 
         // Clear local state
         await MainActor.run {
@@ -676,24 +719,59 @@ public enum AuthServiceError: Error, LocalizedError {
     case networkError(Error)
     case unknownError(Error)
 
-    public var errorDescription: String? {
+    /// Returns a localization key for this error
+    public var localizationKey: String {
         switch self {
         case .signInFailed:
-            return "Sign in failed. Please check your credentials and try again."
+            return "auth.error.general"
         case .signUpFailed:
-            return "Account creation failed. Please try again."
-        case let .signOutFailed(error):
-            return "Sign out failed: \(error.localizedDescription)"
-        case let .sessionValidationFailed(error):
-            return "Session validation failed: \(error.localizedDescription)"
+            return "auth.error.general"
+        case .signOutFailed:
+            return "error.operation_failed"
+        case .sessionValidationFailed:
+            return "error.operation_failed"
+        case .notAuthenticated:
+            return "error.unauthorized"
+        case .invalidCredentials:
+            return "auth.error.invalid_credentials"
+        case .networkError:
+            return "error.network_message"
+        case .unknownError:
+            return "error.unknown"
+        }
+    }
+    
+    /// Returns any associated error for string formatting
+    public var associatedError: Error? {
+        switch self {
+        case let .signOutFailed(error),
+             let .sessionValidationFailed(error),
+             let .networkError(error),
+             let .unknownError(error):
+            return error
+        default:
+            return nil
+        }
+    }
+    
+    public var errorDescription: String? {
+        // For backward compatibility, return a basic English description
+        // Views should use localizationKey for proper localization
+        switch self {
+        case .signInFailed, .signUpFailed:
+            return "Authentication failed. Please try again."
+        case .signOutFailed:
+            return "Sign out failed"
+        case .sessionValidationFailed:
+            return "Session validation failed"
         case .notAuthenticated:
             return "User not authenticated"
         case .invalidCredentials:
-            return "Invalid email or password. Please try again."
-        case let .networkError(error):
-            return "Network error: \(error.localizedDescription)"
-        case let .unknownError(error):
-            return "Unknown error: \(error.localizedDescription)"
+            return "Invalid email or password"
+        case .networkError:
+            return "Network error"
+        case .unknownError:
+            return "Unknown error"
         }
     }
 
@@ -711,6 +789,23 @@ public enum AuthServiceError: Error, LocalizedError {
             return "Network connection issue"
         case .signOutFailed, .unknownError:
             return "Unexpected error"
+        }
+    }
+}
+
+// MARK: - AuthServiceError Localization Extension
+
+public extension AuthServiceError {
+    /// Returns a fully localized error message for display in UI
+    /// This method should be called from MainActor contexts (Views, ViewModels)
+    @MainActor
+    func localizedMessage() -> String {
+        if let associatedError = self.associatedError {
+            // For errors with associated errors, format the message
+            return String(format: L(self.localizationKey), associatedError.localizedDescription)
+        } else {
+            // For simple errors, just use the localization key
+            return L(self.localizationKey)
         }
     }
 }

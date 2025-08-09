@@ -4,7 +4,7 @@
 import ApolloAPI
 
 public extension PantryGraphQL.Objects {
-  public static let Mutation = ApolloAPI.Object(
+  static let Mutation = ApolloAPI.Object(
     typename: "Mutation",
     implementedInterfaces: [],
     keyFields: nil

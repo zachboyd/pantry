@@ -175,9 +175,25 @@ public struct MainTabView: View {
         case .lists:
             ListsTabView()
         case .settings:
-            HouseholdSettingsView()
+            HouseholdSettingsView(household: appState?.currentHousehold)
         case .profile:
-            UserProfileView()
+            let currentAppState = appState
+            UserProfileView(
+                currentUser: currentAppState?.currentUser,
+                currentHousehold: currentAppState?.currentHousehold,
+                households: [], // Will be loaded by ViewModel
+                onSignOut: {
+                    Logger.app.info("🚪 UserProfileView (tab) onSignOut callback invoked, appState: \(currentAppState != nil ? "exists" : "nil")")
+                    if let appState = currentAppState {
+                        await appState.signOut()
+                    } else {
+                        Logger.app.error("❌ AppState is nil in UserProfileView (tab) onSignOut")
+                    }
+                },
+                onSelectHousehold: { household in
+                    currentAppState?.selectHousehold(household)
+                }
+            )
         }
     }
 
@@ -186,7 +202,6 @@ public struct MainTabView: View {
     @ViewBuilder
     private var selectedTabView: some View {
         tabContent(for: selectedTab)
-            .sharedHeaderToolbar(title: selectedTab.title)
     }
 
     // MARK: - Helper Methods
@@ -250,7 +265,24 @@ public struct MainTabView: View {
             )
         // Profile Navigation
         case .userProfile:
-            UserProfileView()
+            let currentAppState = appState
+            UserProfileView(
+                currentUser: currentAppState?.currentUser,
+                currentHousehold: currentAppState?.currentHousehold,
+                households: [], // Will be loaded by ViewModel
+                onSignOut: {
+                    Logger.app.info("🚪 UserProfileView signOut called, appState: \(currentAppState != nil ? "exists" : "nil")")
+                    if let appState = currentAppState {
+                        await appState.signOut()
+                    } else {
+                        Logger.app.error("❌ AppState is nil in UserProfileView signOut")
+                    }
+                },
+                onSelectHousehold: { household in
+                    Logger.app.info("🏠 UserProfileView selectHousehold called, appState: \(currentAppState != nil ? "exists" : "nil")")
+                    currentAppState?.selectHousehold(household)
+                }
+            )
         case .appearanceSettings:
             AppearanceSettingsView()
         // Tab Navigation (shouldn't be used in navigation stack)
@@ -328,11 +360,11 @@ enum MainTab: String, CaseIterable, Hashable {
     var iconName: String {
         AppSections.icon(for: appSection)
     }
-    
+
     var hasSymbolVariant: Bool {
         AppSections.hasSymbolVariant(for: appSection)
     }
-    
+
     var accessibilityIdentifier: String {
         AppSections.accessibilityIdentifier(for: appSection)
     }

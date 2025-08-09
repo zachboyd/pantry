@@ -19,6 +19,8 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         var viewState: CommonViewState = .idle
         var showingError = false
         var errorMessage: String?
+        var showingComingSoon = false
+        var isReadOnly = false
 
         // Form validation
         var nameError: String?
@@ -33,7 +35,12 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         set {
             updateState {
                 $0.name = newValue
-                $0.hasUnsavedChanges = true
+                // Only mark as changed if actually different from original
+                if let original = $0.originalHousehold {
+                    $0.hasUnsavedChanges = (newValue != original.name || $0.description != (original.description ?? ""))
+                } else {
+                    $0.hasUnsavedChanges = true
+                }
             }
             validateName()
         }
@@ -44,7 +51,12 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         set {
             updateState {
                 $0.description = newValue
-                $0.hasUnsavedChanges = true
+                // Only mark as changed if actually different from original
+                if let original = $0.originalHousehold {
+                    $0.hasUnsavedChanges = ($0.name != original.name || newValue != (original.description ?? ""))
+                } else {
+                    $0.hasUnsavedChanges = true
+                }
             }
         }
     }
@@ -105,19 +117,29 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         state.hasUnsavedChanges
     }
 
+    public var showingComingSoon: Bool {
+        state.showingComingSoon
+    }
+
+    public var isReadOnly: Bool {
+        state.isReadOnly
+    }
+
     // MARK: - Initialization
 
     public init(
         dependencies: HouseholdEditDependencies,
         householdId: String? = nil,
-        mode: HouseholdEditMode = .create
+        mode: HouseholdEditMode = .create,
+        isReadOnly: Bool = false
     ) {
         let initialState = State(
             mode: mode,
-            householdId: householdId
+            householdId: householdId,
+            isReadOnly: isReadOnly
         )
         super.init(dependencies: dependencies, initialState: initialState)
-        Self.logger.info("🏠 HouseholdEditViewModel initialized - Mode: \(mode)")
+        Self.logger.info("🏠 HouseholdEditViewModel initialized - Mode: \(mode), ReadOnly: \(isReadOnly)")
     }
 
     public required init(dependencies: HouseholdEditDependencies) {
@@ -137,6 +159,14 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
 
         if isEditMode, let householdId = state.householdId {
             await loadHousehold(id: householdId)
+
+            // Check if user has permission to edit this household
+            if let currentUserId = dependencies.authService.currentUser?.id {
+                // For now, determine read-only based on whether they can manage the household
+                // This could be enhanced with proper permission checks
+                let canEdit = await checkEditPermission(for: householdId, userId: currentUserId)
+                updateState { $0.isReadOnly = !canEdit }
+            }
         }
     }
 
@@ -179,7 +209,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         if let original = state.originalHousehold {
             updateState {
                 $0.name = original.name
-                $0.description = "" // Assuming description is not available in the Household model
+                $0.description = original.description ?? ""
                 $0.hasUnsavedChanges = false
                 $0.nameError = nil
                 $0.descriptionError = nil
@@ -201,6 +231,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
             $0.descriptionError = nil
             $0.showingError = false
             $0.errorMessage = nil
+            $0.showingComingSoon = false
         }
         clearError()
 
@@ -257,6 +288,13 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         clearError()
     }
 
+    /// Dismiss coming soon alert
+    public func dismissComingSoon() {
+        updateState {
+            $0.showingComingSoon = false
+        }
+    }
+
     // MARK: - Private Methods
 
     private func createHousehold() async -> Bool {
@@ -293,41 +331,20 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
     }
 
     private func updateHousehold() async -> Bool {
-        guard let householdId = state.householdId else {
+        guard state.householdId != nil else {
             Self.logger.error("❌ Cannot update household - no ID available")
             return false
         }
 
-        Self.logger.info("✏️ Updating household: \(state.name)")
+        Self.logger.info("✏️ Would update household: \(state.name) - showing coming soon")
 
-        guard validateForm() else {
-            Self.logger.warning("⚠️ Form validation failed")
-            return false
+        // Show coming soon alert instead of actually updating
+        updateState {
+            $0.showingComingSoon = true
         }
 
-        let trimmedName = state.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedDescription = state.description.trimmingCharacters(in: .whitespacesAndNewlines)
-        let description = trimmedDescription.isEmpty ? nil : trimmedDescription
-
-        let result: Household? = await executeTask(.save) { [weak self, dependencies, householdId] in
-            let household = try await dependencies.householdService.updateHousehold(
-                id: householdId,
-                name: trimmedName,
-                description: description
-            )
-
-            await MainActor.run {
-                self?.updateState {
-                    $0.originalHousehold = household
-                    $0.hasUnsavedChanges = false
-                    $0.viewState = .loaded
-                }
-            }
-
-            return household
-        }
-
-        return result != nil
+        // Return false to prevent dismissing the view
+        return false
     }
 
     private func performLoadHousehold(id: String) async {
@@ -344,7 +361,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
             updateState { state in
                 state.originalHousehold = household
                 state.name = household.name
-                state.description = "" // Description not available in current Household model
+                state.description = household.description ?? ""
                 state.hasUnsavedChanges = false
                 state.viewState = .loaded
             }
@@ -358,6 +375,19 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
             }
             handleError(error)
         }
+    }
+
+    // MARK: - Permission Checking
+
+    private func checkEditPermission(for _: String, userId _: String) async -> Bool {
+        // Check if user is owner or admin of the household
+        // For now, we'll use a simple check - in real app, this would use CASL permissions
+        if state.originalHousehold != nil {
+            // If we already have the household, check if user is the owner
+            // In a real app, we'd check member roles here
+            return true // For now, allow editing if they can view it
+        }
+        return true
     }
 
     // MARK: - Error Handling Override

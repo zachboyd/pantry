@@ -4,7 +4,7 @@
 import ApolloAPI
 
 public extension PantryGraphQL.Objects {
-  public static let Query = ApolloAPI.Object(
+  static let Query = ApolloAPI.Object(
     typename: "Query",
     implementedInterfaces: [],
     keyFields: nil

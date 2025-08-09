@@ -1,55 +1,32 @@
 # Household Queries
 query GetHousehold($input: GetHouseholdInput!) {
   household(input: $input) {
-    id
-    name
-    description
-    created_by
-    created_at
-    updated_at
+    ...HouseholdFields
   }
 }
 
 query ListHouseholds {
   households {
-    id
-    name
-    description
-    created_by
-    created_at
-    updated_at
+    ...HouseholdFields
   }
 }
 
 query GetHouseholdMembers($input: GetHouseholdMembersInput!) {
   householdMembers(input: $input) {
-    id
-    household_id
-    user_id
-    role
-    joined_at
+    ...HouseholdMemberFields
   }
 }
 
 # Household Mutations
 mutation CreateHousehold($input: CreateHouseholdInput!) {
   createHousehold(input: $input) {
-    id
-    name
-    description
-    created_by
-    created_at
-    updated_at
+    ...HouseholdFields
   }
 }
 
 mutation AddHouseholdMember($input: AddHouseholdMemberInput!) {
   addHouseholdMember(input: $input) {
-    id
-    household_id
-    user_id
-    role
-    joined_at
+    ...HouseholdMemberFields
   }
 }
 
@@ -59,10 +36,6 @@ mutation RemoveHouseholdMember($input: RemoveHouseholdMemberInput!) {
 
 mutation ChangeHouseholdMemberRole($input: ChangeHouseholdMemberRoleInput!) {
   changeHouseholdMemberRole(input: $input) {
-    id
-    household_id
-    user_id
-    role
-    joined_at
+    ...HouseholdMemberFields
   }
 }

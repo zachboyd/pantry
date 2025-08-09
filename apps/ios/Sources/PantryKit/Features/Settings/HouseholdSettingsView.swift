@@ -2,38 +2,59 @@ import SwiftUI
 
 /// Settings view for household-specific settings
 public struct HouseholdSettingsView: View {
-    @Environment(\.appState) private var appState
-    @State private var viewModel = HouseholdSettingsViewModel()
-
-    public init() {}
-
+    @Environment(\.safeViewModelFactory) private var factory
+    @State private var settingsViewModel: UserSettingsViewModel?
+    @State private var membersWatch: WatchedResult<[HouseholdMember]>?
+    
+    let household: Household?
+    
+    public init(household: Household? = nil) {
+        self.household = household
+    }
+    
     public var body: some View {
         List {
             // Household Info Section
-            if let household = appState?.currentHousehold {
+            if let household = household {
                 householdInfoSection(household: household)
+                
+                // Members Section
+                membersSection(household: household)
             }
-
-            // Members Section
-            membersSection
-
+            
             // Household Preferences Section
             preferencesSection
         }
+        .navigationTitle(L("settings.household"))
         .task {
-            if let appState = appState {
-                await viewModel.onAppear(appState: appState)
+            // Create ViewModel if needed
+            if settingsViewModel == nil {
+                settingsViewModel = try? factory?.makeUserSettingsViewModel()
+            }
+            
+            // Set up watch for household members
+            if let household = household,
+               let householdService = settingsViewModel?.dependencies.householdService {
+                membersWatch = householdService.watchHouseholdMembers(householdId: household.id)
+            }
+            
+            await settingsViewModel?.onAppear()
+        }
+        .onDisappear {
+            Task {
+                await settingsViewModel?.onDisappear()
             }
         }
-        .errorAlert(error: $viewModel.currentError)
     }
-
+    
     // MARK: - Household Info Section
-
+    
     @ViewBuilder
     private func householdInfoSection(household: Household) -> some View {
         Section {
-            NavigationLink(destination: HouseholdEditView(householdId: household.id)) {
+            // For demonstration: Show read-only view if user is not owner/admin
+            // In a real app, you'd check actual permissions here
+            NavigationLink(destination: HouseholdEditView(householdId: household.id, isReadOnly: false)) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L("household.name"))
@@ -42,11 +63,11 @@ public struct HouseholdSettingsView: View {
                         Text(household.name)
                             .font(.body)
                     }
-
+                    
                     Spacer()
                 }
             }
-
+            
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L("household.created"))
@@ -55,28 +76,47 @@ public struct HouseholdSettingsView: View {
                     Text(household.createdAt, style: .date)
                         .font(.body)
                 }
-
+                
                 Spacer()
             }
         } header: {
             Text(L("household.information"))
         }
     }
-
+    
     // MARK: - Members Section
-
+    
     @ViewBuilder
-    private var membersSection: some View {
+    private func membersSection(household: Household) -> some View {
         Section {
-            if let household = appState?.currentHousehold {
-                NavigationLink(destination: HouseholdMembersView(householdId: household.id)) {
-                    HStack {
-                        Label(L("household.manage_members"), systemImage: "person.2")
-
-                        Spacer()
-
-                        Text("\(household.memberCount)")
+            NavigationLink(destination: HouseholdMembersView(householdId: household.id)) {
+                HStack {
+                    Label(L("household.manage_members"), systemImage: "person.2")
+                    
+                    Spacer()
+                    
+                    if let membersWatch = membersWatch {
+                        if membersWatch.isLoading {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        } else {
+                            Text("\(membersWatch.value?.count ?? 0)")
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        Text("0")
                             .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            // Only show invite member option if user has permission to manage members
+            if settingsViewModel?.canManageMembers(for: household.id) == true {
+                NavigationLink(destination: HouseholdInviteView(householdId: household.id, householdName: household.name)) {
+                    HStack {
+                        Label(L("household.invite_member"), systemImage: "person.badge.plus")
+                            .foregroundColor(.accentColor)
+                        Spacer()
                     }
                 }
             }
@@ -84,9 +124,9 @@ public struct HouseholdSettingsView: View {
             Text(L("household.members"))
         }
     }
-
+    
     // MARK: - Preferences Section
-
+    
     @ViewBuilder
     private var preferencesSection: some View {
         Section {
@@ -97,14 +137,14 @@ public struct HouseholdSettingsView: View {
                 Text(L("common.not_set"))
                     .foregroundColor(.secondary)
             }
-
+            
             HStack {
                 Label(L("household.default_store"), systemImage: "cart")
                 Spacer()
                 Text(L("common.not_set"))
                     .foregroundColor(.secondary)
             }
-
+            
             HStack {
                 Label(L("household.meal_planning"), systemImage: "fork.knife")
                 Spacer()
@@ -120,20 +160,6 @@ public struct HouseholdSettingsView: View {
     }
 }
 
-// MARK: - View Model
-
-import Observation
-
-@Observable
-@MainActor
-private final class HouseholdSettingsViewModel {
-    var isLoading = false
-    var currentError: ViewModelError?
-
-    func onAppear(appState _: AppState) async {
-        // Future: Load household-specific settings
-    }
-}
 
 // MARK: - Previews
 

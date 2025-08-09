@@ -13,6 +13,7 @@ public struct HouseholdJoinView: View {
     @State private var isLoading = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @FocusState private var isInviteCodeFocused: Bool
 
     let onBack: () -> Void
     let onComplete: (String) -> Void
@@ -30,7 +31,8 @@ public struct HouseholdJoinView: View {
     }
 
     public var body: some View {
-        VStack(spacing: DesignTokens.Spacing.xl) {
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.xl) {
             // Header
             VStack(spacing: DesignTokens.Spacing.md) {
                 HStack {
@@ -68,6 +70,12 @@ public struct HouseholdJoinView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .font(.monospaced(.body)())
+                    .focused($isInviteCodeFocused)
+                    .onSubmit {
+                        if isFormValid {
+                            joinHousehold()
+                        }
+                    }
             }
 
             // Info section
@@ -110,12 +118,20 @@ public struct HouseholdJoinView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(!isFormValid || isLoading)
+            }
+            .padding(DesignTokens.Spacing.Layout.screenEdge)
         }
-        .padding(DesignTokens.Spacing.Layout.screenEdge)
+        .scrollDismissesKeyboard(.interactively)
         .alert(L("error"), isPresented: $showingAlert) {
             Button(L("ok")) {}
         } message: {
             Text(alertMessage)
+        }
+        .onAppear {
+            // Auto-focus the invite code field after a brief delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isInviteCodeFocused = true
+            }
         }
     }
 

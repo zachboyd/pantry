@@ -280,6 +280,10 @@ open class BaseReactiveViewModel<State, Dependencies>: BaseViewModelProtocol {
     private var activeTasks: [String: Task<Void, Never>] = [:]
     private let errorLogger = Logger(category: "ViewModelError")
     private var streamTasks: [String: Task<Void, Never>] = [:]
+    
+    /// Collection of all WatchedResult instances for automatic cleanup
+    /// Using type-erased array to store different generic types
+    private var managedWatches: [any WatchedResultProtocol] = []
 
     // MARK: - Initialization
 
@@ -308,6 +312,23 @@ open class BaseReactiveViewModel<State, Dependencies>: BaseViewModelProtocol {
         Self.logger.debug("ViewModel disappeared: \(String(describing: type(of: self)))")
         cancelAllTasks()
         stopAllStreams()
+        stopAllWatches()
+    }
+    
+    // MARK: - Watch Management
+    
+    /// Register a WatchedResult to be automatically cleaned up
+    public func registerWatch<T>(_ watch: WatchedResult<T>) {
+        managedWatches.append(watch)
+    }
+    
+    /// Stop all registered watches
+    private func stopAllWatches() {
+        Self.logger.debug("Stopping \(managedWatches.count) watches")
+        for watch in managedWatches {
+            watch.stopWatching()
+        }
+        managedWatches.removeAll()
     }
 
     open func refresh() async {
@@ -478,6 +499,26 @@ open class BaseReactiveViewModel<State, Dependencies>: BaseViewModelProtocol {
             Self.logger.debug("Stopped stream: \(key)")
         }
         streamTasks.removeAll()
+    }
+    
+    // MARK: - WatchedResult Helpers
+    
+    /// Helper computed property to check if any WatchedResult is loading
+    /// Subclasses can override this to include their specific WatchedResults
+    open var isWatchedDataLoading: Bool {
+        false
+    }
+    
+    /// Helper computed property to check if any WatchedResult has an error
+    /// Subclasses can override this to include their specific WatchedResults
+    open var watchedDataError: Error? {
+        nil
+    }
+    
+    /// Helper method to retry all failed WatchedResults
+    /// Subclasses should override this to retry their specific WatchedResults
+    open func retryFailedWatches() async {
+        // Override in subclasses to retry specific WatchedResults
     }
 }
 
