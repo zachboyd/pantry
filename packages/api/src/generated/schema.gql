@@ -44,7 +44,7 @@ type HouseholdMember {
   joined_at: DateTime!
 }
 
-"""A null-safe DateTime scalar that handles Redis serialization"""
+"""A null-safe DateTime scalar"""
 scalar DateTime
 
 type Query {

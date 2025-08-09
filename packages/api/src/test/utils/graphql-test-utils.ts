@@ -249,6 +249,7 @@ export class GraphQLTestUtils {
       birth_date?: Date;
       email?: string;
       primary_household_id?: string;
+      preferences?: Record<string, unknown>;
     },
   ) {
     return {
