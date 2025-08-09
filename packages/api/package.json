@@ -51,6 +51,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@types/pg": "^8.15.4",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
     "better-auth": "^1.2.10",
     "cache-manager": "^7.1.0",
     "class-transformer": "^0.5.1",
@@ -58,7 +59,9 @@
     "dotenv": "^16.5.0",
     "graphql": "^16.11.0",
     "graphql-redis-subscriptions": "^2.7.0",
+    "graphql-scalars": "^1.24.2",
     "graphql-type-json": "^0.3.2",
+    "graphql-ws": "^6.0.6",
     "jose": "^6.0.11",
     "keyv": "^5.4.0",
     "kysely": "^0.28.2",
@@ -68,7 +71,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "tsx": "^4.20.3",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@apollo/server": "^4.12.2",

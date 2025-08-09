@@ -75,12 +75,6 @@ export class GetUserInput {
 }
 
 @InputType()
-export class UserUpdatedSubscriptionInput {
-  @Field()
-  userId: string;
-}
-
-@InputType()
 export class UpdateUserInput {
   @Field()
   id: string;
@@ -155,15 +149,11 @@ export class UserResolver {
   }
 
   @Subscription(() => User)
-  async userUpdated(
-    @Args('input') input: UserUpdatedSubscriptionInput,
-    @CurrentUser() user: UserRecord | null,
-  ) {
-    // Only allow users to subscribe to their own updates
-    if (!user || input.userId !== user.id) {
-      throw new Error('You can only subscribe to your own user updates');
+  async userUpdated(@CurrentUser() user: UserRecord | null) {
+    if (!user) {
+      throw new Error('You must be authenticated to subscribe to user updates');
     }
 
-    return this.pubsubService.getUserUpdatedIterator(input.userId);
+    return this.pubsubService.getUserUpdatedIterator(user.id);
   }
 }
