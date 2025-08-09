@@ -296,7 +296,7 @@ async function generateEnvFile(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.log('🚀 Pantry API - Environment Generator\n');
+  console.log('🚀 Jeeves API - Environment Generator\n');
 
   // Show usage if help is requested
   if (process.argv.includes('--help') || process.argv.includes('-h')) {

@@ -193,11 +193,11 @@ export class IntegrationTestModuleFactory {
 
     if (setCookieHeader && Array.isArray(setCookieHeader)) {
       const sessionCookie = setCookieHeader.find((cookie: string) =>
-        cookie.includes('pantry.session_token='),
+        cookie.includes('jeeves.session_token='),
       );
 
       if (sessionCookie) {
-        const match = sessionCookie.match(/pantry\.session_token=([^;]+)/);
+        const match = sessionCookie.match(/jeeves\.session_token=([^;]+)/);
         if (match) {
           sessionToken = decodeURIComponent(match[1]);
         }

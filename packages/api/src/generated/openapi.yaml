@@ -627,8 +627,8 @@ paths:
         '400':
           description: Invalid or expired token
 info:
-  title: Pantry API
-  description: API for collaborative pantry planning
+  title: Jeeves API
+  description: API for your AI household assistant
   version: 1.0.0
   contact: {}
 tags:
@@ -644,6 +644,6 @@ components:
     cookie:
       type: apiKey
       in: cookie
-      name: pantry.session_token
+      name: jeeves.session_token
       description: Session cookie from Better Auth
   schemas: {}

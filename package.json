@@ -1,7 +1,7 @@
 {
-  "name": "pantry",
+  "name": "jeeves",
   "version": "1.0.0",
-  "description": "Pantry - NestJS backend with PostgreSQL",
+  "description": "Jeeves",
   "type": "module",
   "private": true,
   "workspaces": [

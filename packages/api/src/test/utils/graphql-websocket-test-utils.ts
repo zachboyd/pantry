@@ -38,7 +38,7 @@ export class GraphQLWebSocketTestUtils {
     return this.createClient({
       url: options.url,
       connectionParams: {
-        cookie: `pantry.session_token=${options.sessionToken}`,
+        cookie: `jeeves.session_token=${options.sessionToken}`,
         ...options.additionalParams,
       },
     });

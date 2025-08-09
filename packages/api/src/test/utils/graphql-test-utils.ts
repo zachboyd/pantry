@@ -181,7 +181,7 @@ export class GraphQLTestUtils {
     variables?: Record<string, unknown>,
   ) {
     return this.executeQuery(request, query, variables, {
-      Cookie: `pantry.session_token=${sessionToken}`,
+      Cookie: `jeeves.session_token=${sessionToken}`,
     });
   }
 

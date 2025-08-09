@@ -1,4 +1,4 @@
-// Pantry Database Schema
+// Jeeves Database Schema
 // DBML (Database Markup Language) specification
 // 
 // This file serves as the single source of truth for the database design.
@@ -6,9 +6,9 @@
 // Generate visual diagrams: https://dbdiagram.io/
 // Generate documentation: https://dbdocs.io/
 
-Project pantry {
+Project jeeves {
   database_type: 'PostgreSQL'
-  Note: 'Pantry - Meal planning that works'
+  Note: 'Jeeves - Your AI household assistant'
 }
 
 // ================================================================

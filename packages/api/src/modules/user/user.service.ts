@@ -140,10 +140,10 @@ export class UserServiceImpl implements UserService {
         id: userData.id || uuidv4(),
         auth_user_id: null, // AI users don't have auth
         email: userData.email,
-        first_name: userData.first_name || 'Pantry',
+        first_name: userData.first_name || 'Jeeves',
         last_name: userData.last_name || 'Assistant',
         display_name:
-          userData.display_name || `${personality} - Pantry Assistant`,
+          userData.display_name || `${personality} - Jeeves Assistant`,
         avatar_url: userData.avatar_url || '/avatars/default-ai-assistant.png',
         phone: userData.phone,
         birth_date: userData.birth_date,

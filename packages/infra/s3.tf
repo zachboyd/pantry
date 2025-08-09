@@ -1,4 +1,4 @@
-resource "aws_s3_bucket" "pantry_app_bucket" {
+resource "aws_s3_bucket" "jeeves_app_bucket" {
   bucket = "${var.app_name}-${var.environment}-${var.bucket_suffix}"
 
   tags = {
@@ -8,15 +8,15 @@ resource "aws_s3_bucket" "pantry_app_bucket" {
   }
 }
 
-resource "aws_s3_bucket_versioning" "pantry_app_bucket_versioning" {
-  bucket = aws_s3_bucket.pantry_app_bucket.id
+resource "aws_s3_bucket_versioning" "jeeves_app_bucket_versioning" {
+  bucket = aws_s3_bucket.jeeves_app_bucket.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "pantry_app_bucket_encryption" {
-  bucket = aws_s3_bucket.pantry_app_bucket.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "jeeves_app_bucket_encryption" {
+  bucket = aws_s3_bucket.jeeves_app_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -25,8 +25,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "pantry_app_bucket
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "pantry_app_bucket_pab" {
-  bucket = aws_s3_bucket.pantry_app_bucket.id
+resource "aws_s3_bucket_public_access_block" "jeeves_app_bucket_pab" {
+  bucket = aws_s3_bucket.jeeves_app_bucket.id
 
   block_public_acls       = true
   block_public_policy     = true

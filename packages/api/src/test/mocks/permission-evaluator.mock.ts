@@ -24,11 +24,6 @@ export type PermissionEvaluatorMockType = {
   canDeleteOwnMessage: ReturnType<typeof vi.fn>;
   canUpdateAnyMessage: ReturnType<typeof vi.fn>;
   canDeleteAnyMessage: ReturnType<typeof vi.fn>;
-  canManagePantry: ReturnType<typeof vi.fn>;
-  canReadPantry: ReturnType<typeof vi.fn>;
-  canCreatePantryItem: ReturnType<typeof vi.fn>;
-  canUpdatePantryItem: ReturnType<typeof vi.fn>;
-  canDeletePantryItem: ReturnType<typeof vi.fn>;
   getRawAbility: ReturnType<typeof vi.fn>;
   hasAnyPermission: ReturnType<typeof vi.fn>;
 };
@@ -96,17 +91,6 @@ export class PermissionEvaluatorMock {
         .fn()
         .mockReturnValue(defaultPermissions.canUpdate),
       canDeleteAnyMessage: vi
-        .fn()
-        .mockReturnValue(defaultPermissions.canDelete),
-      canManagePantry: vi.fn().mockReturnValue(defaultPermissions.canManage),
-      canReadPantry: vi.fn().mockReturnValue(defaultPermissions.canRead),
-      canCreatePantryItem: vi
-        .fn()
-        .mockReturnValue(defaultPermissions.canCreate),
-      canUpdatePantryItem: vi
-        .fn()
-        .mockReturnValue(defaultPermissions.canUpdate),
-      canDeletePantryItem: vi
         .fn()
         .mockReturnValue(defaultPermissions.canDelete),
       getRawAbility: vi.fn().mockReturnValue(null),

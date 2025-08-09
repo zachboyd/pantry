@@ -1,7 +1,7 @@
 {
-  "name": "@pantry/api",
+  "name": "@jeeves/api",
   "version": "1.0.0",
-  "description": "NestJS backend API for Pantry",
+  "description": "NestJS backend API for Jeeves",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,8 +10,8 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "docker:dev": "docker compose down && docker compose up -d && docker compose logs -f pantry-api",
-    "docker:dev:build": "docker compose down && docker compose up --build -d && docker compose logs -f pantry-api",
+    "docker:dev": "docker compose down && docker compose up -d && docker compose logs -f jeeves-api",
+    "docker:dev:build": "docker compose down && docker compose up --build -d && docker compose logs -f jeeves-api",
     "docker:dev:down": "docker compose down",
     "db:migrate": "tsx src/database/migrate.ts",
     "db:migrate:down": "tsx src/database/migrate.ts --down",

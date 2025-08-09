@@ -9,10 +9,10 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "pantry-terraform-state-cf2fc6a4"
+    bucket         = "jeeves-terraform-state-cf2fc6a4"
     key            = "terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "pantry-terraform-state-lock"
+    dynamodb_table = "jeeves-terraform-state-lock"
     encrypt        = true
   }
 }

@@ -18,16 +18,16 @@ export class SwaggerService {
 
     // Build OpenAPI configuration dynamically
     const swaggerConfig = new DocumentBuilder()
-      .setTitle('Pantry API')
-      .setDescription('API for collaborative pantry planning')
+      .setTitle('Jeeves API')
+      .setDescription('API for your AI household assistant')
       .setVersion('1.0.0');
 
     // Add servers based on environment
     if (config.app.nodeEnv === 'production') {
-      swaggerConfig.addServer('https://api.pantry.com/v1', 'Production server');
+      swaggerConfig.addServer('https://api.jeeves.com/v1', 'Production server');
     } else if (config.app.nodeEnv === 'staging') {
       swaggerConfig.addServer(
-        'https://api-staging.pantry.com/v1',
+        'https://api-staging.jeeves.com/v1',
         'Staging server',
       );
     }
@@ -42,7 +42,7 @@ export class SwaggerService {
     swaggerConfig.addCookieAuth('session', {
       type: 'apiKey',
       in: 'cookie',
-      name: 'pantry.session_token',
+      name: 'jeeves.session_token',
       description: 'Session cookie from Better Auth',
     });
 
@@ -58,7 +58,7 @@ export class SwaggerService {
 
     // Setup Swagger UI
     SwaggerModule.setup('api/docs', app, document, {
-      customSiteTitle: 'Pantry API Documentation',
+      customSiteTitle: 'Jeeves API Documentation',
       swaggerOptions: {
         persistAuthorization: true,
         displayRequestDuration: true,

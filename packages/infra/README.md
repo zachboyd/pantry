@@ -1,6 +1,6 @@
-# Pantry Infrastructure
+# Jeeves Infrastructure
 
-This directory contains Terraform configuration for the Pantry application infrastructure.
+This directory contains Terraform configuration for the Jeeves application infrastructure.
 
 ## Structure
 
@@ -20,8 +20,8 @@ First, create the Terraform state infrastructure:
 ```bash
 cd bootstrap/
 terraform init
-terraform plan -var="app_name=pantry" -var="aws_region=us-east-1"
-terraform apply -var="app_name=pantry" -var="aws_region=us-east-1"
+terraform plan -var="app_name=jeeves" -var="aws_region=us-east-1"
+terraform apply -var="app_name=jeeves" -var="aws_region=us-east-1"
 
 # Note the outputs
 terraform output
@@ -33,10 +33,10 @@ After bootstrap, uncomment and update the backend configuration in `main.tf`:
 
 ```hcl
 backend "s3" {
-  bucket         = "pantry-terraform-state"
+  bucket         = "jeeves-terraform-state"
   key            = "terraform.tfstate"
   region         = "us-east-1"
-  dynamodb_table = "pantry-terraform-state-lock"
+  dynamodb_table = "jeeves-terraform-state-lock"
   encrypt        = true
 }
 ```
@@ -62,12 +62,12 @@ terraform apply -var-file=environments/prod.tfvars
 
 ### Bootstrap
 
-- S3 bucket: `pantry-terraform-state`
-- DynamoDB table: `pantry-terraform-state-lock`
+- S3 bucket: `jeeves-terraform-state`
+- DynamoDB table: `jeeves-terraform-state-lock`
 
 ### Application (per environment)
 
-- S3 bucket: `pantry-dev` or `pantry-prod`
+- S3 bucket: `jeeves-dev` or `jeeves-prod`
 - Versioning enabled
 - Server-side encryption
 - Public access blocked

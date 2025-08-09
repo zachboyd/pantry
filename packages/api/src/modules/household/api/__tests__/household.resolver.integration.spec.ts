@@ -693,7 +693,7 @@ describe('Household Resolver Integration Tests', () => {
       // Act
       const response = await testRequest
         .post('/api/household')
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send(createHouseholdInput);
 
       // Assert

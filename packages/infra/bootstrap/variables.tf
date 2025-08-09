@@ -1,7 +1,7 @@
 variable "app_name" {
   description = "Application name for resource naming"
   type        = string
-  default     = "pantry"
+  default     = "jeeves"
 }
 
 variable "aws_region" {

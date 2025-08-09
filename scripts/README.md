@@ -96,7 +96,7 @@ Branch: feat/new-feature
 Create PR with these details? (y/N): y
 
 [SUCCESS] PR created successfully!
-https://github.com/zachboyd/pantry/pull/11
+https://github.com/zachboyd/jeeves/pull/11
 
 [INFO] PR #11 is ready for review.
 
