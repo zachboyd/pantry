@@ -60,23 +60,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     )
     .execute();
 
-  // Create pantry table
-  await db.schema
-    .createTable('pantry')
-    .addColumn('id', 'uuid', (col) => col.primaryKey().notNull())
-    .addColumn('household_id', 'uuid', (col) =>
-      col.notNull().references('household.id').onDelete('cascade'),
-    )
-    .addColumn('name', 'varchar(200)', (col) => col.notNull())
-    .addColumn('description', 'text')
-    .addColumn('created_at', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`now()`),
-    )
-    .addColumn('updated_at', 'timestamptz', (col) =>
-      col.notNull().defaultTo(sql`now()`),
-    )
-    .execute();
-
   // Create message table
   await db.schema
     .createTable('message')
@@ -150,12 +133,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .execute();
 
   await db.schema
-    .createIndex('idx_pantry_household')
-    .on('pantry')
-    .column('household_id')
-    .execute();
-
-  await db.schema
     .createIndex('idx_message_household_created')
     .on('message')
     .columns(['household_id', 'created_at'])
@@ -206,7 +183,6 @@ export async function down(db: Kysely<unknown>): Promise<void> {
   await db.schema.dropTable('typing_indicator').ifExists().execute();
   await db.schema.dropTable('message_read').ifExists().execute();
   await db.schema.dropTable('message').ifExists().execute();
-  await db.schema.dropTable('pantry').ifExists().execute();
   await db.schema.dropTable('household_member').ifExists().execute();
   await db.schema.dropTable('household').ifExists().execute();
 

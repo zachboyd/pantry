@@ -147,23 +147,6 @@ Table household_member {
   '''
 }
 
-Table pantry {
-  id uuid [primary key, note: 'Unique pantry identifier']
-  household_id uuid [ref: > household.id, not null, note: 'Associated household']
-  name varchar(200) [not null, note: 'Pantry name/location (e.g., "Main Kitchen", "Garage Pantry")']
-  description text [null, note: 'Optional pantry description']
-  created_at timestamptz [default: `now()`, not null]
-  updated_at timestamptz [default: `now()`, not null]
-  
-  indexes {
-    (household_id) [note: 'Household pantry lookup']
-  }
-  
-  Note: '''
-  Pantry storage areas within a household.
-  Contains inventory, meal plans, shopping lists, etc.
-  '''
-}
 
 Table message {
   id uuid [primary key, note: 'Unique message identifier']
