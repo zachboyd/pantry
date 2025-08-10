@@ -7,7 +7,7 @@ import {
   Parent,
 } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { ObjectType, Field, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, InputType, ID } from '@nestjs/graphql';
 import { CurrentUser } from '../../auth/auth.decorator.js';
 import { TOKENS } from '../../../common/tokens.js';
 import type { UserRecord } from '../../user/user.types.js';
@@ -20,7 +20,7 @@ import {
 // GraphQL Types
 @ObjectType()
 export class Household {
-  @Field()
+  @Field(() => ID)
   id: string;
 
   @Field()
@@ -44,7 +44,7 @@ export class Household {
 
 @ObjectType()
 export class HouseholdMember {
-  @Field()
+  @Field(() => ID)
   id: string;
 
   @Field()

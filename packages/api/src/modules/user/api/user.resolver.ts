@@ -1,6 +1,6 @@
 import { Resolver, Query, Mutation, Subscription, Args } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { ObjectType, Field, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, InputType, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 import { CurrentUser } from '../../auth/auth.decorator.js';
 import { TOKENS } from '../../../common/tokens.js';
@@ -16,7 +16,7 @@ import { GuardedUserService } from './guarded-user.service.js';
 
 @ObjectType()
 export class User {
-  @Field()
+  @Field(() => ID)
   id: string;
 
   @Field({ nullable: true })
