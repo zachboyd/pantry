@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Build script for Pantry iOS app
+# Build script for Jeeves iOS app
 # Usage: ./Scripts/build.sh [debug|release]
 
 set -e
 
 # Configuration
-SCHEME="Pantry"
+SCHEME="Jeeves"
 CONFIGURATION=${1:-debug}
-WORKSPACE="Pantry.xcworkspace"
+WORKSPACE="Jeeves.xcworkspace"
 
 # Colors for output
 RED='\033[0;31m'
@@ -16,7 +16,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${YELLOW}🏗️  Building Pantry iOS app...${NC}"
+echo -e "${YELLOW}🏗️  Building Jeeves iOS app...${NC}"
 echo -e "Configuration: ${CONFIGURATION}"
 echo -e "Workspace: ${WORKSPACE}"
 echo ""

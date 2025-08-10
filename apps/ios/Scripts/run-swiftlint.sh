@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run SwiftLint for Pantry iOS App
+# Run SwiftLint for Jeeves iOS App
 # This script runs SwiftLint with the project's configuration
 
 # Colors for output

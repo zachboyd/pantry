@@ -1,4 +1,4 @@
-# Pantry iOS App - Claude Instructions
+# Jeeves iOS App - Claude Instructions
 
 ## Project Overview
 This is an iOS/iPadOS-only project. The app is built using SwiftUI and targets iOS 18+.
@@ -14,13 +14,13 @@ This is an iOS/iPadOS-only project. The app is built using SwiftUI and targets i
 ✅ **ONLY use xcodebuild for iOS builds:**
 ```bash
 # Build for iOS Simulator
-xcodebuild -scheme Pantry -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+xcodebuild -scheme Jeeves -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 
 # Build the library target
-xcodebuild -scheme PantryKit -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+xcodebuild -scheme JeevesKit -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 
 # Run on simulator
-xcodebuild -scheme Pantry -destination 'platform=iOS Simulator,name=iPhone 16 Pro' run
+xcodebuild -scheme Jeeves -destination 'platform=iOS Simulator,name=iPhone 16 Pro' run
 ```
 
 ❌ **NEVER use these commands:**
@@ -33,9 +33,9 @@ xcodebuild -scheme Pantry -destination 'platform=iOS Simulator,name=iPhone 16 Pr
 
 ### GraphQL Integration
 - The app uses Apollo iOS for GraphQL
-- Schema file: `Sources/PantryKit/GraphQL/schema.graphqls` (note the .graphqls extension with 's')
-- Operations are in `Sources/PantryKit/GraphQL/Operations/` (files with .graphql extension)
-- Generated code is in `Sources/PantryKit/GraphQL/Generated/`
+- Schema file: `Sources/JeevesKit/GraphQL/schema.graphqls` (note the .graphqls extension with 's')
+- Operations are in `Sources/JeevesKit/GraphQL/Operations/` (files with .graphql extension)
+- Generated code is in `Sources/JeevesKit/GraphQL/Generated/`
 - **Field Name Mapping**: Swift models use camelCase versions of GraphQL snake_case fields:
   - `created_by` → `createdBy`
   - `user_id` → `userId`
@@ -114,7 +114,7 @@ struct MainAppContainerView: View {
 
 **Container Views Exception**:
 Only container views may access AppState to coordinate app-wide state:
-- `PantryKit.swift` (AppRootContentView)
+- `JeevesKit.swift` (AppRootContentView)
 - `MainAppContainerView.swift`
 - `AuthenticationContainerView.swift`
 - `OnboardingContainerView.swift`
@@ -189,7 +189,7 @@ struct MyView: View {
 # Generate Apollo types
 ./apollo-ios-cli generate
 
-# Fetch latest schema from backend (outputs to Sources/PantryKit/GraphQL/schema.graphqls)
+# Fetch latest schema from backend (outputs to Sources/JeevesKit/GraphQL/schema.graphqls)
 ./apollo-ios-cli fetch-schema
 ```
 
@@ -223,7 +223,7 @@ struct MyView: View {
 
 ### Testing
 - Use iOS simulators for testing
-- Available schemes: Pantry, PantryKit
+- Available schemes: Jeeves, JeevesKit
 - Test on various iOS devices and iPad for responsive design
 
 ### Swift 6 Compatibility
@@ -235,7 +235,7 @@ struct MyView: View {
 
 ### Date Utilities
 - **Centralized date conversion**: All GraphQL DateTime conversions use `DateUtilities.swift`
-- Location: `Sources/PantryKit/Utilities/DateUtilities.swift`
+- Location: `Sources/JeevesKit/Utilities/DateUtilities.swift`
 - Thread-safe implementation using DispatchQueue for formatter access
 - Key methods:
   - `dateFromGraphQL(_:)` - Convert GraphQL DateTime string to Date
@@ -260,18 +260,18 @@ struct MyView: View {
   TextField(L("auth.email.placeholder"), text: $email)
   
   // ❌ Wrong - hardcoded strings
-  Text("Pantry")
+  Text("Jeeves")
   Button("Save") { }
   
   // ✅ Correct - logger messages in English (not localized)
   Logger.info("User tapped save button")
   ```
-- Add new strings to `Sources/PantryKit/Localization/en.lproj/Localizable.strings`
+- Add new strings to `Sources/JeevesKit/Localization/en.lproj/Localizable.strings`
 - Follow the key naming convention: `feature.component.property` (e.g., `auth.button.signin`)
-- See `Sources/PantryKit/Localization/README.md` for detailed guidelines
+- See `Sources/JeevesKit/Localization/README.md` for detailed guidelines
 
 ### UI Components
-- **Button Components**: ALWAYS use the shared button components from `Sources/PantryKit/Shared/`
+- **Button Components**: ALWAYS use the shared button components from `Sources/JeevesKit/Shared/`
   - **PrimaryButton**: Use for main actions (filled background, prominent style)
     - Supports loading states with `isLoading` parameter
     - Supports disabled states with `isDisabled` parameter
@@ -286,7 +286,7 @@ struct MyView: View {
   }
   ```
 
-- **FormTextField Component**: ALWAYS use the shared FormTextField component from `Sources/PantryKit/Shared/FormTextField.swift`
+- **FormTextField Component**: ALWAYS use the shared FormTextField component from `Sources/JeevesKit/Shared/FormTextField.swift`
   - **Features**:
     - Unified design with consistent styling across all inputs
     - Password visibility toggle for secure fields

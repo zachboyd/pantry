@@ -1,11 +1,11 @@
-# SwiftLint Configuration for Pantry iOS App
+# SwiftLint Configuration for Jeeves iOS App
 
 # Paths
 included:
   - Sources
   - Tests
 excluded:
-  - Sources/PantryCore/Generated
+  - Sources/JeevesKit/GraphQL/Generated
   - .build
   - Package.swift
 
@@ -85,7 +85,7 @@ cyclomatic_complexity:
   warning: 10
   error: 20
 
-# Custom Rules for Pantry
+# Custom Rules for Jeeves
 custom_rules:
   hardcoded_text_string:
     name: "Hardcoded Text String"

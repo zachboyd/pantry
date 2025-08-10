@@ -1,6 +1,6 @@
-# Pantry iOS Deployment Guide
+# Jeeves iOS Deployment Guide
 
-Quick reference for building and deploying the Pantry iOS app.
+Quick reference for building and deploying the Jeeves iOS app.
 
 ## Prerequisites
 
@@ -14,8 +14,8 @@ Each `.xcconfig` file in `Config/` should define:
 
 ```
 GRAPHQL_ENDPOINT = http://localhost:3001/graphql  // or your environment URL
-APP_BUNDLE_IDENTIFIER = com.pantryapp.ios
-APP_NAME = Pantry Dev
+APP_BUNDLE_IDENTIFIER = com.jeevesapp.app
+APP_NAME = Jeeves Dev
 APP_VERSION = 1.0.0
 BUILD_NUMBER = 1
 ```
@@ -32,7 +32,7 @@ BUILD_NUMBER = 1
 ```
 
 ### Xcode
-1. Open `Pantry.xcworkspace`
+1. Open `Jeeves.xcworkspace`
 2. Select scheme (Development/Staging/Production)
 3. Press ⌘+R to run
 
@@ -48,9 +48,9 @@ BUILD_NUMBER = 1
 
 | Environment | Bundle ID | Purpose |
 |------------|-----------|---------|
-| Development | `com.pantryapp.ios` | Local development |
-| Staging | `com.pantryapp.ios.staging` | QA testing |
-| Production | `com.pantryapp.ios` | App Store release |
+| Development | `com.jeevesapp.app` | Local development |
+| Staging | `com.jeevesapp.app.staging` | QA testing |
+| Production | `com.jeevesapp.app` | App Store release |
 
 ## Troubleshooting
 

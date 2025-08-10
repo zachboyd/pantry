@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 echo "🔧 Making Apollo generated types public..."
 
 # Find all generated Swift files and make them public
-find Sources/PantryKit/GraphQL/Generated -name "*.swift" -type f | while read -r file; do
+find Sources/JeevesKit/GraphQL/Generated -name "*.swift" -type f | while read -r file; do
     echo "Processing: $file"
     
     # Make classes, structs, and enums public

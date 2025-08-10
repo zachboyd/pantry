@@ -199,10 +199,10 @@ func serializationExample() async throws {
     print("Can manage recipes:", await dynamicAbility.can("delete", "Recipe"))
 }
 
-// MARK: - PantryKit Integration Example
+// MARK: - JeevesKit Integration Example
 
-/// Example showing how PantryKit would use the JSON serialization
-struct PantryKitIntegrationExample {
+/// Example showing how JeevesKit would use the JSON serialization
+struct JeevesKitIntegrationExample {
     
     @MainActor
     static func loadUserPermissions(from userData: UserData) async throws -> PureAbility {

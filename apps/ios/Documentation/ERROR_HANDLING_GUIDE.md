@@ -1,6 +1,6 @@
 # Error Handling Guide
 
-This guide documents the error handling patterns used in the Pantry iOS app.
+This guide documents the error handling patterns used in the Jeeves iOS app.
 
 ## Overview
 
@@ -125,7 +125,7 @@ When implementing error handling in a view:
 - Uses simple error alert pattern
 - Converts errors to ViewModelError in catch blocks
 
-### PantryTabView
+### JeevesTabView
 - Extends BaseReactiveViewModel
 - Manages error state in ViewModel
 - Custom alert presentation

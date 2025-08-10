@@ -1,6 +1,6 @@
-name: Pantry
+name: Jeeves
 options:
-  bundleIdPrefix: com.pantry
+  bundleIdPrefix: com.jeevesapp
   deploymentTarget:
     iOS: 18.0
   createIntermediateGroups: true
@@ -13,20 +13,20 @@ packages:
     path: .
     
 targets:
-  Pantry:
+  Jeeves:
     type: application
     platform: iOS
     deploymentTarget: 18.0
     sources:
-      - path: Pantry/Pantry
+      - path: Jeeves/Jeeves
         createIntermediateGroups: true
     dependencies:
       - package: local
-        product: PantryKit
+        product: JeevesKit
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.pantry.app
-        PRODUCT_NAME: Pantry
+        PRODUCT_BUNDLE_IDENTIFIER: com.jeevesapp.app
+        PRODUCT_NAME: Jeeves
         MARKETING_VERSION: 1.0.0
         CURRENT_PROJECT_VERSION: 1
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -37,7 +37,7 @@ targets:
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Pantry
+        INFOPLIST_KEY_CFBundleDisplayName: Jeeves
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -45,7 +45,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
         ENABLE_PREVIEWS: YES
-        DEVELOPMENT_ASSET_PATHS: "Pantry/Pantry"
+        DEVELOPMENT_ASSET_PATHS: "Jeeves/Jeeves"
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-Onone"
@@ -56,10 +56,10 @@ targets:
           SWIFT_COMPILATION_MODE: wholemodule
 
 schemes:
-  Pantry:
+  Jeeves:
     build:
       targets:
-        Pantry: all
+        Jeeves: all
     run:
       config: Debug
       commandLineArguments:

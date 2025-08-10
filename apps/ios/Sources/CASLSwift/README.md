@@ -19,7 +19,7 @@ This is a pure Swift implementation that is backend-agnostic. It handles permiss
 
 ## Installation
 
-CASLSwift is included as part of the Pantry iOS app and can be imported via:
+CASLSwift is included as part of the Jeeves iOS app and can be imported via:
 
 ```swift
 import CASLSwift

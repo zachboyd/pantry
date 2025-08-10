@@ -17,7 +17,7 @@ if [ ! -f "./apollo-ios-cli" ]; then
 fi
 
 # Ensure GraphQL operations directory exists
-mkdir -p Sources/PantryKit/GraphQL/Operations
+mkdir -p Sources/JeevesKit/GraphQL/Operations
 
 # Check if schema file exists
 if [ ! -f "schema.gql" ]; then
@@ -33,7 +33,7 @@ if [ ! -f "schema.gql" ]; then
 fi
 
 # Check if operations exist
-OPERATIONS_COUNT=$(find Sources/PantryKit/GraphQL/Operations -name "*.graphql" | wc -l)
+OPERATIONS_COUNT=$(find Sources/JeevesKit/GraphQL/Operations -name "*.graphql" | wc -l)
 if [ "$OPERATIONS_COUNT" -eq 0 ]; then
     echo "⚠️  No GraphQL operations found. Creating basic operations..."
     # The operations file should already exist from the setup
@@ -44,9 +44,9 @@ echo "🔄 Generating Apollo types..."
 ./apollo-ios-cli generate
 
 # Check if generation was successful
-if [ -d "Sources/PantryKit/GraphQL/Generated" ]; then
+if [ -d "Sources/JeevesKit/GraphQL/Generated" ]; then
     echo "✅ Apollo types generated successfully!"
-    echo "📁 Generated files in: Sources/PantryKit/GraphQL/Generated"
+    echo "📁 Generated files in: Sources/JeevesKit/GraphQL/Generated"
     
     # Make all generated types public
     echo "🔧 Making Apollo generated types public..."

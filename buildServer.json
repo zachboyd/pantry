@@ -12,8 +12,8 @@
 	"argv": [
 		"/opt/homebrew/bin/xcode-build-server"
 	],
-	"workspace": "/Users/robgoldiez/Documents/pantry/apps/ios/Pantry.xcworkspace",
-	"build_root": "/Users/robgoldiez/Library/Developer/Xcode/DerivedData/Pantry-eyzhwrdufyxiumhjlisbmqrfvlrh",
-	"scheme": "Pantry",
+	"workspace": "/Users/robgoldiez/Documents/pantry/apps/ios/Jeeves.xcworkspace",
+	"build_root": "/Users/robgoldiez/Library/Developer/Xcode/DerivedData/Jeeves-gcoqonlnqtbmraglbasgfivbycry",
+	"scheme": "Jeeves",
 	"kind": "xcode"
 }

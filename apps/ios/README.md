@@ -1,6 +1,6 @@
-# Pantry iOS App
+# Jeeves iOS App
 
-Smart kitchen management iOS application built with SwiftUI and Swift Package Manager.
+Smart home management iOS application built with SwiftUI and Swift Package Manager.
 
 ## Requirements
 
@@ -45,14 +45,14 @@ After installing Sweetpad, you can:
 ```
 apps/ios/
 ├── Package.swift                    # Swift Package Manager configuration
-├── Pantry.xcworkspace/             # Xcode workspace
-├── Pantry.xcodeproj/               # Xcode project
-├── Pantry/                         # iOS app target
-│   └── Pantry/                    # App source files
-│       ├── PantryApp.swift        # Main app entry point
+├── Jeeves.xcworkspace/             # Xcode workspace
+├── Jeeves.xcodeproj/               # Xcode project
+├── Jeeves/                         # iOS app target
+│   └── Jeeves/                    # App source files
+│       ├── JeevesApp.swift        # Main app entry point
 │       └── Assets.xcassets/       # App assets
-├── Sources/                        # PantryKit framework source
-│   └── PantryKit/                 # Main framework module
+├── Sources/                        # JeevesKit framework source
+│   └── JeevesKit/                 # Main framework module
 ├── Tests/                          # Unit tests
 ├── Config/                         # Environment configurations
 ├── Scripts/                        # Build and utility scripts
@@ -86,7 +86,7 @@ swift test
 
 ### Opening in Xcode
 
-Open `Pantry.xcworkspace` in Xcode to work with the project.
+Open `Jeeves.xcworkspace` in Xcode to work with the project.
 
 ## Architecture
 
@@ -111,9 +111,9 @@ This project uses:
 
 ### Component Documentation
 
-- **[GraphQL Integration](Sources/PantryKit/GraphQL/README.md)** - Apollo setup and usage
-- **[Service Layer](Sources/PantryKit/Services/README.md)** - How to use and extend services
-- **[ViewModels](Sources/PantryKit/ViewModels/README.md)** - ViewModel patterns and examples
+- **[GraphQL Integration](Sources/JeevesKit/GraphQL/README.md)** - Apollo setup and usage
+- **[Service Layer](Sources/JeevesKit/Services/README.md)** - How to use and extend services
+- **[ViewModels](Sources/JeevesKit/ViewModels/README.md)** - ViewModel patterns and examples
 
 ## Key Technologies
 
@@ -135,8 +135,8 @@ swift test
 
 Key test files:
 
-- `Tests/PantryKitTests/` - Unit tests
-- `Tests/PantryKitTests/Mocks/` - Mock implementations
+- `Tests/JeevesKitTests/` - Unit tests
+- `Tests/JeevesKitTests/Mocks/` - Mock implementations
 
 ## Debugging Tips
 

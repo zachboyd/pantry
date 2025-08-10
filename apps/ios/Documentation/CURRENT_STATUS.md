@@ -1,10 +1,10 @@
-# Pantry iOS - Current Implementation Status
+# Jeeves iOS - Current Implementation Status
 
 *Last Updated: January 27, 2025*
 
 ## Overview
 
-The Pantry iOS app MVP is substantially complete with core architecture, services, and UI foundation in place. The app follows clean architecture principles with MVVM pattern, dependency injection, and GraphQL integration.
+The Jeeves iOS app MVP is substantially complete with core architecture, services, and UI foundation in place. The app follows clean architecture principles with MVVM pattern, dependency injection, and GraphQL integration.
 
 ## Implementation Summary
 
@@ -41,7 +41,7 @@ The Pantry iOS app MVP is substantially complete with core architecture, service
 - **Authentication**: LoginViewModel, SignUpViewModel
 - **Onboarding**: OnboardingViewModel, OnboardingCoordinator
 - **Household**: HouseholdListViewModel, HouseholdEditViewModel, HouseholdMembersViewModel
-- **Tabs**: PantryTabViewModel, ChatTabViewModel, ListsTabViewModel (placeholders)
+- **Tabs**: JeevesTabViewModel, ChatTabViewModel, ListsTabViewModel (placeholders)
 - **Settings**: SettingsViewModel
 - **Common**: AuthenticationViewModel, BaseViewModel patterns
 
@@ -71,7 +71,7 @@ The Pantry iOS app MVP is substantially complete with core architecture, service
 ### 📋 Not Started (Post-MVP)
 
 #### Features
-- Pantry item management
+- Jeeves item management
 - Shopping lists
 - Recipe management
 - Chat functionality
@@ -91,10 +91,10 @@ The Pantry iOS app MVP is substantially complete with core architecture, service
 ```
 apps/ios/
 ├── ✅ Package.swift                    # Configured
-├── ✅ Pantry.xcworkspace/             # Ready
-├── ✅ Pantry.xcodeproj/               # Configured
-├── ✅ Pantry/                         # App target ready
-├── ✅ Sources/PantryKit/              # Framework implemented
+├── ✅ Jeeves.xcworkspace/             # Ready
+├── ✅ Jeeves.xcodeproj/               # Configured
+├── ✅ Jeeves/                         # App target ready
+├── ✅ Sources/JeevesKit/              # Framework implemented
 │   ├── ✅ Core/                       # Logging, utilities
 │   ├── ✅ DI/                         # Dependency injection
 │   ├── ✅ Design/                     # Design tokens
@@ -156,7 +156,7 @@ apps/ios/
 4. Accessibility audit
 
 ### Long Term (Future Releases)
-1. Pantry items feature
+1. Jeeves items feature
 2. Shopping lists
 3. Recipe management
 4. Real-time updates

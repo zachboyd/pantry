@@ -1,5 +1,5 @@
 {
-    "sweetpad.build.xcodeWorkspacePath": "apps/ios/Pantry.xcworkspace",
+    "sweetpad.build.xcodeWorkspacePath": "apps/ios/Jeeves.xcworkspace",
     "editor.formatOnSave": true,
     "[swift]": {
         "editor.defaultFormatter": "vknabel.vscode-swiftformat"

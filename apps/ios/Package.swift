@@ -2,15 +2,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "Pantry",
+    name: "Jeeves",
     defaultLocalization: "en",
     platforms: [
         .iOS(.v18)
     ],
     products: [
         .library(
-            name: "PantryKit",
-            targets: ["PantryKit"]
+            name: "JeevesKit",
+            targets: ["JeevesKit"]
         ),
         .library(
             name: "CASLSwift",
@@ -42,7 +42,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "PantryKit",
+            name: "JeevesKit",
             dependencies: [
                 .product(name: "Apollo", package: "apollo-ios"),
                 .product(name: "ApolloWebSocket", package: "apollo-ios"),
@@ -50,19 +50,19 @@ let package = Package(
             ],
             path: "Sources",
             exclude: [
-                "PantryKit/GraphQL/README.md",
-                "PantryKit/Localization/README.md",
+                "JeevesKit/GraphQL/README.md",
+                "JeevesKit/Localization/README.md",
                 "CASLSwift"
             ],
             resources: [
-                .process("PantryKit/Localization"),
-                .copy("PantryKit/GraphQL/Operations")
+                .process("JeevesKit/Localization"),
+                .copy("JeevesKit/GraphQL/Operations")
             ]
         ),
         .testTarget(
-            name: "PantryKitTests",
+            name: "JeevesKitTests",
             dependencies: [
-                "PantryKit"
+                "JeevesKit"
             ],
             path: "Tests"
         ),

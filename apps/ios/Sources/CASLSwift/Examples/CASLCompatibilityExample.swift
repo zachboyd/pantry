@@ -116,7 +116,7 @@ func caslCompatibilityExample() async throws {
     print("Wrong format includes 'priority' and 'inverted: false'")
     print("Correct format omits these fields")
     
-    // MARK: - Practical PantryKit Example
+    // MARK: - Practical JeevesKit Example
     
     let pantryPermissionsJSON = """
     [
@@ -160,7 +160,7 @@ func caslCompatibilityExample() async throws {
     
     let pantryAbility = try PureAbility.from(jsonString: pantryPermissionsJSON)
     
-    print("\n=== Pantry App Permissions ===")
+    print("\n=== Jeeves App Permissions ===")
     print("Can read any household:", pantryAbility.can("read", "Household"))
     print("Can create recipes in current household:", pantryAbility.can("create", "Recipe"))
     print("Can manage owned households:", pantryAbility.can("manage", "Household"))

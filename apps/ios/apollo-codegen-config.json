@@ -1,11 +1,11 @@
 {
-  "schemaNamespace": "PantryGraphQL",
+  "schemaNamespace": "JeevesGraphQL",
   "input": {
     "operationSearchPaths": [
       "Sources/**/*.graphql"
     ],
     "schemaSearchPaths": [
-      "Sources/PantryKit/GraphQL/schema.graphqls"
+      "Sources/JeevesKit/GraphQL/schema.graphqls"
     ]
   },
   "output": {
@@ -13,10 +13,10 @@
       "none": {}
     },
     "schemaTypes": {
-      "path": "Sources/PantryKit/GraphQL/Generated",
+      "path": "Sources/JeevesKit/GraphQL/Generated",
       "moduleType": {
         "embeddedInTarget": {
-          "name": "PantryKit",
+          "name": "JeevesKit",
           "accessModifier": "public"
         }
       }
@@ -38,6 +38,6 @@
     },
     "downloadTimeout": 60,
     "headers": [],
-    "outputPath": "Sources/PantryKit/GraphQL/schema.graphqls"
+    "outputPath": "Sources/JeevesKit/GraphQL/schema.graphqls"
   }
 }

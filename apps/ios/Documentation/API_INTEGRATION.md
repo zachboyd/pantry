@@ -1,14 +1,14 @@
 # API Integration Guide
 
-This guide shows how to work with GraphQL in the Pantry iOS app using Apollo Client.
+This guide shows how to work with GraphQL in the Jeeves iOS app using Apollo Client.
 
 ## Quick Links
 
-- **[GraphQL Documentation](../Sources/PantryKit/GraphQL/README.md)** - Apollo client details
-- **[Service Layer Guide](../Sources/PantryKit/Services/README.md)** - Service patterns
+- **[GraphQL Documentation](../Sources/JeevesKit/GraphQL/README.md)** - Apollo client details
+- **[Service Layer Guide](../Sources/JeevesKit/Services/README.md)** - Service patterns
 - **[Development Guide](DEVELOPMENT_GUIDE.md)** - Step-by-step examples
-- **GraphQL Operations**: `Sources/PantryKit/GraphQL/Operations/`
-- **Generated Types**: `Sources/PantryKit/GraphQL/Generated/`
+- **GraphQL Operations**: `Sources/JeevesKit/GraphQL/Operations/`
+- **Generated Types**: `Sources/JeevesKit/GraphQL/Generated/`
 
 ## Architecture Overview
 
@@ -26,7 +26,7 @@ This guide shows how to work with GraphQL in the Pantry iOS app using Apollo Cli
 ## Key Components
 
 ### 1. Apollo Client Service
-- **Location**: `Sources/PantryKit/Services/ApolloClientService.swift`
+- **Location**: `Sources/JeevesKit/Services/ApolloClientService.swift`
 - **Purpose**: Manages Apollo client lifecycle and configuration
 - **Features**: 
   - Environment-based endpoint configuration
@@ -34,7 +34,7 @@ This guide shows how to work with GraphQL in the Pantry iOS app using Apollo Cli
   - Cache management
 
 ### 2. GraphQL Service
-- **Location**: `Sources/PantryKit/Services/GraphQLService.swift`
+- **Location**: `Sources/JeevesKit/Services/GraphQLService.swift`
 - **Purpose**: High-level GraphQL operations abstraction
 - **Features**:
   - Type-safe query and mutation methods
@@ -49,13 +49,13 @@ This guide shows how to work with GraphQL in the Pantry iOS app using Apollo Cli
 ### 4. Code Generation
 - **Script**: `./Scripts/generate-apollo-types.sh`
 - **Config**: `apollo-codegen-config.json`
-- **Output**: `Sources/PantryKit/GraphQL/Generated/`
+- **Output**: `Sources/JeevesKit/GraphQL/Generated/`
 
 ## Working with GraphQL
 
 ### 1. Adding a New Query
 
-Create in `Sources/PantryKit/GraphQL/Operations/YourOperations.graphql`:
+Create in `Sources/JeevesKit/GraphQL/Operations/YourOperations.graphql`:
 
 ```graphql
 query GetItems($householdId: String!) {
@@ -82,7 +82,7 @@ public final class ItemService {
     private let graphQLService: GraphQLServiceProtocol
     
     public func getItems(householdId: String) async throws -> [Item] {
-        let query = PantryGraphQL.GetItemsQuery(householdId: householdId)
+        let query = JeevesGraphQL.GetItemsQuery(householdId: householdId)
         let data = try await graphQLService.query(query)
         return data.items.map { mapToDomainModel($0) }
     }
@@ -100,8 +100,8 @@ public func getCurrentHousehold() async throws -> Household? {
         throw ServiceError.notAuthenticated
     }
     
-    let query = PantryGraphQL.GetAuthenticatedHouseholdQuery(
-        input: PantryGraphQL.GetHouseholdInputGql(id: "current")
+    let query = JeevesGraphQL.GetAuthenticatedHouseholdQuery(
+        input: JeevesGraphQL.GetHouseholdInputGql(id: "current")
     )
     
     let data = try await graphQLService.query(query)
@@ -114,8 +114,8 @@ public func getCurrentHousehold() async throws -> Household? {
 ```swift
 // From HouseholdService.swift
 public func createHousehold(name: String, description: String?) async throws -> Household {
-    let mutation = PantryGraphQL.CreateHouseholdMutation(
-        input: PantryGraphQL.CreateHouseholdInputGql(
+    let mutation = JeevesGraphQL.CreateHouseholdMutation(
+        input: JeevesGraphQL.CreateHouseholdInputGql(
             name: name,
             description: description.map { GraphQLNullable<String>.some($0) } ?? .none
         )
@@ -140,8 +140,8 @@ GRAPHQL_ENDPOINT = http://localhost:3001/graphql
 | Environment | Typical Endpoint | Config File |
 |------------|------------------|-------------|
 | Local Development | `http://localhost:3001/graphql` | `Development.xcconfig` |
-| Staging | `https://staging-api.pantryapp.com/graphql` | `Staging.xcconfig` |
-| Production | `https://api.pantryapp.com/graphql` | `Production.xcconfig` |
+| Staging | `https://staging-api.jeevesapp.com/graphql` | `Staging.xcconfig` |
+| Production | `https://api.jeevesapp.com/graphql` | `Production.xcconfig` |
 
 ## Error Handling
 
@@ -209,7 +209,7 @@ let dateOrNow = DateUtilities.dateFromGraphQLOrNow(graphqlDateTime)
 let graphqlString = DateUtilities.graphQLStringFromDate(date)
 
 // Example in service mapping
-private func mapUserFromGraphQL(_ user: PantryGraphQL.User) -> User {
+private func mapUserFromGraphQL(_ user: JeevesGraphQL.User) -> User {
     return User(
         id: user.id,
         email: user.email,
@@ -225,7 +225,7 @@ private func mapUserFromGraphQL(_ user: PantryGraphQL.User) -> User {
 
 ```swift
 private func mapGraphQLHouseholdToDomain(
-    _ graphqlHousehold: PantryGraphQL.GetAuthenticatedHouseholdQuery.Data.Household
+    _ graphqlHousehold: JeevesGraphQL.GetAuthenticatedHouseholdQuery.Data.Household
 ) -> Household {
     return Household(
         id: graphqlHousehold.id,

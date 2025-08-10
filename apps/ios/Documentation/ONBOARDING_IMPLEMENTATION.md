@@ -70,6 +70,6 @@ mutation UpdateUser($input: UpdateUserInput!) {
 
 ## UI Components Created
 
-- **PantryTextFieldStyle**: Consistent text field styling
-- **PantryPrimaryButtonStyle**: Primary button styling for CTAs
+- **JeevesTextFieldStyle**: Consistent text field styling
+- **JeevesButtonStyle**: Primary button styling for CTAs
 - Proper use of DesignTokens throughout

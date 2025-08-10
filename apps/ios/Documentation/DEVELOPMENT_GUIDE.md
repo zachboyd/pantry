@@ -1,6 +1,6 @@
-# Pantry iOS Development Guide
+# Jeeves iOS Development Guide
 
-This guide provides practical instructions for common development tasks in the Pantry iOS app.
+This guide provides practical instructions for common development tasks in the Jeeves iOS app.
 
 ## Table of Contents
 
@@ -22,7 +22,7 @@ Let's walk through adding a complete feature from scratch:
 
 #### 1. Define GraphQL Operations
 
-Create `Sources/PantryKit/GraphQL/Operations/RecipeOperations.graphql`:
+Create `Sources/JeevesKit/GraphQL/Operations/RecipeOperations.graphql`:
 
 ```graphql
 query GetRecipes($householdId: String!) {
@@ -50,11 +50,11 @@ mutation CreateRecipe($input: CreateRecipeInput!) {
 ./Scripts/generate-apollo-types.sh
 ```
 
-This creates typed Swift code in `Sources/PantryKit/GraphQL/Generated/`
+This creates typed Swift code in `Sources/JeevesKit/GraphQL/Generated/`
 
 #### 3. Create the Service
 
-Create `Sources/PantryKit/Services/RecipeService.swift`:
+Create `Sources/JeevesKit/Services/RecipeService.swift`:
 
 ```swift
 import Foundation
@@ -73,14 +73,14 @@ public final class RecipeService: RecipeServiceProtocol {
     }
     
     public func getRecipes(householdId: String) async throws -> [Recipe] {
-        let query = PantryGraphQL.GetRecipesQuery(householdId: householdId)
+        let query = JeevesGraphQL.GetRecipesQuery(householdId: householdId)
         let data = try await graphQLService.query(query)
         return data.recipes.map { mapToDomainModel($0) }
     }
     
     public func createRecipe(_ recipe: Recipe) async throws -> Recipe {
-        let mutation = PantryGraphQL.CreateRecipeMutation(
-            input: PantryGraphQL.CreateRecipeInput(
+        let mutation = JeevesGraphQL.CreateRecipeMutation(
+            input: JeevesGraphQL.CreateRecipeInput(
                 name: recipe.name,
                 // ... other fields
             )
@@ -93,7 +93,7 @@ public final class RecipeService: RecipeServiceProtocol {
 
 #### 4. Add to Service Factory
 
-Update `Sources/PantryKit/DI/ServiceFactory.swift`:
+Update `Sources/JeevesKit/DI/ServiceFactory.swift`:
 
 ```swift
 public static func createRecipeService(
@@ -109,7 +109,7 @@ public static func createRecipeService(
 
 #### 5. Create ViewModel
 
-Create `Sources/PantryKit/ViewModels/Recipe/RecipeListViewModel.swift`:
+Create `Sources/JeevesKit/ViewModels/Recipe/RecipeListViewModel.swift`:
 
 ```swift
 import Foundation
@@ -166,7 +166,7 @@ public final class RecipeListViewModel: BaseReactiveViewModel<RecipeListViewMode
 
 #### 6. Add to ViewModelFactory
 
-Update `Sources/PantryKit/ViewModels/ViewModelFactory.swift`:
+Update `Sources/JeevesKit/ViewModels/ViewModelFactory.swift`:
 
 ```swift
 public func makeRecipeListViewModel() throws -> RecipeListViewModel {
@@ -187,7 +187,7 @@ public func makeRecipeListViewModel() throws -> RecipeListViewModel {
 
 #### 7. Create the View
 
-Create `Sources/PantryKit/Features/Recipe/RecipeListView.swift`:
+Create `Sources/JeevesKit/Features/Recipe/RecipeListView.swift`:
 
 ```swift
 import SwiftUI
@@ -235,15 +235,15 @@ public struct RecipeListView: View {
 // 2. Generate types
 // 3. Use in service:
 
-let query = PantryGraphQL.YourQuery(param: value)
+let query = JeevesGraphQL.YourQuery(param: value)
 let data = try await graphQLService.query(query)
 ```
 
 ### Mutation Pattern
 
 ```swift
-let mutation = PantryGraphQL.YourMutation(
-    input: PantryGraphQL.YourInput(
+let mutation = JeevesGraphQL.YourMutation(
+    input: JeevesGraphQL.YourInput(
         field1: value1,
         field2: value2
     )
@@ -403,7 +403,7 @@ The app provides a set of shared UI components to ensure consistency across all 
 
 ### Button Components
 
-Located in `Sources/PantryKit/Shared/PrimaryButton.swift`:
+Located in `Sources/JeevesKit/Shared/PrimaryButton.swift`:
 
 #### PrimaryButton
 Use for main actions (filled background, prominent style):
@@ -435,7 +435,7 @@ TextButton("Forgot Password?") {
 
 ### FormTextField Component
 
-Located in `Sources/PantryKit/Shared/FormTextField.swift`:
+Located in `Sources/JeevesKit/Shared/FormTextField.swift`:
 
 **Always use FormTextField instead of raw TextField or SecureField for consistency.**
 
@@ -581,7 +581,7 @@ throw ViewModelError.validationFailed([
 
 ```swift
 import XCTest
-@testable import PantryKit
+@testable import JeevesKit
 
 final class RecipeServiceTests: XCTestCase {
     var sut: RecipeService!

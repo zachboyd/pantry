@@ -1,6 +1,6 @@
-# Pantry iOS Architecture Guide
+# Jeeves iOS Architecture Guide
 
-This guide explains how to work with the Pantry iOS app architecture.
+This guide explains how to work with the Jeeves iOS app architecture.
 
 ## Overview
 
@@ -102,7 +102,7 @@ public final class ItemService: ItemServiceProtocol {
     private let graphQLService: GraphQLServiceProtocol
     
     public func getItems() async throws -> [Item] {
-        let query = PantryGraphQL.GetItemsQuery()
+        let query = JeevesGraphQL.GetItemsQuery()
         let data = try await graphQLService.query(query)
         return data.items.map { mapToDomain($0) }
     }
@@ -158,7 +158,7 @@ public func saveItem() async {
 ```swift
 // In Service
 public func createItem(_ item: Item) async throws -> Item {
-    let mutation = PantryGraphQL.CreateItemMutation(input: ...)
+    let mutation = JeevesGraphQL.CreateItemMutation(input: ...)
     let data = try await graphQLService.mutate(mutation)
     return mapToDomain(data.createItem)
 }
