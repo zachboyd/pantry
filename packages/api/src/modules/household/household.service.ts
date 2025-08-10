@@ -505,4 +505,41 @@ export class HouseholdServiceImpl implements HouseholdService {
       throw error;
     }
   }
+
+  async getHouseholdMemberCount(
+    householdId: string,
+    userId: string,
+  ): Promise<number> {
+    this.logger.log(
+      `Getting member count for household ${householdId} requested by user ${userId}`,
+    );
+
+    try {
+      const household = await this.householdRepository.getHouseholdByIdForUser(
+        householdId,
+        userId,
+      );
+
+      if (!household) {
+        this.logger.warn(
+          `Household ${householdId} not found or user ${userId} does not have access`,
+        );
+        throw new NotFoundException('Household not found');
+      }
+
+      const count =
+        await this.householdRepository.getHouseholdMemberCount(householdId);
+
+      this.logger.log(
+        `Retrieved member count ${count} for household ${householdId}`,
+      );
+      return count;
+    } catch (error) {
+      this.logger.error(
+        `Failed to get member count for household ${householdId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
 }

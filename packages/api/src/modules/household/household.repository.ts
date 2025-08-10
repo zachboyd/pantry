@@ -327,4 +327,30 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       throw error;
     }
   }
+
+  async getHouseholdMemberCount(householdId: string): Promise<number> {
+    this.logger.log(`Getting member count for household ${householdId}`);
+
+    const db = this.databaseService.getConnection();
+
+    try {
+      const result = await db
+        .selectFrom('household_member')
+        .select(db.fn.countAll().as('count'))
+        .where('household_id', '=', householdId)
+        .executeTakeFirstOrThrow();
+
+      const count = Number(result.count);
+      this.logger.debug(
+        `Retrieved member count ${count} for household ${householdId}`,
+      );
+      return count;
+    } catch (error) {
+      this.logger.error(
+        `Failed to get member count for household ${householdId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
 }

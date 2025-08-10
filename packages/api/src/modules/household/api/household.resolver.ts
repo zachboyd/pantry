@@ -1,4 +1,11 @@
-import { Resolver, Mutation, Query, Args } from '@nestjs/graphql';
+import {
+  Resolver,
+  Mutation,
+  Query,
+  Args,
+  ResolveField,
+  Parent,
+} from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { ObjectType, Field, InputType } from '@nestjs/graphql';
 import { CurrentUser } from '../../auth/auth.decorator.js';
@@ -30,6 +37,9 @@ export class Household {
 
   @Field()
   updated_at: Date;
+
+  @Field({ nullable: true })
+  memberCount?: number;
 }
 
 @ObjectType()
@@ -214,5 +224,16 @@ export class HouseholdResolver {
       user,
     );
     return result.household;
+  }
+
+  @ResolveField(() => Number)
+  async memberCount(
+    @Parent() household: Household,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<number> {
+    return this.guardedHouseholdService.getHouseholdMemberCount(
+      household.id,
+      user,
+    );
   }
 }

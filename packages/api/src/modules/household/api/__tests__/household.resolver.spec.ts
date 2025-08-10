@@ -17,6 +17,10 @@ import {
 } from '../household.resolver.js';
 import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
+import {
+  GuardedHouseholdServiceMock,
+  type GuardedHouseholdServiceMockType,
+} from '../../../../test/mocks/guarded-household-service.mock.js';
 import type {
   HouseholdRecord,
   HouseholdMemberRecord,
@@ -53,23 +57,12 @@ const createHouseholdMemberFixture = (
 
 describe('HouseholdResolver', () => {
   let householdResolver: HouseholdResolver;
-  let mockGuardedHouseholdService: {
-    createHousehold: ReturnType<typeof vi.fn>;
-    getHousehold: ReturnType<typeof vi.fn>;
-    addHouseholdMember: ReturnType<typeof vi.fn>;
-    removeHouseholdMember: ReturnType<typeof vi.fn>;
-    changeHouseholdMemberRole: ReturnType<typeof vi.fn>;
-  };
+  let mockGuardedHouseholdService: GuardedHouseholdServiceMockType;
 
   beforeEach(async () => {
-    // Create mocks
-    mockGuardedHouseholdService = {
-      createHousehold: vi.fn(),
-      getHousehold: vi.fn(),
-      addHouseholdMember: vi.fn(),
-      removeHouseholdMember: vi.fn(),
-      changeHouseholdMemberRole: vi.fn(),
-    };
+    // Create mocks using dedicated mock factory
+    mockGuardedHouseholdService =
+      GuardedHouseholdServiceMock.createGuardedHouseholdServiceMock();
 
     // Create test module
     const module = await Test.createTestingModule({
@@ -218,13 +211,18 @@ describe('HouseholdResolver', () => {
         id: 'test-household-id',
         name: 'Retrieved Household',
       });
+      const expectedMemberCount = 3;
 
       mockGuardedHouseholdService.getHousehold.mockResolvedValue({
         household,
       });
+      mockGuardedHouseholdService.getHouseholdMemberCount.mockResolvedValue(
+        expectedMemberCount,
+      );
 
       // Act
       const result = await householdResolver.household(input, user);
+      const memberCount = await householdResolver.memberCount(result, user);
 
       // Assert
       expect(result).toEqual({
@@ -235,10 +233,14 @@ describe('HouseholdResolver', () => {
         created_at: household.created_at,
         updated_at: household.updated_at,
       } satisfies Household);
+      expect(memberCount).toBe(expectedMemberCount);
       expect(mockGuardedHouseholdService.getHousehold).toHaveBeenCalledWith(
         'test-household-id',
         user,
       );
+      expect(
+        mockGuardedHouseholdService.getHouseholdMemberCount,
+      ).toHaveBeenCalledWith('test-household-id', user);
     });
 
     it('should handle UnauthorizedException', async () => {
@@ -646,6 +648,119 @@ describe('HouseholdResolver', () => {
       await expect(
         householdResolver.changeHouseholdMemberRole(input, user),
       ).rejects.toThrow(serviceError);
+    });
+  });
+
+  describe('memberCount field resolver', () => {
+    it('should return member count successfully', async () => {
+      // Arrange
+      const household = createHouseholdFixture({
+        id: 'test-household-id',
+        name: 'Test Household',
+      });
+      const user = DatabaseFixtures.createUserResult();
+      const expectedCount = 3;
+
+      mockGuardedHouseholdService.getHouseholdMemberCount.mockResolvedValue(
+        expectedCount,
+      );
+
+      // Act
+      const result = await householdResolver.memberCount(household, user);
+
+      // Assert
+      expect(result).toBe(expectedCount);
+      expect(
+        mockGuardedHouseholdService.getHouseholdMemberCount,
+      ).toHaveBeenCalledWith(household.id, user);
+    });
+
+    it('should handle UnauthorizedException', async () => {
+      // Arrange
+      const household = createHouseholdFixture({
+        id: 'test-household-id',
+        name: 'Test Household',
+      });
+      const user = null;
+
+      mockGuardedHouseholdService.getHouseholdMemberCount.mockRejectedValue(
+        new UnauthorizedException('User not found'),
+      );
+
+      // Act & Assert
+      await expect(
+        householdResolver.memberCount(household, user),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(
+        mockGuardedHouseholdService.getHouseholdMemberCount,
+      ).toHaveBeenCalledWith(household.id, user);
+    });
+
+    it('should handle ForbiddenException for access restrictions', async () => {
+      // Arrange
+      const household = createHouseholdFixture({
+        id: 'restricted-household-id',
+        name: 'Restricted Household',
+      });
+      const user = DatabaseFixtures.createUserResult();
+
+      mockGuardedHouseholdService.getHouseholdMemberCount.mockRejectedValue(
+        new ForbiddenException(
+          'Insufficient permissions to view household member count',
+        ),
+      );
+
+      // Act & Assert
+      await expect(
+        householdResolver.memberCount(household, user),
+      ).rejects.toThrow(ForbiddenException);
+      expect(
+        mockGuardedHouseholdService.getHouseholdMemberCount,
+      ).toHaveBeenCalledWith(household.id, user);
+    });
+
+    it('should handle BadRequestException for invalid household ID', async () => {
+      // Arrange
+      const household = createHouseholdFixture({
+        id: '',
+        name: 'Invalid Household',
+      });
+      const user = DatabaseFixtures.createUserResult();
+
+      mockGuardedHouseholdService.getHouseholdMemberCount.mockRejectedValue(
+        new BadRequestException('Household ID is required'),
+      );
+
+      // Act & Assert
+      await expect(
+        householdResolver.memberCount(household, user),
+      ).rejects.toThrow(BadRequestException);
+      expect(
+        mockGuardedHouseholdService.getHouseholdMemberCount,
+      ).toHaveBeenCalledWith(household.id, user);
+    });
+
+    it('should return 0 for empty household', async () => {
+      // Arrange
+      const household = createHouseholdFixture({
+        id: 'empty-household-id',
+        name: 'Empty Household',
+      });
+      const user = DatabaseFixtures.createUserResult();
+      const expectedCount = 0;
+
+      mockGuardedHouseholdService.getHouseholdMemberCount.mockResolvedValue(
+        expectedCount,
+      );
+
+      // Act
+      const result = await householdResolver.memberCount(household, user);
+
+      // Assert
+      expect(result).toBe(expectedCount);
+      expect(
+        mockGuardedHouseholdService.getHouseholdMemberCount,
+      ).toHaveBeenCalledWith(household.id, user);
     });
   });
 });

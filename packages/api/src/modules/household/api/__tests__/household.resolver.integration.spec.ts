@@ -50,6 +50,35 @@ describe('Household Resolver Integration Tests', () => {
     await IntegrationTestModuleFactory.closeApp(app, testDbService);
   });
 
+  describe('household query', () => {
+    it('should return household with memberCount field', async () => {
+      // Arrange - Create household with multiple members
+      const { manager, members, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          3, // Create 3 members + 1 manager = 4 total
+        );
+
+      // Act - Query the household
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.createGetHouseholdInput(householdId),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const household = response.body.data.household;
+      expect(household).toBeDefined();
+      expect(household.id).toBe(householdId);
+      expect(household.memberCount).toBe(5); // 3 members + 1 manager + 1 AI user
+    });
+  });
+
   describe('householdMembers query', () => {
     it('should return household members when user is a household member', async () => {
       // Arrange - Create household with multiple members

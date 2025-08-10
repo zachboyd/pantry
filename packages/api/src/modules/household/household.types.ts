@@ -102,6 +102,13 @@ export interface HouseholdRepository {
     id: string,
     data: Updateable<Household>,
   ): Promise<HouseholdRecord>;
+
+  /**
+   * Get the count of members in a household
+   * @param householdId - Household ID
+   * @returns Promise with the number of members
+   */
+  getHouseholdMemberCount(householdId: string): Promise<number>;
 }
 
 /**
@@ -203,4 +210,12 @@ export interface HouseholdService {
     id: string,
     data: Updateable<Household>,
   ): Promise<HouseholdRecord>;
+
+  /**
+   * Get the count of members in a household with access control
+   * @param householdId - Household ID
+   * @param userId - User ID requesting access (for permission checks)
+   * @returns Promise with the number of members
+   */
+  getHouseholdMemberCount(householdId: string, userId: string): Promise<number>;
 }

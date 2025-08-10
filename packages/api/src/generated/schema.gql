@@ -34,6 +34,7 @@ type Household {
   created_by: String!
   created_at: DateTime!
   updated_at: DateTime!
+  memberCount: Float
 }
 
 type HouseholdMember {

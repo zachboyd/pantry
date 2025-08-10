@@ -369,4 +369,34 @@ export class GuardedHouseholdService {
 
     return { household };
   }
+
+  async getHouseholdMemberCount(
+    householdId: string,
+    user: UserRecord | null,
+  ): Promise<number> {
+    // Validation
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!householdId || householdId.trim().length === 0) {
+      throw new BadRequestException('Household ID is required');
+    }
+
+    // Check permissions - user must be a member of the household
+    const evaluator = await this.permissionService.getPermissionEvaluator(
+      user.id,
+    );
+    if (!evaluator.canReadHousehold(householdId.trim())) {
+      throw new ForbiddenException(
+        'Insufficient permissions to view household member count',
+      );
+    }
+
+    // Delegate to service
+    return this.householdService.getHouseholdMemberCount(
+      householdId.trim(),
+      user.id,
+    );
+  }
 }
