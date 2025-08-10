@@ -170,7 +170,8 @@ public final class GraphQLService: GraphQLServiceProtocol {
 
         do {
             return try await withCheckedThrowingContinuation { continuation in
-                apollo.perform(mutation: mutation) { [weak self] result in
+                // Use performMutation with explicit publishResultToStore to ensure cache updates
+                apollo.perform(mutation: mutation, publishResultToStore: true) { [weak self] result in
                     guard let self = self else {
                         continuation.resume(throwing: ServiceError.operationFailed("Service deallocated"))
                         return

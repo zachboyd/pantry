@@ -49,6 +49,10 @@ public final class AppState {
     public private(set) var error: Error?
     public private(set) var isInitialized: Bool = false
 
+    // MARK: - Reactive Watchers
+
+    private var currentHouseholdWatch: WatchedResult<Household>?
+
     // MARK: - Services
 
     public let container = DependencyContainer()
@@ -145,6 +149,8 @@ public final class AppState {
 
         // Always clear local state regardless of network sign out success
         defer {
+            // Clear reactive watchers (they'll be cancelled when tasks are cancelled)
+
             // Clear user data
             currentHousehold = nil
             currentUser = nil
@@ -196,6 +202,10 @@ public final class AppState {
     public func selectHousehold(_ household: Household?) {
         Self.logger.info("🏠 Selecting household: \(household?.name ?? "none")")
         currentHousehold = household
+
+        // Setup watcher for the new household to keep it reactive
+        // This will automatically stop any existing watcher first
+        setupHouseholdWatcher()
 
         // Persist selection
         if let household = household {
@@ -300,6 +310,10 @@ public final class AppState {
             // Execute the hydrate query
             try await hydrateUserData()
 
+            // Setup reactive household watcher AFTER hydration
+            // This ensures currentHousehold stays in sync with Apollo cache changes
+            setupHouseholdWatcher()
+
             // Transition to hydrated phase
             phase = .hydrated
             Self.logger.info("✅ Hydration complete, app ready")
@@ -373,6 +387,66 @@ public final class AppState {
 
             Self.logger.info("✅ Hydration complete. Selected household: \(currentHousehold?.name ?? "none")")
         }
+    }
+
+    /// Setup reactive household watcher to keep AppState in sync with Apollo cache
+    private func setupHouseholdWatcher() {
+        guard let householdService = householdService else {
+            Self.logger.warning("⚠️ Cannot setup household watcher - HouseholdService not available")
+            return
+        }
+
+        // Only setup if we have a current household to watch
+        guard let currentHousehold = currentHousehold else {
+            Self.logger.debug("🔍 No current household to watch yet")
+            return
+        }
+
+        Self.logger.info("👁️ Setting up reactive household watcher for: \(currentHousehold.name)")
+
+        // Use watchHousehold(id:) with the actual household ID
+        currentHouseholdWatch = householdService.watchHousehold(id: currentHousehold.id)
+
+        // Set up observation to detect changes
+        Task { @MainActor in
+            guard let watch = currentHouseholdWatch else { return }
+
+            // Store the current name to detect changes
+            var lastKnownName = currentHousehold.name
+
+            // Use withObservationTracking to observe changes to the WatchedResult
+            while !Task.isCancelled {
+                withObservationTracking {
+                    // Access the watched value to register observation
+                    _ = watch.value
+                    _ = watch.error
+                    _ = watch.isLoading
+                } onChange: {
+                    // This closure is called when the observed values change
+                    Task { @MainActor in
+                        // Check if we have a valid updated household
+                        if let updatedHousehold = watch.value,
+                           updatedHousehold.id == self.currentHousehold?.id,
+                           updatedHousehold.name != lastKnownName
+                        {
+                            Self.logger.info("🔄 Household watcher: detected name change from '\(lastKnownName)' to '\(updatedHousehold.name)'")
+                            self.currentHousehold = updatedHousehold
+                            lastKnownName = updatedHousehold.name
+                        }
+
+                        // Log errors but don't spam - only log once per error type
+                        if let error = watch.error {
+                            Self.logger.warning("⚠️ Household watcher error: \(error)")
+                        }
+                    }
+                }
+
+                // Small delay to prevent tight loop
+                try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+            }
+        }
+
+        Self.logger.info("✅ Household watcher setup complete")
     }
 
     // MARK: - Computed Properties

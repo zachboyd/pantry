@@ -331,20 +331,41 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
     }
 
     private func updateHousehold() async -> Bool {
-        guard state.householdId != nil else {
+        guard let householdId = state.householdId else {
             Self.logger.error("❌ Cannot update household - no ID available")
             return false
         }
 
-        Self.logger.info("✏️ Would update household: \(state.name) - showing coming soon")
+        Self.logger.info("✏️ Updating household: \(state.name)")
 
-        // Show coming soon alert instead of actually updating
-        updateState {
-            $0.showingComingSoon = true
+        guard validateForm() else {
+            Self.logger.warning("⚠️ Form validation failed")
+            return false
         }
 
-        // Return false to prevent dismissing the view
-        return false
+        let trimmedName = state.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = state.description.trimmingCharacters(in: .whitespacesAndNewlines)
+        let description = trimmedDescription.isEmpty ? nil : trimmedDescription
+
+        let result: Household? = await executeTask(.save) { [weak self, dependencies] in
+            let household = try await dependencies.householdService.updateHousehold(
+                id: householdId,
+                name: trimmedName,
+                description: description
+            )
+
+            await MainActor.run {
+                self?.updateState {
+                    $0.originalHousehold = household
+                    $0.hasUnsavedChanges = false
+                    $0.viewState = .loaded
+                }
+            }
+
+            return household
+        }
+
+        return result != nil
     }
 
     private func performLoadHousehold(id: String) async {

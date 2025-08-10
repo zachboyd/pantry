@@ -39,3 +39,9 @@ mutation ChangeHouseholdMemberRole($input: ChangeHouseholdMemberRoleInput!) {
     ...HouseholdMemberFields
   }
 }
+
+mutation UpdateHousehold($input: UpdateHouseholdInput!) {
+  updateHousehold(input: $input) {
+    ...HouseholdFields
+  }
+}

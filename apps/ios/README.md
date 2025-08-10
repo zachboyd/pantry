@@ -119,6 +119,10 @@ This project uses:
 - **[Service Layer](Sources/JeevesKit/Services/README.md)** - How to use and extend services
 - **[ViewModels](Sources/JeevesKit/ViewModels/README.md)** - ViewModel patterns and examples
 
+### Advanced Patterns
+
+- **[Reactive Watching Pattern](Documentation/REACTIVE_WATCHING_PATTERN.md)** - Apollo cache reactive updates pattern
+
 ## Key Technologies
 
 - **SwiftUI** - Modern declarative UI framework

@@ -179,6 +179,12 @@ struct MyView: View {
 - AuthenticationContainerView handles the callbacks and updates AppState
 - Sign out is handled through callbacks passed from container views
 
+**Reactive Data Watching Pattern**:
+- Services provide `WatchedResult<T>` for reactive data updates
+- AppState uses `withObservationTracking` to monitor cache changes
+- UI automatically updates when Apollo cache changes from mutations
+- See `Documentation/REACTIVE_WATCHING_PATTERN.md` for detailed implementation guide
+
 **Default Parameters**:
 - Views should provide default parameter values for optional callbacks
 - This allows views to be used in different contexts (e.g., previews, tests)

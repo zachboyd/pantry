@@ -384,3 +384,9 @@ updateState { state in
 ## Adding New Features
 
 See [Development Guide](DEVELOPMENT_GUIDE.md) for step-by-step instructions on adding new features following this architecture.
+
+## Advanced Patterns
+
+### Reactive Watching
+
+For implementing reactive UI updates when Apollo cache changes (e.g., when mutations update cached data), see the [Reactive Watching Pattern](REACTIVE_WATCHING_PATTERN.md) guide.

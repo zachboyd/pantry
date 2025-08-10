@@ -465,3 +465,11 @@ extension YourService: ServiceHealth {
 - ❌ Cache sensitive data
 - ❌ Skip error handling
 - ❌ Add manual string trimming in ViewModels (services handle this)
+
+## Advanced Service Patterns
+
+### Reactive Data Watching
+
+For services that need to provide reactive data updates (e.g., when Apollo cache changes from mutations), see the [Reactive Watching Pattern](../../Documentation/REACTIVE_WATCHING_PATTERN.md) guide.
+
+This pattern is used by services like `HouseholdService` and `UserService` to automatically update the UI when data changes in the Apollo cache.

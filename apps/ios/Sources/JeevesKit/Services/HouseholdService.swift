@@ -26,6 +26,7 @@ private protocol GraphQLHouseholdSelectionSet {
 // Conformance for existing GraphQL types
 extension JeevesGraphQL.GetHouseholdQuery.Data.Household: GraphQLHouseholdSelectionSet {}
 extension JeevesGraphQL.CreateHouseholdMutation.Data.CreateHousehold: GraphQLHouseholdSelectionSet {}
+extension JeevesGraphQL.UpdateHouseholdMutation.Data.UpdateHousehold: GraphQLHouseholdSelectionSet {}
 
 /// Household service implementation with GraphQL integration
 @MainActor
@@ -242,26 +243,38 @@ public final class HouseholdService: HouseholdServiceProtocol {
             throw ServiceError.notAuthenticated
         }
 
-        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        // Use our new trimming extensions
+        let trimmedName = name.trimmed()
+        guard !trimmedName.isEmpty else {
             Self.logger.warning("⚠️ Invalid household name")
             throw ServiceError.validationFailed(["Household name cannot be empty"])
         }
 
         do {
-            // For MVP, we'll use the create mutation as a placeholder
-            // In a full implementation, you would have an update mutation
-            let mutation = JeevesGraphQL.CreateHouseholdMutation(
-                input: JeevesGraphQL.CreateHouseholdInput(
-                    name: name,
-                    description: description.map { GraphQLNullable<String>.some($0) } ?? .none
+            let mutation = JeevesGraphQL.UpdateHouseholdMutation(
+                input: JeevesGraphQL.UpdateHouseholdInput(
+                    id: id,
+                    name: GraphQLNullable<String>.some(trimmedName),
+                    description: description.trimmed().map { GraphQLNullable<String>.some($0) } ?? .none
                 )
             )
 
             let data = try await graphQLService.mutate(mutation)
-            let household = mapGraphQLHouseholdToDomain(data.createHousehold)
+            let household = mapGraphQLHouseholdToDomain(data.updateHousehold)
 
-            // Update cache
-            invalidateCache()
+            // Update local cache with the new data
+            currentHouseholdCache = household
+            if let index = householdsCache.firstIndex(where: { $0.id == household.id }) {
+                householdsCache[index] = household
+            }
+            lastCacheUpdate = Date()
+
+            // The mutation response will automatically update Apollo's cache
+            // because it returns the same fields (via HouseholdFields fragment)
+            // that the watched queries use. This will trigger the watchers automatically.
+
+            // DEBUG: Cache should be automatically updated by the mutation response
+            Self.logger.debug("🔍 Mutation completed - cache should now contain updated household data")
 
             Self.logger.info("✅ Household updated successfully: \(household.name)")
             return household
@@ -464,14 +477,19 @@ public final class HouseholdService: HouseholdServiceProtocol {
         let query = JeevesGraphQL.GetHouseholdQuery(input: input)
 
         // Create a REAL Apollo watcher that observes cache changes!
+        // Use the EXACT same cache policy as the working watchUser(id) method
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
             cachePolicy: .returnCacheDataAndFetch
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetHouseholdQuery.Data>, Error>) in
             guard let self = self, let result = result else { return }
 
+            // DEBUG: Log every time the watcher is triggered
+            Self.logger.debug("👁️ Watcher triggered for household: \(id)")
+
             switch graphQLResult {
             case let .success(data):
+                Self.logger.debug("📊 Watcher success - source: \(data.source), has data: \(data.data?.household != nil)")
                 if let householdData = data.data?.household {
                     // Transform GraphQL data to Household model
                     let household = self.mapGraphQLHouseholdToDomain(householdData)
@@ -483,9 +501,13 @@ public final class HouseholdService: HouseholdServiceProtocol {
                         result.update(value: household, source: source)
                         result.setLoading(false)
 
-                        // Also update our cache
+                        // Also update our cache - MATCH THE WORKING USER PATTERN
                         if household.id == self.currentHouseholdCache?.id {
                             self.currentHouseholdCache = household
+                        }
+                        // Also update the households list cache
+                        if let index = self.householdsCache.firstIndex(where: { $0.id == household.id }) {
+                            self.householdsCache[index] = household
                         }
 
                         Self.logger.info("🔄 Household watch updated from \(source) for ID: \(id)")
