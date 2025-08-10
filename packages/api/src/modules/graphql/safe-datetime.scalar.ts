@@ -1,4 +1,5 @@
 import { Scalar, CustomScalar } from '@nestjs/graphql';
+import { ValueNode } from 'graphql';
 import { GraphQLDateTime } from 'graphql-scalars';
 
 /**
@@ -38,7 +39,7 @@ export class SafeDateTimeScalar implements CustomScalar<string, Date> {
     return GraphQLDateTime.parseValue(value);
   }
 
-  parseLiteral(ast: unknown): Date | null {
+  parseLiteral(ast: ValueNode): Date | null {
     return GraphQLDateTime.parseLiteral(ast);
   }
 }

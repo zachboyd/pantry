@@ -91,14 +91,24 @@ describe('User Subscription Integration Tests', () => {
       });
 
       // Start subscription
-      const subscriptionPromise = GraphQLWebSocketTestUtils.executeSubscription(
-        {
+      const subscriptionPromise =
+        GraphQLWebSocketTestUtils.executeSubscription<{
+          userUpdated: {
+            id: string;
+            display_name?: string;
+            phone?: string;
+            first_name: string;
+            last_name: string;
+            created_at: string;
+            updated_at: string;
+            [key: string]: unknown;
+          };
+        }>({
           client,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
           timeout: 10000,
-        },
-      );
+        });
 
       // Act - Update user profile via GraphQL mutation
       await GraphQLTestUtils.executeAuthenticatedQuery(
@@ -169,7 +179,13 @@ describe('User Subscription Integration Tests', () => {
       });
 
       const user1SubscriptionPromise =
-        GraphQLWebSocketTestUtils.executeSubscription({
+        GraphQLWebSocketTestUtils.executeSubscription<{
+          userUpdated: {
+            id: string;
+            display_name: string;
+            [key: string]: unknown;
+          };
+        }>({
           client: user1Client,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
@@ -224,7 +240,9 @@ describe('User Subscription Integration Tests', () => {
 
       // Should receive an error
       GraphQLWebSocketTestUtils.assertHasErrors(result);
-      expect(result.errors[0].message).toContain('Authentication required');
+      expect((result.errors[0] as { message: string }).message).toContain(
+        'Authentication required',
+      );
     });
 
     it('should reject subscription with invalid session token', async () => {
@@ -244,7 +262,9 @@ describe('User Subscription Integration Tests', () => {
 
       // Should receive an error
       GraphQLWebSocketTestUtils.assertHasErrors(result);
-      expect(result.errors[0].message).toContain('Invalid token');
+      expect((result.errors[0] as { message: string }).message).toContain(
+        'Invalid token',
+      );
     });
 
     it('should handle multiple subscription clients for the same user', async () => {
@@ -280,7 +300,12 @@ describe('User Subscription Integration Tests', () => {
 
       // Start subscriptions on both clients
       const subscription1Promise =
-        GraphQLWebSocketTestUtils.executeSubscription({
+        GraphQLWebSocketTestUtils.executeSubscription<{
+          userUpdated: {
+            display_name: string;
+            [key: string]: unknown;
+          };
+        }>({
           client: client1,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
@@ -288,7 +313,12 @@ describe('User Subscription Integration Tests', () => {
         });
 
       const subscription2Promise =
-        GraphQLWebSocketTestUtils.executeSubscription({
+        GraphQLWebSocketTestUtils.executeSubscription<{
+          userUpdated: {
+            display_name: string;
+            [key: string]: unknown;
+          };
+        }>({
           client: client2,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
@@ -347,14 +377,29 @@ describe('User Subscription Integration Tests', () => {
         sessionToken,
       });
 
-      const subscriptionPromise = GraphQLWebSocketTestUtils.executeSubscription(
-        {
+      const subscriptionPromise =
+        GraphQLWebSocketTestUtils.executeSubscription<{
+          userUpdated: {
+            id: string;
+            first_name: string;
+            last_name: string;
+            display_name: string;
+            avatar_url: string;
+            phone: string;
+            email: string;
+            is_ai: boolean;
+            created_at: string;
+            updated_at: string;
+            birth_date: string;
+            preferences: unknown;
+            [key: string]: unknown;
+          };
+        }>({
           client,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
           timeout: 8000,
-        },
-      );
+        });
 
       // Act - Update with all supported field types
       const birthDate = new Date('1990-06-15');
@@ -440,14 +485,24 @@ describe('User Subscription Integration Tests', () => {
         sessionToken,
       });
 
-      const subscriptionPromise = GraphQLWebSocketTestUtils.executeSubscription(
-        {
+      const subscriptionPromise =
+        GraphQLWebSocketTestUtils.executeSubscription<{
+          userUpdated: {
+            id: string;
+            display_name: string;
+            birth_date: string | null;
+            avatar_url: string | null;
+            phone: string | null;
+            created_at: string;
+            updated_at: string;
+            [key: string]: unknown;
+          };
+        }>({
           client,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
           timeout: 8000,
-        },
-      );
+        });
 
       // Act - Update with some null/empty values
       await GraphQLTestUtils.executeAuthenticatedQuery(
