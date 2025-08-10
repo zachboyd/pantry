@@ -38,7 +38,7 @@ export class SafeDateTimeScalar implements CustomScalar<string, Date> {
     return GraphQLDateTime.parseValue(value);
   }
 
-  parseLiteral(ast: any): Date | null {
+  parseLiteral(ast: unknown): Date | null {
     return GraphQLDateTime.parseLiteral(ast);
   }
 }

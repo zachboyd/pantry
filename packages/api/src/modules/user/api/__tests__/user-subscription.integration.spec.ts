@@ -9,7 +9,6 @@ import {
 } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import type { Kysely } from 'kysely';
-import type { Client } from 'graphql-ws';
 import type { DB } from '../../../../generated/database.js';
 import { IntegrationTestModuleFactory } from '../../../../test/utils/integration-test-module-factory.js';
 import { TestDatabaseService } from '../../../../test/utils/test-database.service.js';

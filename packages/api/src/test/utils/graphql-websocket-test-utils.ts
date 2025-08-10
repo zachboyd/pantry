@@ -47,7 +47,7 @@ export class GraphQLWebSocketTestUtils {
   /**
    * Execute a subscription and collect results
    */
-  static async executeSubscription<T = any>(options: {
+  static async executeSubscription<T = unknown>(options: {
     client: Client;
     query: string;
     variables?: Record<string, unknown>;
@@ -55,7 +55,7 @@ export class GraphQLWebSocketTestUtils {
     expectedMessages?: number;
   }): Promise<{
     results: T[];
-    errors: any[];
+    errors: unknown[];
     completed: boolean;
   }> {
     const {
@@ -66,10 +66,10 @@ export class GraphQLWebSocketTestUtils {
       expectedMessages = 1,
     } = options;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const results: T[] = [];
-      const errors: any[] = [];
-      let completed = false;
+      const errors: unknown[] = [];
+      let _completed = false;
 
       // Set timeout
       const timeoutId = setTimeout(() => {
@@ -117,7 +117,7 @@ export class GraphQLWebSocketTestUtils {
           },
           complete: () => {
             clearTimeout(timeoutId);
-            completed = true;
+            _completed = true;
             resolve({
               results,
               errors,
@@ -174,7 +174,7 @@ export class GraphQLWebSocketTestUtils {
             unsubscribe();
             resolve();
           },
-          error: (error) => {
+          error: (_error) => {
             // Connection established but subscription failed - that's ok for this test
             if (!connected) {
               connected = true;
@@ -204,7 +204,7 @@ export class GraphQLWebSocketTestUtils {
         try {
           client.dispose();
           resolve();
-        } catch (error) {
+        } catch (_error) {
           // Ignore cleanup errors
           resolve();
         }
@@ -244,7 +244,7 @@ export class GraphQLWebSocketTestUtils {
   /**
    * Assert that a subscription result contains no errors
    */
-  static assertNoErrors(result: { errors: any[] }): void {
+  static assertNoErrors(result: { errors: unknown[] }): void {
     if (result.errors && result.errors.length > 0) {
       throw new Error(
         `Subscription errors: ${JSON.stringify(result.errors, null, 2)}`,
@@ -255,7 +255,10 @@ export class GraphQLWebSocketTestUtils {
   /**
    * Assert that a subscription result has specific errors
    */
-  static assertHasErrors(result: { errors: any[] }, expectedCount = 1): void {
+  static assertHasErrors(
+    result: { errors: unknown[] },
+    expectedCount = 1,
+  ): void {
     if (!result.errors || result.errors.length !== expectedCount) {
       throw new Error(
         `Expected ${expectedCount} subscription errors, got: ${JSON.stringify(result.errors, null, 2)}`,
@@ -267,7 +270,7 @@ export class GraphQLWebSocketTestUtils {
    * Assert that a subscription received expected number of messages
    */
   static assertMessageCount(
-    result: { results: any[]; errors: any[]; completed: boolean },
+    result: { results: unknown[]; errors: unknown[]; completed: boolean },
     expectedCount: number,
   ): void {
     if (result.results.length !== expectedCount) {

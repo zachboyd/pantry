@@ -40,7 +40,11 @@ import { SafeDateTimeScalar } from './safe-datetime.scalar.js';
         }
 
         // Fallback to upgrade request headers if available
-        const wsReq = (context as any)?.extra?.request;
+        const wsReq = (
+          context as {
+            extra?: { request?: { headers?: Record<string, string> } };
+          }
+        )?.extra?.request;
         if (wsReq?.headers && typeof wsReq.headers === 'object') {
           Object.assign(headers, wsReq.headers);
         }
