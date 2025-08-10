@@ -16,14 +16,14 @@ public struct HouseholdCreationView: View {
     @FocusState private var focusedField: Field?
     let onBack: (() -> Void)?
     let onComplete: ((String) -> Void)?
-    
+
     enum Field: Hashable {
         case householdName
         case description
     }
-    
+
     public init(viewModel: HouseholdCreationViewModel? = nil, onBack: (() -> Void)? = nil, onComplete: ((String) -> Void)? = nil) {
-        self._viewModel = State(initialValue: viewModel)
+        _viewModel = State(initialValue: viewModel)
         self.onBack = onBack
         self.onComplete = onComplete
     }
@@ -31,102 +31,102 @@ public struct HouseholdCreationView: View {
     public var body: some View {
         ScrollView {
             VStack(spacing: DesignTokens.Spacing.xxl) {
-            VStack(spacing: DesignTokens.Spacing.md) {
-                Text(L("household.creation.title"))
-                    .font(DesignTokens.Typography.Semantic.pageTitle())
-                    .multilineTextAlignment(.center)
-                
-                Text(L("household.creation.subtitle"))
-                    .font(DesignTokens.Typography.Semantic.body())
-                    .foregroundColor(DesignTokens.Colors.Text.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, DesignTokens.Spacing.xl)
-            
-            VStack(spacing: DesignTokens.Spacing.lg) {
-                // Household Name Field
-                FormTextField(
-                    label: L("household.name"),
-                    placeholder: L("household.name.placeholder"),
-                    text: Binding(
-                        get: { viewModel?.state.householdName ?? "" },
-                        set: { viewModel?.updateHouseholdName($0) }
-                    ),
-                    autocorrectionDisabled: true
-                )
-                .focused($focusedField, equals: .householdName)
-                .onSubmit {
-                    focusedField = .description
+                VStack(spacing: DesignTokens.Spacing.md) {
+                    Text(L("household.creation.title"))
+                        .font(DesignTokens.Typography.Semantic.pageTitle())
+                        .multilineTextAlignment(.center)
+
+                    Text(L("household.creation.subtitle"))
+                        .font(DesignTokens.Typography.Semantic.body())
+                        .foregroundColor(DesignTokens.Colors.Text.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                
-                // Description Field (Optional)
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                    HStack {
-                        Text(L("household.description.label"))
-                            .font(DesignTokens.Typography.Semantic.caption())
-                            .foregroundColor(DesignTokens.Colors.Text.secondary)
-                        
-                        Text(L("common.optional"))
-                            .font(DesignTokens.Typography.Semantic.caption())
-                            .foregroundColor(DesignTokens.Colors.Text.tertiary)
+                .padding(.top, DesignTokens.Spacing.xl)
+
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    // Household Name Field
+                    FormTextField(
+                        label: L("household.name"),
+                        placeholder: L("household.name.placeholder"),
+                        text: Binding(
+                            get: { viewModel?.state.householdName ?? "" },
+                            set: { viewModel?.updateHouseholdName($0) }
+                        ),
+                        autocorrectionDisabled: true
+                    )
+                    .focused($focusedField, equals: .householdName)
+                    .onSubmit {
+                        focusedField = .description
                     }
-                    
-                    TextField(L("household.description.placeholder"), text: Binding(
-                        get: { viewModel?.state.householdDescription ?? "" },
-                        set: { viewModel?.updateHouseholdDescription($0) }
-                    ), axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .padding(DesignTokens.Spacing.md)
-                        .background(DesignTokens.Colors.Surface.secondary)
-                        .cornerRadius(DesignTokens.BorderRadius.sm)
-                        .lineLimit(3...6)
-                        .focused($focusedField, equals: .description)
+
+                    // Description Field (Optional)
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                        HStack {
+                            Text(L("household.description.label"))
+                                .font(DesignTokens.Typography.Semantic.caption())
+                                .foregroundColor(DesignTokens.Colors.Text.secondary)
+
+                            Text(L("common.optional"))
+                                .font(DesignTokens.Typography.Semantic.caption())
+                                .foregroundColor(DesignTokens.Colors.Text.tertiary)
+                        }
+
+                        TextField(L("household.description.placeholder"), text: Binding(
+                            get: { viewModel?.state.householdDescription ?? "" },
+                            set: { viewModel?.updateHouseholdDescription($0) }
+                        ), axis: .vertical)
+                            .textFieldStyle(.plain)
+                            .padding(DesignTokens.Spacing.md)
+                            .background(DesignTokens.Colors.Surface.secondary)
+                            .cornerRadius(DesignTokens.BorderRadius.sm)
+                            .lineLimit(3 ... 6)
+                            .focused($focusedField, equals: .description)
+                    }
                 }
-            }
-            
-            // Admin role info
-            HStack(spacing: DesignTokens.Spacing.sm) {
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(DesignTokens.Colors.Primary.base)
-                
-                Text(L("household.creation.admin_info"))
-                    .font(DesignTokens.Typography.Semantic.caption())
-                    .foregroundColor(DesignTokens.Colors.Text.secondary)
-                
+
+                // Admin role info
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(DesignTokens.Colors.Primary.base)
+
+                    Text(L("household.creation.admin_info"))
+                        .font(DesignTokens.Typography.Semantic.caption())
+                        .foregroundColor(DesignTokens.Colors.Text.secondary)
+
+                    Spacer()
+                }
+                .padding(DesignTokens.Spacing.md)
+                .background(DesignTokens.Colors.Surface.secondary)
+                .cornerRadius(DesignTokens.BorderRadius.sm)
+
+                if let error = viewModel?.currentError {
+                    Text(error.localizedDescription)
+                        .font(DesignTokens.Typography.Semantic.caption())
+                        .foregroundColor(DesignTokens.Colors.Status.error)
+                        .multilineTextAlignment(.center)
+                }
+
                 Spacer()
-            }
-            .padding(DesignTokens.Spacing.md)
-            .background(DesignTokens.Colors.Surface.secondary)
-            .cornerRadius(DesignTokens.BorderRadius.sm)
-            
-            if let error = viewModel?.currentError {
-                Text(error.localizedDescription)
-                    .font(DesignTokens.Typography.Semantic.caption())
-                    .foregroundColor(DesignTokens.Colors.Status.error)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Spacer()
-            
-            PrimaryButton(
-                "Create Household",
-                isLoading: viewModel?.isLoading ?? false,
-                isDisabled: !(viewModel?.isFormValid ?? false),
-                action: {
-                    Task {
-                        if let householdId = await viewModel?.createHousehold() {
-                            await MainActor.run {
-                                if let onComplete = onComplete {
-                                    onComplete(householdId)
-                                } else {
-                                    dismiss()
+
+                PrimaryButton(
+                    "Create Household",
+                    isLoading: viewModel?.isLoading ?? false,
+                    isDisabled: !(viewModel?.isFormValid ?? false),
+                    action: {
+                        Task {
+                            if let householdId = await viewModel?.createHousehold() {
+                                await MainActor.run {
+                                    if let onComplete = onComplete {
+                                        onComplete(householdId)
+                                    } else {
+                                        dismiss()
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            )
+                )
             }
             .padding(DesignTokens.Spacing.lg)
         }

@@ -17,13 +17,13 @@ public struct SignUpView: View {
     @State private var isLoading = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
-    
+
     enum Field: Hashable {
         case email
         case password
         case confirmPassword
     }
-    
+
     @FocusState private var focusedField: Field?
 
     @Environment(\.authService) private var authService
@@ -54,92 +54,92 @@ public struct SignUpView: View {
             // Consistent background color
             DesignTokens.Colors.systemBackground()
                 .ignoresSafeArea()
-            
+
             ScrollView {
                 VStack(spacing: DesignTokens.Spacing.lg) {
-                // Header with icon
-                VStack(spacing: DesignTokens.Spacing.sm) {
-                    Image(systemName: "fork.knife")
-                        .font(.system(size: 60))
-                        .foregroundColor(.accentColor)
-                        .padding(.bottom, DesignTokens.Spacing.sm)
+                    // Header with icon
+                    VStack(spacing: DesignTokens.Spacing.sm) {
+                        Image(systemName: "fork.knife")
+                            .font(.system(size: 60))
+                            .foregroundColor(.accentColor)
+                            .padding(.bottom, DesignTokens.Spacing.sm)
 
-                    Text(L("auth.button.create"))
-                        .font(DesignTokens.Typography.Semantic.sectionHeader())
-                        .foregroundColor(DesignTokens.Colors.Text.primary)
+                        Text(L("auth.button.create"))
+                            .font(DesignTokens.Typography.Semantic.sectionHeader())
+                            .foregroundColor(DesignTokens.Colors.Text.primary)
 
-                    Text(L("auth.signup.subtitle"))
-                        .font(DesignTokens.Typography.Semantic.body())
-                        .foregroundColor(DesignTokens.Colors.Text.secondary)
-                }
-                .padding(.top, DesignTokens.Spacing.xxl)
-                .padding(.bottom, DesignTokens.Spacing.xl)
+                        Text(L("auth.signup.subtitle"))
+                            .font(DesignTokens.Typography.Semantic.body())
+                            .foregroundColor(DesignTokens.Colors.Text.secondary)
+                    }
+                    .padding(.top, DesignTokens.Spacing.xxl)
+                    .padding(.bottom, DesignTokens.Spacing.xl)
 
-                // Form
-                VStack(spacing: DesignTokens.Spacing.md) {
-                    FormTextField.email(text: $email)
-                        .focused($focusedField, equals: .email)
-                        .onSubmit {
-                            focusedField = .password
+                    // Form
+                    VStack(spacing: DesignTokens.Spacing.md) {
+                        FormTextField.email(text: $email)
+                            .focused($focusedField, equals: .email)
+                            .onSubmit {
+                                focusedField = .password
+                            }
+
+                        VStack(spacing: DesignTokens.Spacing.xs) {
+                            FormTextField.password(
+                                placeholder: PasswordConstants.placeholder,
+                                text: $password,
+                                isNewPassword: true,
+                                validation: { $0.count >= PasswordConstants.minimumLength },
+                                errorMessage: PasswordConstants.tooShortError
+                            )
+                            .focused($focusedField, equals: .password)
+                            .onSubmit {
+                                focusedField = .confirmPassword
+                            }
+
+                            // Password strength meter
+                            // PasswordStrengthMeter(password: password)
+
+                            // Password requirements
+                            // PasswordRequirementsView(password: password)
                         }
 
-                    VStack(spacing: DesignTokens.Spacing.xs) {
                         FormTextField.password(
-                            placeholder: PasswordConstants.placeholder,
-                            text: $password,
+                            label: L("auth.confirm_password"),
+                            placeholder: PasswordConstants.confirmPlaceholder,
+                            text: $confirmPassword,
                             isNewPassword: true,
-                            validation: { $0.count >= PasswordConstants.minimumLength },
-                            errorMessage: PasswordConstants.tooShortError
+                            validation: { $0 == password && !$0.isEmpty },
+                            errorMessage: PasswordConstants.mismatchError
                         )
-                        .focused($focusedField, equals: .password)
+                        .focused($focusedField, equals: .confirmPassword)
                         .onSubmit {
-                            focusedField = .confirmPassword
-                        }
-
-                        // Password strength meter
-                        // PasswordStrengthMeter(password: password)
-
-                        // Password requirements
-                        // PasswordRequirementsView(password: password)
-                    }
-
-                    FormTextField.password(
-                        label: L("auth.confirm_password"),
-                        placeholder: PasswordConstants.confirmPlaceholder,
-                        text: $confirmPassword,
-                        isNewPassword: true,
-                        validation: { $0 == password && !$0.isEmpty },
-                        errorMessage: PasswordConstants.mismatchError
-                    )
-                    .focused($focusedField, equals: .confirmPassword)
-                    .onSubmit {
-                        // Dismiss keyboard and trigger sign up if form is valid
-                        focusedField = nil
-                        if isFormValid {
-                            signUp()
+                            // Dismiss keyboard and trigger sign up if form is valid
+                            focusedField = nil
+                            if isFormValid {
+                                signUp()
+                            }
                         }
                     }
+
+                    // Sign up button
+                    PrimaryButton(L("auth.button.create"), isLoading: isLoading, isDisabled: !isFormValid, action: signUp)
+
+                    // Sign in link
+                    HStack {
+                        Text(L("auth.has_account"))
+                            .font(DesignTokens.Typography.Semantic.body())
+                            .foregroundColor(DesignTokens.Colors.Text.secondary)
+
+                        TextButton(L("auth.button.signin"), action: onSignInTap)
+                    }
+                    .padding(.top, DesignTokens.Spacing.sm)
                 }
-
-                // Sign up button
-                PrimaryButton(L("auth.button.create"), isLoading: isLoading, isDisabled: !isFormValid, action: signUp)
-
-                // Sign in link
-                HStack {
-                    Text(L("auth.has_account"))
-                        .font(DesignTokens.Typography.Semantic.body())
-                        .foregroundColor(DesignTokens.Colors.Text.secondary)
-
-                    TextButton(L("auth.button.signin"), action: onSignInTap)
-                }
-                .padding(.top, DesignTokens.Spacing.sm)
-            }
-            .padding(.horizontal, DesignTokens.Spacing.xl)
-            .padding(.bottom, DesignTokens.Spacing.xxl)
+                .padding(.horizontal, DesignTokens.Spacing.xl)
+                .padding(.bottom, DesignTokens.Spacing.xxl)
             }
             .scrollDismissesKeyboard(.interactively)
             .alert(L("error"), isPresented: $showingAlert) {
-                Button(L("ok"), role: .cancel) { }
+                Button(L("ok"), role: .cancel) {}
             } message: {
                 Text(alertMessage)
             }
@@ -179,7 +179,7 @@ public struct SignUpView: View {
                 Self.logger.error("❌ Sign up failed: \(error)")
                 await MainActor.run {
                     isLoading = false
-                    
+
                     // Use localized message for AuthServiceError
                     if let authError = error as? AuthServiceError {
                         alertMessage = authError.localizedMessage()
@@ -187,7 +187,7 @@ public struct SignUpView: View {
                         // Fallback for non-AuthServiceError errors
                         alertMessage = error.localizedDescription
                     }
-                    
+
                     showingAlert = true
                 }
             }

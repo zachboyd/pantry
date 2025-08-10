@@ -10,12 +10,12 @@ import SwiftUI
 /// Container for onboarding flow states
 public struct OnboardingContainerView: View {
     private static let logger = Logger(category: "OnboardingContainerView")
-    
+
     @Environment(\.safeViewModelFactory) private var viewModelFactory
     @State private var viewModel: OnboardingContainerViewModel?
     @State private var userInfoViewModel: UserInfoViewModel?
     @State private var householdCreationViewModel: HouseholdCreationViewModel?
-    
+
     let onSignOut: () async -> Void
     let onComplete: (String) async -> Void
 
@@ -34,18 +34,18 @@ public struct OnboardingContainerView: View {
                 Group {
                     if let viewModel = viewModel {
                         if viewModel.state.isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .scaleEffect(1.5)
-                            .fadeTransition()
-                    } else {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                                .scaleEffect(1.5)
+                                .fadeTransition()
+                        } else {
                             ZStack {
                                 switch viewModel.state.currentStep {
-                            case .loading:
-                                // Loading state handled above
-                                EmptyView()
-                                
-                            case .userInfo:
+                                case .loading:
+                                    // Loading state handled above
+                                    EmptyView()
+
+                                case .userInfo:
                                     if let userInfoViewModel = userInfoViewModel {
                                         UserInfoView(
                                             viewModel: userInfoViewModel,
@@ -59,7 +59,7 @@ public struct OnboardingContainerView: View {
                                         .zIndex(1)
                                     }
 
-                            case .householdCreation:
+                                case .householdCreation:
                                     if let householdCreationViewModel = householdCreationViewModel {
                                         HouseholdCreationView(
                                             viewModel: householdCreationViewModel,
@@ -76,30 +76,30 @@ public struct OnboardingContainerView: View {
                                         .slideAndFadeTransition(edge: .trailing)
                                         .zIndex(2)
                                     }
-                                
-                            case .complete:
-                                // This shouldn't be shown, but just in case
-                                VStack(spacing: DesignTokens.Spacing.lg) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 60))
-                                        .foregroundColor(DesignTokens.Colors.Status.success)
-                                    
-                                    Text(L("onboarding.complete.title"))
-                                        .font(DesignTokens.Typography.Semantic.pageTitle())
-                                    
-                                    Text(L("onboarding.complete.subtitle"))
-                                        .font(DesignTokens.Typography.Semantic.body())
-                                        .foregroundColor(DesignTokens.Colors.Text.secondary)
-                                }
-                                .fadeAndScaleTransition()
-                                .zIndex(3)
-                                .onAppear {
-                                    // Auto-complete after a brief moment
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                        if let completionId = viewModel.getCompletionHouseholdId() {
-                                            completeOnboarding(with: completionId)
-                                        }
+
+                                case .complete:
+                                    // This shouldn't be shown, but just in case
+                                    VStack(spacing: DesignTokens.Spacing.lg) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 60))
+                                            .foregroundColor(DesignTokens.Colors.Status.success)
+
+                                        Text(L("onboarding.complete.title"))
+                                            .font(DesignTokens.Typography.Semantic.pageTitle())
+
+                                        Text(L("onboarding.complete.subtitle"))
+                                            .font(DesignTokens.Typography.Semantic.body())
+                                            .foregroundColor(DesignTokens.Colors.Text.secondary)
                                     }
+                                    .fadeAndScaleTransition()
+                                    .zIndex(3)
+                                    .onAppear {
+                                        // Auto-complete after a brief moment
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                            if let completionId = viewModel.getCompletionHouseholdId() {
+                                                completeOnboarding(with: completionId)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -143,10 +143,10 @@ public struct OnboardingContainerView: View {
             await onComplete(householdId)
         }
     }
-    
+
     private func setupViewModels() {
         guard let factory = viewModelFactory else { return }
-        
+
         do {
             viewModel = try factory.makeOnboardingContainerViewModel()
             userInfoViewModel = try factory.makeUserInfoViewModel(currentUser: viewModel?.state.currentUser)

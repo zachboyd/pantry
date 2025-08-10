@@ -7,17 +7,18 @@ public extension String {
     /// - Returns: Trimmed string, or self if no trimming needed
     func trimmed() -> String {
         // Performance optimization: only create new string if needed
-        guard !isEmpty && (hasPrefix(" ") || hasSuffix(" ") || 
-              contains("\n") || contains("\r") || contains("\t")) else {
+        guard !isEmpty && (hasPrefix(" ") || hasSuffix(" ") ||
+            contains("\n") || contains("\r") || contains("\t"))
+        else {
             return self
         }
         return trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
+
     /// Check if string needs trimming (useful for validation)
     var needsTrimming: Bool {
-        !isEmpty && (hasPrefix(" ") || hasSuffix(" ") || 
-         contains("\n") || contains("\r") || contains("\t"))
+        !isEmpty && (hasPrefix(" ") || hasSuffix(" ") ||
+            contains("\n") || contains("\r") || contains("\t"))
     }
 }
 
@@ -30,7 +31,7 @@ public extension Optional where Wrapped == String {
         }
         return value
     }
-    
+
     /// Trim optional strings, preserving empty strings
     /// - Returns: Trimmed string or nil if original was nil
     func trimmedPreservingEmpty() -> String? {

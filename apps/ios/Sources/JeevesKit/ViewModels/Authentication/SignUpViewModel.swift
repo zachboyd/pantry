@@ -269,7 +269,6 @@ public final class SignUpViewModel: BaseReactiveViewModel<SignUpViewModel.State,
         }
     }
 
-
     // MARK: - Lifecycle
 
     override public func onAppear() async {

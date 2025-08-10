@@ -195,7 +195,6 @@ public final class LoginViewModel: BaseReactiveViewModel<LoginViewModel.State, A
         }
     }
 
-
     // MARK: - Lifecycle
 
     override public func onAppear() async {

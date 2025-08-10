@@ -25,6 +25,7 @@ public final class DependencyContainer {
     private var _notificationService: NotificationServiceProtocol?
 
     // MARK: - Repositories (Removed)
+
     // The repository pattern has been removed.
     // Services now interact directly with GraphQL through GraphQLService.
 
@@ -237,7 +238,6 @@ public final class DependencyContainer {
             )
         }
 
-
         if _notificationService == nil {
             Self.logger.info("🔔 Creating NotificationService...")
             _notificationService = try ServiceFactory.createNotificationService()
@@ -277,7 +277,7 @@ public final class DependencyContainer {
             _graphQLService = try ServiceFactory.createGraphQLService(
                 apolloClientService: apolloClientService
             )
-            
+
             // Initialize WatchManager after Apollo Client service
             _watchManager = WatchManager(apollo: apolloClientService.apollo)
             Self.logger.info("👁️ WatchManager initialized")
@@ -285,7 +285,7 @@ public final class DependencyContainer {
             guard let graphQLService = _graphQLService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "GraphQLService")
             }
-            
+
             // Initialize HydrationService with WatchManager
             _hydrationService = try ServiceFactory.createHydrationService(
                 graphQLService: graphQLService,
@@ -458,7 +458,7 @@ public final class DependencyContainer {
         }
         return service
     }
-    
+
     public func getHydrationService() throws -> HydrationService {
         guard let service = _hydrationService else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "HydrationService")
@@ -610,7 +610,7 @@ public final class DependencyContainer {
     public var graphQLService: GraphQLService? {
         return try? getGraphQLService()
     }
-    
+
     /// Get hydration service - available after initialization
     public var hydrationService: HydrationService? {
         return try? getHydrationService()
@@ -757,4 +757,3 @@ public struct ShoppingListItem: Codable, Identifiable, Sendable {
     public let completedBy: String?
     public let completedAt: Date?
 }
-

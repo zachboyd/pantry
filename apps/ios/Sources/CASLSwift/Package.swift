@@ -4,13 +4,13 @@ import PackageDescription
 let package = Package(
     name: "CASLSwift",
     platforms: [
-        .iOS(.v18)
+        .iOS(.v18),
     ],
     products: [
         .library(
             name: "CASLSwift",
             targets: ["CASLSwift"]
-        )
+        ),
     ],
     dependencies: [],
     targets: [
@@ -22,7 +22,7 @@ let package = Package(
                 "README.md",
                 "Documentation",
                 "Examples",
-                "Serialization/PermissionFormat.md"
+                "Serialization/PermissionFormat.md",
             ],
             sources: [
                 "Core",
@@ -30,13 +30,13 @@ let package = Package(
                 "Rules",
                 "Builders",
                 "Extensions",
-                "Serialization"
+                "Serialization",
             ]
         ),
         .testTarget(
             name: "CASLSwiftTests",
             dependencies: ["CASLSwift"],
             path: "Tests"
-        )
+        ),
     ]
 )

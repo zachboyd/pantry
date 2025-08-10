@@ -4,65 +4,66 @@ import Foundation
 public actor RuleEngine {
     private let ruleIndex: RuleIndex
     private var conditionEvaluator: ConditionEvaluator?
-    
+
     public init() {
-        self.ruleIndex = RuleIndex()
+        ruleIndex = RuleIndex()
     }
-    
+
     /// Set the condition evaluator
     public func setConditionEvaluator(_ evaluator: ConditionEvaluator) {
-        self.conditionEvaluator = evaluator
+        conditionEvaluator = evaluator
     }
-    
+
     /// Add a rule to the engine
     public func addRule(_ rule: Rule) async {
         await ruleIndex.add(rule)
     }
-    
+
     /// Add multiple rules to the engine
     public func addRules(_ rules: [Rule]) async {
         await ruleIndex.addRules(rules)
     }
-    
+
     /// Check if an action is allowed on a subject
     public func can(
         _ action: Action,
         _ subject: any Subject
     ) async -> Bool {
         let subjectType = subject.subjectType
-        
+
         // Capture evaluator locally to avoid actor isolation issues
-        let evaluator = self.conditionEvaluator
-        
+        let evaluator = conditionEvaluator
+
         // Find applicable rules
         let rule = await ruleIndex.findRule(
             for: action,
             subjectType: subjectType,
             evaluateConditions: { rule in
                 guard rule.hasConditions,
-                      let evaluator = evaluator else {
+                      let evaluator = evaluator
+                else {
                     return true
                 }
-                
+
                 // For type-based checks (using TypedSubject), skip condition evaluation
                 // as we're asking about general permissions on a subject type, not specific instances
                 if String(describing: type(of: subject)) == "TypedSubject" {
                     return true
                 }
-                
+
                 return evaluator.evaluate(rule.conditions!, against: subject)
             }
         )
-        
+
         // If we found a rule, return whether it allows (not inverted) the action
         if let rule = rule {
             return !rule.inverted
         }
-        
+
         // No rule found means not allowed
         return false
     }
-    
+
     /// Check if an action is forbidden on a subject
     public func cannot(
         _ action: Action,
@@ -70,7 +71,7 @@ public actor RuleEngine {
     ) async -> Bool {
         !(await can(action, subject))
     }
-    
+
     /// Get all rules that apply to a subject
     public func rulesFor(
         _ subject: any Subject
@@ -79,7 +80,7 @@ public actor RuleEngine {
             rule.matchesSubjectType(subject.subjectType)
         }
     }
-    
+
     /// Get permitted fields for an action on a subject
     public func permittedFieldsBy(
         _ action: Action,
@@ -87,26 +88,27 @@ public actor RuleEngine {
     ) async -> Set<String>? {
         let subjectType = subject.subjectType
         let rules = await ruleIndex.relevantRules(for: action, subjectType: subjectType)
-        
+
         // Capture evaluator locally
-        let evaluator = self.conditionEvaluator
-        
+        let evaluator = conditionEvaluator
+
         var permittedFields: Set<String>?
         var hasFieldRestrictions = false
-        
+
         for rule in rules {
             // Skip rules with conditions unless they match
             if rule.hasConditions {
                 if let evaluator = evaluator,
-                   !evaluator.evaluate(rule.conditions!, against: subject) {
+                   !evaluator.evaluate(rule.conditions!, against: subject)
+                {
                     continue
                 }
             }
-            
+
             // If rule has field restrictions
             if let fields = rule.fields {
                 hasFieldRestrictions = true
-                
+
                 if rule.inverted {
                     // Remove fields for inverted rules
                     if permittedFields == nil {
@@ -122,21 +124,21 @@ public actor RuleEngine {
                         permittedFields?.formUnion(fields)
                     }
                 }
-            } else if !rule.inverted && !hasFieldRestrictions {
+            } else if !rule.inverted, !hasFieldRestrictions {
                 // If a rule allows all fields and we haven't seen field restrictions yet,
                 // return nil to indicate all fields are allowed
                 return nil
             }
         }
-        
+
         return permittedFields
     }
-    
+
     /// Clear all rules
     public func clear() async {
         await ruleIndex.clear()
     }
-    
+
     /// Get all rules currently in the engine
     public func getRules() async -> [Rule] {
         await ruleIndex.getAllRules()

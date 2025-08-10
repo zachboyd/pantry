@@ -14,23 +14,23 @@ public struct SubjectBuilder {
 public final class FluentSubjectBuilder<Properties: Sendable> {
     private var properties: Properties
     private var subjectType: SubjectType?
-    
+
     public init(properties: Properties) {
         self.properties = properties
     }
-    
+
     /// Set a custom subject type
     public func withType(_ type: String) -> Self {
-        self.subjectType = SubjectType(type)
+        subjectType = SubjectType(type)
         return self
     }
-    
+
     /// Set a custom subject type
     public func withType(_ type: SubjectType) -> Self {
-        self.subjectType = type
+        subjectType = type
         return self
     }
-    
+
     /// Build a generic subject
     public func build() -> GenericSubject<Properties> {
         GenericSubject(properties, subjectType: subjectType)
@@ -42,24 +42,24 @@ public final class FluentIdentifiableSubjectBuilder<ID: Hashable & Sendable, Pro
     private let id: ID
     private var properties: Properties
     private var subjectType: SubjectType?
-    
+
     public init(id: ID, properties: Properties) {
         self.id = id
         self.properties = properties
     }
-    
+
     /// Set a custom subject type
     public func withType(_ type: String) -> Self {
-        self.subjectType = SubjectType(type)
+        subjectType = SubjectType(type)
         return self
     }
-    
+
     /// Set a custom subject type
     public func withType(_ type: SubjectType) -> Self {
-        self.subjectType = type
+        subjectType = type
         return self
     }
-    
+
     /// Build an identifiable generic subject
     public func build() -> IdentifiableGenericSubject<ID, Properties> {
         IdentifiableGenericSubject(id: id, properties: properties, subjectType: subjectType)
@@ -68,23 +68,22 @@ public final class FluentIdentifiableSubjectBuilder<ID: Hashable & Sendable, Pro
 
 // MARK: - Factory Methods
 
-public struct SubjectFactory {
-    
+public enum SubjectFactory {
     /// Create a simple subject with just a type
     public static func simple(type: String) -> SimpleSubject {
         SimpleSubject(type: type)
     }
-    
+
     /// Create a simple subject with type and id
     public static func simple(type: String, id: String) -> SimpleSubject {
         SimpleSubject(type: type, id: id)
     }
-    
+
     /// Create a simple subject with type, id, and properties
     public static func simple(type: String, id: String? = nil, properties: [String: Any]) -> SimpleSubject {
         SimpleSubject(type: type, id: id, properties: properties)
     }
-    
+
     /// Create a generic subject from any Sendable type
     public static func generic<T: Sendable>(_ value: T, type: String? = nil) -> GenericSubject<T> {
         if let type = type {
@@ -93,7 +92,7 @@ public struct SubjectFactory {
             return GenericSubject(value)
         }
     }
-    
+
     /// Create an identifiable generic subject
     public static func identifiable<ID: Hashable & Sendable, T: Sendable>(
         id: ID,
@@ -106,12 +105,12 @@ public struct SubjectFactory {
             return IdentifiableGenericSubject(id: id, properties: properties)
         }
     }
-    
+
     /// Start building a fluent subject
     public static func build<T: Sendable>(_ properties: T) -> FluentSubjectBuilder<T> {
         FluentSubjectBuilder(properties: properties)
     }
-    
+
     /// Start building a fluent identifiable subject
     public static func build<ID: Hashable & Sendable, T: Sendable>(
         id: ID,
@@ -128,12 +127,12 @@ public struct SubjectFactory {
 public struct SubjectTyped<Value> {
     public var wrappedValue: Value
     public let subjectType: SubjectType
-    
+
     public init(wrappedValue: Value, type: String? = nil) {
         self.wrappedValue = wrappedValue
-        self.subjectType = SubjectType(type ?? String(describing: Value.self))
+        subjectType = SubjectType(type ?? String(describing: Value.self))
     }
-    
+
     public var projectedValue: SubjectType {
         subjectType
     }

@@ -22,10 +22,10 @@ public final class UserService: UserServiceProtocol {
 
     /// User data cache
     private var userCache: [String: User] = [:]
-    
+
     /// Current user ID for proper cache tracking
     private var currentUserId: String?
-    
+
     /// Cached watched results for query deduplication
     private var currentUserWatch: WatchedResult<User>?
     private var userWatches: [String: WatchedResult<User>] = [:]
@@ -33,7 +33,6 @@ public final class UserService: UserServiceProtocol {
     /// Apollo watchers for reactive updates (stored to allow cancellation)
     private var apolloWatchers: [String: GraphQLQueryWatcher<JeevesGraphQL.GetUserQuery>] = [:]
     private var currentUserApolloWatcher: GraphQLQueryWatcher<JeevesGraphQL.GetCurrentUserQuery>?
-    
 
     // MARK: - Initialization
 
@@ -135,49 +134,49 @@ public final class UserService: UserServiceProtocol {
         currentUserId = nil
         currentUserWatch = nil
         userWatches.removeAll()
-        
+
         // Cancel all Apollo watchers
         apolloWatchers.values.forEach { $0.cancel() }
         apolloWatchers.removeAll()
         currentUserApolloWatcher?.cancel()
         currentUserApolloWatcher = nil
-        
+
         Self.logger.info("✅ User cache and watchers cleared")
     }
-    
+
     // MARK: - Reactive Watch Methods
-    
+
     /// Watch current user with reactive updates
     public func watchCurrentUser() -> WatchedResult<User> {
         Self.logger.info("👁️ Creating watched result for current user")
-        
+
         // Return existing watch if available
         if let existing = currentUserWatch {
             Self.logger.debug("♻️ Reusing existing current user watch")
             return existing
         }
-        
+
         // Create the watched result
         let result = WatchedResult<User>()
         result.setLoading(true)
-        
+
         // Get the Apollo client directly (like in the demo)
         guard let graphQLService = graphQLService as? GraphQLService else {
             Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
             result.setError(ServiceError.serviceUnavailable("GraphQL"))
             return result
         }
-        
+
         // Create the query for current user
         let query = JeevesGraphQL.GetCurrentUserQuery()
-        
+
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
             cachePolicy: .returnCacheDataAndFetch
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetCurrentUserQuery.Data>, Error>) in
             guard let self = self, let result = result else { return }
-            
+
             switch graphQLResult {
             case let .success(data):
                 if let userData = data.data?.currentUser {
@@ -201,29 +200,29 @@ public final class UserService: UserServiceProtocol {
                         createdAt: userData.created_at,
                         updatedAt: userData.updated_at
                     )
-                    
+
                     // Update the watched result (this triggers view updates!)
                     Task { @MainActor in
-                        let source: WatchedResult<User>.DataSource = 
+                        let source: WatchedResult<User>.DataSource =
                             data.source == .cache ? .cache : .server
                         result.update(value: user, source: source)
                         result.setLoading(false)
-                        
+
                         // Also update our cache
                         self.currentUserId = user.id
                         self.userCache[user.id] = user
-                        
+
                         Self.logger.info("🔄 Current user watch updated from \(source)")
                     }
                 }
-                
+
                 if let errors = data.errors, !errors.isEmpty {
                     Self.logger.warning("⚠️ Watch query returned errors")
                     for error in errors {
                         Self.logger.warning("  - \(error.message ?? "Unknown error")")
                     }
                 }
-                
+
             case let .failure(error):
                 Task { @MainActor in
                     result.setError(error)
@@ -232,65 +231,65 @@ public final class UserService: UserServiceProtocol {
                 }
             }
         }
-        
+
         // Store the watcher so we can cancel it later
         currentUserApolloWatcher = watcher
-        
+
         // Cache the watched result
         currentUserWatch = result
-        
+
         Self.logger.info("✅ Current user watch created with true reactive watching")
         return result
     }
-    
+
     /// Watch specific user by ID with reactive updates
     public func watchUser(id: String) -> WatchedResult<User> {
         Self.logger.info("👁️ Creating watched result for user: \(id)")
-        
+
         // Return existing watch if available
         if let existing = userWatches[id] {
             Self.logger.debug("♻️ Reusing existing watch for user: \(id)")
             return existing
         }
-        
+
         // Create the watched result
         let result = WatchedResult<User>()
         result.setLoading(true)
-        
+
         // Get the Apollo client directly (like in the demo)
         guard let graphQLService = graphQLService as? GraphQLService else {
             Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
             result.setError(ServiceError.serviceUnavailable("GraphQL"))
             return result
         }
-        
+
         // Create the query for the specific user
         let input = JeevesGraphQL.GetUserInput(id: id)
         let query = JeevesGraphQL.GetUserQuery(input: input)
-        
+
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
             cachePolicy: .returnCacheDataAndFetch
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetUserQuery.Data>, Error>) in
             guard let self = self, let result = result else { return }
-            
+
             switch graphQLResult {
             case let .success(data):
                 if let userData = data.data?.user {
                     // Transform GraphQL data to User model
                     let user = self.createUserFromGraphQLData(userData)
-                    
+
                     // Update the watched result (this triggers view updates!)
                     Task { @MainActor in
-                        let source: WatchedResult<User>.DataSource = 
+                        let source: WatchedResult<User>.DataSource =
                             data.source == .cache ? .cache : .server
                         result.update(value: user, source: source)
                         result.setLoading(false)
-                        
+
                         // Also update our cache
                         self.userCache[user.id] = user
-                        
+
                         Self.logger.info("🔄 User watch updated from \(source) for ID: \(id)")
                     }
                 } else {
@@ -299,14 +298,14 @@ public final class UserService: UserServiceProtocol {
                         result.setLoading(false)
                     }
                 }
-                
+
                 if let errors = data.errors, !errors.isEmpty {
                     Self.logger.warning("⚠️ Watch query returned errors for user ID: \(id)")
                     for error in errors {
                         Self.logger.warning("  - \(error.message ?? "Unknown error")")
                     }
                 }
-                
+
             case let .failure(error):
                 Task { @MainActor in
                     result.setError(error)
@@ -315,17 +314,17 @@ public final class UserService: UserServiceProtocol {
                 }
             }
         }
-        
+
         // Store the watcher so we can cancel it later
         apolloWatchers[id] = watcher
-        
+
         // Cache the watched result
         userWatches[id] = result
-        
+
         Self.logger.info("✅ User watch created with true reactive watching for ID: \(id)")
         return result
     }
-    
+
     // Helper method to create User from GraphQL data
     private func createUserFromGraphQLData(_ userData: JeevesGraphQL.GetUserQuery.Data.User) -> User {
         return User(

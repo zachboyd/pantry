@@ -1,5 +1,5 @@
-import SwiftUI
 import Combine
+import SwiftUI
 
 // MARK: - Environment Key for Ability
 
@@ -9,8 +9,8 @@ public struct AbilityEnvironmentKey: EnvironmentKey {
 }
 
 /// Environment values extension
-extension EnvironmentValues {
-    public var ability: PureAbility? {
+public extension EnvironmentValues {
+    var ability: PureAbility? {
         get { self[AbilityEnvironmentKey.self] }
         set { self[AbilityEnvironmentKey.self] = newValue }
     }
@@ -23,14 +23,15 @@ public struct CanViewModifier: ViewModifier {
     let action: String
     let subject: String
     let ability: PureAbility?
-    
+
     @Environment(\.ability) private var environmentAbility
-    
+
     public func body(content: Content) -> some View {
         let currentAbility = ability ?? environmentAbility
-        
+
         if let currentAbility = currentAbility,
-           currentAbility.canSync(action, subject) ?? false {
+           currentAbility.canSync(action, subject) ?? false
+        {
             content
         }
     }
@@ -39,7 +40,7 @@ public struct CanViewModifier: ViewModifier {
 /// View modifier to inject ability into environment
 public struct AbilityModifier: ViewModifier {
     let ability: PureAbility
-    
+
     public func body(content: Content) -> some View {
         content
             .environment(\.ability, ability)
@@ -52,14 +53,15 @@ public struct PermissionBasedContentModifier<Alternative: View>: ViewModifier {
     let subject: String
     let ability: PureAbility?
     let alternative: Alternative
-    
+
     @Environment(\.ability) private var environmentAbility
-    
+
     public func body(content: Content) -> some View {
         let currentAbility = ability ?? environmentAbility
-        
+
         if let currentAbility = currentAbility,
-           currentAbility.canSync(action, subject) ?? false {
+           currentAbility.canSync(action, subject) ?? false
+        {
             content
         } else {
             alternative
@@ -69,9 +71,9 @@ public struct PermissionBasedContentModifier<Alternative: View>: ViewModifier {
 
 // MARK: - View Extensions
 
-extension View {
+public extension View {
     /// Shows this view only if the user has the specified permission
-    public func canView(
+    func canView(
         _ action: String,
         _ subject: String,
         ability: PureAbility? = nil
@@ -82,14 +84,14 @@ extension View {
             ability: ability
         ))
     }
-    
+
     /// Injects an ability into the environment
-    public func ability(_ ability: PureAbility) -> some View {
+    func ability(_ ability: PureAbility) -> some View {
         modifier(AbilityModifier(ability: ability))
     }
-    
+
     /// Shows alternative content when permission is denied
-    public func permissionBased<Alternative: View>(
+    func permissionBased<Alternative: View>(
         _ action: String,
         _ subject: String,
         ability: PureAbility? = nil,
@@ -113,10 +115,10 @@ public struct PermissionButton: View {
     let subject: String
     let ability: PureAbility?
     let onTap: () -> Void
-    
+
     @Environment(\.ability) private var environmentAbility
     @State private var hasPermission = false
-    
+
     public init(
         _ title: String,
         action: String,
@@ -130,7 +132,7 @@ public struct PermissionButton: View {
         self.ability = ability
         self.onTap = onTap
     }
-    
+
     public var body: some View {
         Button(title) {
             if hasPermission {
@@ -145,7 +147,7 @@ public struct PermissionButton: View {
             checkPermission()
         }
     }
-    
+
     private func checkPermission() {
         let currentAbility = ability ?? environmentAbility
         hasPermission = currentAbility?.canSync(action, subject) ?? false
@@ -159,9 +161,9 @@ public struct PermissionLink<Destination: View>: View {
     let subject: String
     let ability: PureAbility?
     let destination: Destination
-    
+
     @Environment(\.ability) private var environmentAbility
-    
+
     public init(
         _ title: String,
         action: String,
@@ -175,12 +177,13 @@ public struct PermissionLink<Destination: View>: View {
         self.ability = ability
         self.destination = destination()
     }
-    
+
     public var body: some View {
         let currentAbility = ability ?? environmentAbility
-        
+
         if let currentAbility = currentAbility,
-           currentAbility.canSync(action, subject) ?? false {
+           currentAbility.canSync(action, subject) ?? false
+        {
             NavigationLink(title, destination: destination)
         }
     }
@@ -192,9 +195,9 @@ public struct PermissionSection<Content: View>: View {
     let subject: String
     let ability: PureAbility?
     let content: Content
-    
+
     @Environment(\.ability) private var environmentAbility
-    
+
     public init(
         action: String,
         subject: String,
@@ -206,7 +209,7 @@ public struct PermissionSection<Content: View>: View {
         self.ability = ability
         self.content = content()
     }
-    
+
     public var body: some View {
         content
             .canView(action, subject, ability: ability)
@@ -217,41 +220,41 @@ public struct PermissionSection<Content: View>: View {
 
 struct ExampleView: View {
     @Environment(\.ability) private var ability
-    
+
     var body: some View {
         VStack {
             // Only show if user can read posts
             Text("Welcome!")
                 .canView("read", "post")
-            
+
             // Show different content based on permissions
             Text("Admin Panel")
                 .permissionBased("manage", "users") {
                     Text("You need admin access")
                         .foregroundColor(.red)
                 }
-            
+
             // Permission-aware button
             PermissionButton("Delete", action: "delete", subject: "post") {
                 deletePost()
             }
-            
+
             // Permission-aware navigation
             PermissionLink("Settings", action: "update", subject: "settings") {
                 Text("Settings Content")
             }
-            
+
             // Permission-aware section
             PermissionSection(action: "manage", subject: "content") {
                 VStack {
                     Text("Content Management")
-                    Button("Edit Article") { }
-                    Button("Delete Article") { }
+                    Button("Edit Article") {}
+                    Button("Delete Article") {}
                 }
             }
         }
     }
-    
+
     func deletePost() {
         // Delete implementation
     }

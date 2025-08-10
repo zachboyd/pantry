@@ -87,7 +87,7 @@ public final class ServiceFactory {
         logger.info("🏭 Creating UserService with GraphQL")
 
         let service = UserService(
-            authService: authService, 
+            authService: authService,
             graphQLService: graphQLService,
             watchManager: watchManager
         )
@@ -149,24 +149,25 @@ public final class ServiceFactory {
         logger.info("✅ NotificationService created successfully")
         return service
     }
-    
+
     /// Create HydrationService with all required dependencies
     public static func createHydrationService(
         graphQLService: GraphQLServiceProtocol,
         watchManager: WatchManager? = nil
     ) throws -> HydrationService {
         logger.info("🏭 Creating HydrationService")
-        
+
         let service = HydrationService(
             graphQLService: graphQLService,
             watchManager: watchManager
         )
-        
+
         logger.info("✅ HydrationService created successfully")
         return service
     }
 
     // MARK: - Repository Creation (Removed)
+
     // The repository pattern has been removed in favor of direct GraphQL service usage.
     // Services now interact directly with GraphQL through Apollo Client.
 
@@ -198,6 +199,7 @@ public final class ServiceFactory {
 // - NotificationService.swift
 
 // MARK: - Repository Pattern Removed
+
 // The repository pattern has been removed from this architecture.
 // All services now interact directly with GraphQL through the GraphQLService,
 // which provides a cleaner and more direct data access pattern.

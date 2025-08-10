@@ -7,12 +7,12 @@ import Observation
 @Observable @MainActor
 public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsViewModel.State, UserSettingsDependencies> {
     private static let logger = Logger.ui
-    
+
     // MARK: - Watched Data
-    
+
     /// Watched current user that updates reactively
     public let currentUserWatch: WatchedResult<User>
-    
+
     /// Watched household list that updates reactively
     public let householdsWatch: WatchedResult<[Household]>
 
@@ -209,7 +209,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
     public var isAuthenticated: Bool {
         dependencies.authService.isAuthenticated
     }
-    
+
     /// Check if current user can manage members for a specific household
     /// This is reactive and will automatically update when permissions change
     public func canManageMembers(for householdId: String) -> Bool {
@@ -222,21 +222,21 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
 
     public required init(dependencies: UserSettingsDependencies) {
         // Start watching data immediately
-        self.currentUserWatch = dependencies.userService.watchCurrentUser()
-        self.householdsWatch = dependencies.householdService.watchUserHouseholds()
-        
+        currentUserWatch = dependencies.userService.watchCurrentUser()
+        householdsWatch = dependencies.householdService.watchUserHouseholds()
+
         let initialState = State()
         super.init(dependencies: dependencies, initialState: initialState)
-        
+
         // Register watches for automatic cleanup
         registerWatch(currentUserWatch)
         registerWatch(householdsWatch)
-        
+
         Self.logger.info("⚙️ UserSettingsViewModel initialized")
 
         loadNotificationSettings()
         loadSelectedHousehold()
-        
+
         // Update state when watched data changes
         Task { @MainActor in
             await self.observeWatchedData()
@@ -245,18 +245,18 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
 
     public required init(dependencies: UserSettingsDependencies, initialState: State) {
         // Start watching data immediately
-        self.currentUserWatch = dependencies.userService.watchCurrentUser()
-        self.householdsWatch = dependencies.householdService.watchUserHouseholds()
-        
+        currentUserWatch = dependencies.userService.watchCurrentUser()
+        householdsWatch = dependencies.householdService.watchUserHouseholds()
+
         super.init(dependencies: dependencies, initialState: initialState)
-        
+
         // Register watches for automatic cleanup
         registerWatch(currentUserWatch)
         registerWatch(householdsWatch)
-        
+
         loadNotificationSettings()
         loadSelectedHousehold()
-        
+
         // Update state when watched data changes
         Task { @MainActor in
             await self.observeWatchedData()
@@ -268,7 +268,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
     override public func onAppear() async {
         Self.logger.debug("👁️ UserSettingsViewModel appeared")
         await super.onAppear()
-        
+
         // No need to load manually - watched data will provide updates
         // Just update state from watched data if available
         if let user = currentUserWatch.value {
@@ -278,7 +278,6 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
             updateState { $0.userHouseholds = households }
         }
     }
-    
 
     override public func refresh() async {
         Self.logger.debug("🔄 UserSettingsViewModel refresh")
@@ -635,9 +634,9 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
             $0.viewState = .error(currentError ?? .unknown(errorMessage))
         }
     }
-    
+
     // MARK: - Private Methods (Reactive)
-    
+
     /// Observe changes to watched data
     private func observeWatchedData() async {
         // The WatchedResults are @Observable, so changes will trigger UI updates automatically
@@ -648,7 +647,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         if let households = householdsWatch.value {
             updateState { state in
                 state.userHouseholds = households
-                
+
                 // Validate selected household
                 if let selectedId = state.selectedHouseholdId,
                    !households.contains(where: { $0.id == selectedId })
@@ -660,18 +659,17 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
             }
         }
     }
-    
-    
+
     // MARK: - WatchedResult Helpers Override
-    
+
     override public var isWatchedDataLoading: Bool {
         currentUserWatch.isLoading || householdsWatch.isLoading
     }
-    
+
     override public var watchedDataError: Error? {
         currentUserWatch.error ?? householdsWatch.error
     }
-    
+
     override public func retryFailedWatches() async {
         if currentUserWatch.error != nil {
             await currentUserWatch.retry()

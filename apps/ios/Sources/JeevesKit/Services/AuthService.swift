@@ -1,7 +1,7 @@
 import Apollo
+import CASLSwift
 import Combine
 import Foundation
-import CASLSwift
 
 /// Protocol defining authentication service interface
 @MainActor
@@ -51,12 +51,12 @@ public class AuthService: AuthServiceProtocol {
     public var currentAuthUserId: String? {
         return currentAuthUser?.id
     }
-    
+
     /// Expose authTokenManager for other services that need it (e.g., ApolloClientService)
     public var tokenManager: AuthTokenManager {
         return authTokenManager
     }
-    
+
     /// Expose permissionService for creating PermissionProvider
     public var permissionService: PermissionServiceProtocol {
         return _permissionService
@@ -75,7 +75,7 @@ public class AuthService: AuthServiceProtocol {
         self.apiClient = apiClient
         self.authTokenManager = authTokenManager
         self.apolloClient = apolloClient
-        self._permissionService = permissionService ?? PermissionService()
+        _permissionService = permissionService ?? PermissionService()
 
         Self.logger.info("🔐 AuthService initializing...")
 
@@ -323,7 +323,7 @@ public class AuthService: AuthServiceProtocol {
                 isAuthenticated = false
                 isLoading = false
             }
-            
+
             // Clear permissions
             await _permissionService.clearPermissions()
 
@@ -352,7 +352,7 @@ public class AuthService: AuthServiceProtocol {
     /// Load user permissions from backend
     public func loadUserPermissions() async {
         Self.logger.info("🔐 Loading user permissions")
-        
+
         // Connect permission service to Apollo for automatic updates
         if let apolloClient = apolloClient {
             await _permissionService.subscribeToUserPermissions(apolloClient: apolloClient)
@@ -377,7 +377,7 @@ public class AuthService: AuthServiceProtocol {
 
         // Clear API client state
         apiClient.clearAuthenticationState()
-        
+
         // Clear permissions
         await permissionService.clearPermissions()
 
@@ -740,7 +740,7 @@ public enum AuthServiceError: Error, LocalizedError {
             return "error.unknown"
         }
     }
-    
+
     /// Returns any associated error for string formatting
     public var associatedError: Error? {
         switch self {
@@ -753,7 +753,7 @@ public enum AuthServiceError: Error, LocalizedError {
             return nil
         }
     }
-    
+
     public var errorDescription: String? {
         // For backward compatibility, return a basic English description
         // Views should use localizationKey for proper localization
@@ -800,12 +800,12 @@ public extension AuthServiceError {
     /// This method should be called from MainActor contexts (Views, ViewModels)
     @MainActor
     func localizedMessage() -> String {
-        if let associatedError = self.associatedError {
+        if let associatedError = associatedError {
             // For errors with associated errors, format the message
-            return String(format: L(self.localizationKey), associatedError.localizedDescription)
+            return String(format: L(localizationKey), associatedError.localizedDescription)
         } else {
             // For simple errors, just use the localization key
-            return L(self.localizationKey)
+            return L(localizationKey)
         }
     }
 }

@@ -10,7 +10,7 @@ import SwiftUI
 /// View for editing household information
 public struct HouseholdEditView: View {
     private static let logger = Logger.household
-    
+
     let householdId: String
     let isReadOnly: Bool
 
@@ -36,7 +36,7 @@ public struct HouseholdEditView: View {
                                 Spacer()
                                 Text(viewModel.name)
                             }
-                            
+
                             if !viewModel.description.isEmpty {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text(L("household.description"))
@@ -56,8 +56,8 @@ public struct HouseholdEditView: View {
                                 get: { viewModel.description },
                                 set: { viewModel.description = $0 }
                             ), axis: .vertical)
-                            .textInputAutocapitalization(.sentences)
-                            .lineLimit(3, reservesSpace: true)
+                                .textInputAutocapitalization(.sentences)
+                                .lineLimit(3, reservesSpace: true)
                         }
                     } header: {
                         Text(L("household.edit.section_title"))
@@ -66,7 +66,6 @@ public struct HouseholdEditView: View {
                             Text(L("household.edit.section_footer"))
                         }
                     }
-
                 }
                 .navigationTitle(viewModel.isReadOnly ? L("household.view.title") : L("household.edit.title"))
                 .navigationBarTitleDisplayMode(.inline)

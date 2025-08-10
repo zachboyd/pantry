@@ -19,7 +19,7 @@ public enum AppPhase: CustomStringConvertible {
     case hydrated
     case signingOut
     case error
-    
+
     public var description: String {
         switch self {
         case .launching: return "launching"
@@ -52,7 +52,6 @@ public final class AppState {
     // MARK: - Services
 
     public let container = DependencyContainer()
-    
 
     public var authService: (any AuthServiceProtocol)? {
         container.authService
@@ -150,7 +149,7 @@ public final class AppState {
             currentHousehold = nil
             currentUser = nil
             needsOnboarding = false
-            
+
             // Always go to unauthenticated state - user should be able to sign in again
             // even if network sign out failed
             phase = .unauthenticated
@@ -188,7 +187,7 @@ public final class AppState {
         // Update to authenticated state
         phase = .authenticated
         Self.logger.info("✅ Successfully transitioned to authenticated state")
-        
+
         // Start hydration process
         await startHydration()
     }
@@ -205,25 +204,25 @@ public final class AppState {
             }
         }
     }
-    
+
     /// Switch to a different household
     public func switchHousehold(to household: Household) async {
         Self.logger.info("🔄 Switching to household: \(household.name)")
-        
+
         // Update current household
         selectHousehold(household)
-        
+
         // Reset any tab-specific state
         // This ensures all tabs reload with the new household context
         NotificationCenter.default.post(name: .householdChanged, object: household)
-        
+
         Self.logger.info("✅ Household switch complete")
     }
 
     /// Refresh the current user from the backend
     public func refreshCurrentUser() async {
         Self.logger.info("🔄 Refreshing current user")
-        
+
         if let userService = userService {
             do {
                 if let refreshedUser = try await userService.getCurrentUser() {
@@ -235,21 +234,22 @@ public final class AppState {
             }
         }
     }
-    
+
     /// Complete onboarding with a selected household
     public func completeOnboarding(householdId: String) async {
         Self.logger.info("🎉 Completing onboarding with household: \(householdId)")
 
         // Get the household
         if let householdService = householdService,
-           let userService = userService {
+           let userService = userService
+        {
             do {
                 // Refresh the current user to get updated name
                 if let refreshedUser = try await userService.getCurrentUser() {
                     Self.logger.info("🔄 Refreshed user after onboarding: \(refreshedUser.name ?? "Unknown")")
                     currentUser = refreshedUser
                 }
-                
+
                 let household = try await householdService.getHousehold(id: householdId)
                 currentHousehold = household
                 needsOnboarding = false
@@ -271,35 +271,35 @@ public final class AppState {
     /// Start the hydration process
     private func startHydration() async {
         Self.logger.info("💧 Starting hydration process")
-        
+
         // Transition to hydrating phase
         phase = .hydrating
-        
+
         do {
             // First, get the user ID from auth service
             guard let authService = authService,
-                  let userId = authService.currentUser?.id else {
+                  let userId = authService.currentUser?.id
+            else {
                 Self.logger.error("❌ No authenticated user found for service initialization")
                 throw AppError.authenticationFailed
             }
-            
+
             // Initialize all services for the authenticated user
             Self.logger.info("🔧 Initializing all services for authenticated user: \(userId)")
             try await container.initializeForUser(userId)
             Self.logger.info("✅ All services initialized successfully")
-            
+
             // Don't setup cache observers yet - wait until after hydration
             // so we have initial data to observe
-            
+
             // Load user permissions
             Self.logger.info("🔐 Loading user permissions")
             await authService.loadUserPermissions()
             Self.logger.info("✅ User permissions loaded")
-            
+
             // Execute the hydrate query
             try await hydrateUserData()
-            
-            
+
             // Transition to hydrated phase
             phase = .hydrated
             Self.logger.info("✅ Hydration complete, app ready")
@@ -328,28 +328,28 @@ public final class AppState {
         let graphQLService = await MainActor.run {
             GraphQLService(apolloClientService: apolloClientService)
         }
-        
+
         let hydrationService = await MainActor.run {
             HydrationService(graphQLService: graphQLService)
         }
         let result = try await hydrationService.hydrateUserData()
-        
+
         Self.logger.info("✅ Hydrated user data")
         Self.logger.info("📊 Found \(result.households.count) households")
 
         // Use households from the hydration result
         let households = result.households
         let currentUser = result.currentUser
-        
+
         // Store current user
         self.currentUser = currentUser
         Self.logger.info("📊 Initial user from hydration: \(currentUser.name ?? "Unknown")")
         Self.logger.info("   First: '\(currentUser.firstName)', Last: '\(currentUser.lastName)', Display: '\(currentUser.displayName ?? "nil")'")
-        
+
         // Check if user needs onboarding based on missing user info OR no households
         let needsUserInfo = currentUser.firstName.isEmpty || currentUser.lastName.isEmpty
         let hasNoHouseholds = households.isEmpty
-        
+
         if needsUserInfo || hasNoHouseholds {
             needsOnboarding = true
             if needsUserInfo {

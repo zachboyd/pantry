@@ -6,7 +6,7 @@ import SwiftUI
 public struct ErrorAlertModifier: ViewModifier {
     @Binding var error: ViewModelError?
     let onDismiss: (() -> Void)?
-    
+
     public func body(content: Content) -> some View {
         content
             .alert(
@@ -24,7 +24,7 @@ public struct ErrorAlertModifier: ViewModifier {
             } message: { error in
                 VStack(alignment: .leading, spacing: 8) {
                     Text(error.errorDescription ?? "An unexpected error occurred")
-                    
+
                     if let recoverySuggestion = error.recoverySuggestion {
                         Text(recoverySuggestion)
                             .font(.caption)
@@ -55,11 +55,11 @@ public extension View {
 public struct ErrorBoundary<Content: View>: View {
     @ViewBuilder let content: () -> Content
     @State private var error: ViewModelError?
-    
+
     public init(@ViewBuilder content: @escaping () -> Content) {
         self.content = content
     }
-    
+
     public var body: some View {
         content()
             .errorAlert(error: $error)
@@ -84,18 +84,18 @@ public extension EnvironmentValues {
 /// A handler for propagating errors up the view hierarchy
 public struct ErrorHandler: Sendable {
     private let handler: @Sendable (ViewModelError) -> Void
-    
+
     public init(handler: @escaping @Sendable (ViewModelError) -> Void) {
         self.handler = handler
     }
-    
+
     public func handle(_ error: ViewModelError) {
         handler(error)
     }
-    
+
     public func handle(_ error: Error) {
         let viewModelError: ViewModelError
-        
+
         switch error {
         case let vmError as ViewModelError:
             viewModelError = vmError
@@ -104,7 +104,7 @@ public struct ErrorHandler: Sendable {
         default:
             viewModelError = .unknown(error.localizedDescription)
         }
-        
+
         handler(viewModelError)
     }
 }
@@ -122,7 +122,7 @@ public extension View {
         errorHandler: ErrorHandler,
         _ operation: @escaping @Sendable () async throws -> T
     ) -> some View {
-        self.task(priority: priority) {
+        task(priority: priority) {
             do {
                 _ = try await operation()
             } catch {

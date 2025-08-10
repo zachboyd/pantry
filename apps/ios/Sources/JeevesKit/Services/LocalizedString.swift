@@ -21,13 +21,13 @@ public extension String {
     var localized: String {
         return L(self)
     }
-    
+
     /// Returns the localized version of this string with arguments
     @MainActor
     func localized(with args: CVarArg...) -> String {
         return L(self, args)
     }
-    
+
     /// Returns the localized plural version of this string
     @MainActor
     func localizedPlural(count: Int, args: CVarArg...) -> String {

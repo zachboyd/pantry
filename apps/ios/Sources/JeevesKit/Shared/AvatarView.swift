@@ -3,13 +3,13 @@ import SwiftUI
 /// A reusable avatar component that displays user profile image or initials
 public struct AvatarView: View {
     // MARK: - Size Definition
-    
+
     public enum Size {
         case small
         case medium
         case large
         case extraLarge
-        
+
         var value: CGFloat {
             switch self {
             case .small: return 32
@@ -18,7 +18,7 @@ public struct AvatarView: View {
             case .extraLarge: return 80
             }
         }
-        
+
         var fontSize: CGFloat {
             switch self {
             case .small: return 14
@@ -28,30 +28,30 @@ public struct AvatarView: View {
             }
         }
     }
-    
+
     // MARK: - Properties
-    
+
     private let user: User?
     private let size: Size
     private let onTap: (() -> Void)?
-    
+
     @State private var isHovered = false
-    
+
     // MARK: - Computed Properties
-    
+
     private var displayName: String {
         user?.name ?? "Unknown"
     }
-    
+
     private var initials: String {
         // Use the User model's built-in initials property
         user?.initials ?? "?"
     }
-    
+
     private var avatarUrl: String? {
         user?.avatarUrl
     }
-    
+
     private var backgroundColor: Color {
         // Generate a consistent color based on the user ID
         if let userId = user?.id {
@@ -62,9 +62,9 @@ public struct AvatarView: View {
             return DesignTokens.Colors.Surface.secondary
         }
     }
-    
+
     // MARK: - Initializers
-    
+
     public init(
         user: User?,
         size: Size = .medium,
@@ -74,17 +74,18 @@ public struct AvatarView: View {
         self.size = size
         self.onTap = onTap
     }
-    
+
     // MARK: - Body
-    
+
     public var body: some View {
         let avatarContent = Group {
             if let user = user, user.isAi {
                 // Show AI avatar for AI users using the dedicated component
                 AIAvatarView(customSize: size.value)
             } else if let avatarUrl = avatarUrl,
-               !avatarUrl.isEmpty,
-               let url = URL(string: avatarUrl) {
+                      !avatarUrl.isEmpty,
+                      let url = URL(string: avatarUrl)
+            {
                 // Show async image
                 AsyncImage(url: url) { phase in
                     switch phase {
@@ -92,18 +93,18 @@ public struct AvatarView: View {
                         ProgressView()
                             .scaleEffect(0.5)
                             .frame(width: size.value, height: size.value)
-                        
-                    case .success(let image):
+
+                    case let .success(image):
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: size.value, height: size.value)
                             .clipShape(Circle())
-                        
+
                     case .failure:
                         // Fall back to initials on failure
                         initialsView
-                        
+
                     @unknown default:
                         initialsView
                     }
@@ -118,7 +119,7 @@ public struct AvatarView: View {
         }
         .frame(width: size.value, height: size.value)
         .contentShape(Circle())
-        
+
         if let onTap = onTap {
             Button(action: onTap) {
                 avatarContent
@@ -138,15 +139,15 @@ public struct AvatarView: View {
                 .accessibilityAddTraits(.isImage)
         }
     }
-    
+
     // MARK: - Subviews
-    
+
     @ViewBuilder
     private var initialsView: some View {
         ZStack {
             Circle()
                 .fill(backgroundColor)
-            
+
             Text(initials)
                 .font(.system(size: size.fontSize, weight: .medium))
                 .foregroundColor(.white)
@@ -154,7 +155,7 @@ public struct AvatarView: View {
                 .lineLimit(1)
         }
     }
-    
+
     @ViewBuilder
     private var fallbackView: some View {
         Image(systemName: "person.circle.fill")
@@ -179,7 +180,7 @@ public struct AvatarView: View {
                     ),
                     size: size
                 )
-                
+
                 Text(String(describing: size))
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -200,7 +201,7 @@ public struct AvatarView: View {
                 createdAt: Date()
             )
         )
-        
+
         // With single name
         AvatarView(
             user: User(
@@ -210,10 +211,10 @@ public struct AvatarView: View {
                 createdAt: Date()
             )
         )
-        
+
         // No user
         AvatarView(user: nil)
-        
+
         // With tap action
         AvatarView(
             user: User(

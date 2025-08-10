@@ -5,23 +5,23 @@ public struct HouseholdSettingsView: View {
     @Environment(\.safeViewModelFactory) private var factory
     @State private var settingsViewModel: UserSettingsViewModel?
     @State private var membersWatch: WatchedResult<[HouseholdMember]>?
-    
+
     let household: Household?
-    
+
     public init(household: Household? = nil) {
         self.household = household
     }
-    
+
     public var body: some View {
         List {
             // Household Info Section
             if let household = household {
                 householdInfoSection(household: household)
-                
+
                 // Members Section
                 membersSection(household: household)
             }
-            
+
             // Household Preferences Section
             preferencesSection
         }
@@ -31,13 +31,14 @@ public struct HouseholdSettingsView: View {
             if settingsViewModel == nil {
                 settingsViewModel = try? factory?.makeUserSettingsViewModel()
             }
-            
+
             // Set up watch for household members
             if let household = household,
-               let householdService = settingsViewModel?.dependencies.householdService {
+               let householdService = settingsViewModel?.dependencies.householdService
+            {
                 membersWatch = householdService.watchHouseholdMembers(householdId: household.id)
             }
-            
+
             await settingsViewModel?.onAppear()
         }
         .onDisappear {
@@ -46,9 +47,9 @@ public struct HouseholdSettingsView: View {
             }
         }
     }
-    
+
     // MARK: - Household Info Section
-    
+
     @ViewBuilder
     private func householdInfoSection(household: Household) -> some View {
         Section {
@@ -63,11 +64,11 @@ public struct HouseholdSettingsView: View {
                         Text(household.name)
                             .font(.body)
                     }
-                    
+
                     Spacer()
                 }
             }
-            
+
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L("household.created"))
@@ -76,25 +77,25 @@ public struct HouseholdSettingsView: View {
                     Text(household.createdAt, style: .date)
                         .font(.body)
                 }
-                
+
                 Spacer()
             }
         } header: {
             Text(L("household.information"))
         }
     }
-    
+
     // MARK: - Members Section
-    
+
     @ViewBuilder
     private func membersSection(household: Household) -> some View {
         Section {
             NavigationLink(destination: HouseholdMembersView(householdId: household.id)) {
                 HStack {
                     Label(L("household.manage_members"), systemImage: "person.2")
-                    
+
                     Spacer()
-                    
+
                     if let membersWatch = membersWatch {
                         if membersWatch.isLoading {
                             ProgressView()
@@ -109,7 +110,7 @@ public struct HouseholdSettingsView: View {
                     }
                 }
             }
-            
+
             // Only show invite member option if user has permission to manage members
             if settingsViewModel?.canManageMembers(for: household.id) == true {
                 NavigationLink(destination: HouseholdInviteView(householdId: household.id, householdName: household.name)) {
@@ -124,9 +125,9 @@ public struct HouseholdSettingsView: View {
             Text(L("household.members"))
         }
     }
-    
+
     // MARK: - Preferences Section
-    
+
     @ViewBuilder
     private var preferencesSection: some View {
         Section {
@@ -137,14 +138,14 @@ public struct HouseholdSettingsView: View {
                 Text(L("common.not_set"))
                     .foregroundColor(.secondary)
             }
-            
+
             HStack {
                 Label(L("household.default_store"), systemImage: "cart")
                 Spacer()
                 Text(L("common.not_set"))
                     .foregroundColor(.secondary)
             }
-            
+
             HStack {
                 Label(L("household.meal_planning"), systemImage: "fork.knife")
                 Spacer()
@@ -159,7 +160,6 @@ public struct HouseholdSettingsView: View {
         }
     }
 }
-
 
 // MARK: - Previews
 

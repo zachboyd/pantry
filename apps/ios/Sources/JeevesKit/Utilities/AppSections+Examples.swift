@@ -14,13 +14,13 @@ struct SectionButton: View {
     let section: AppSections.Section
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
                 AppSections.makeIcon(for: section, color: isSelected ? DesignTokens.Colors.Primary.base : .secondary)
                     .font(.system(size: 24))
-                
+
                 Text(AppSections.label(for: section))
                     .font(.caption)
                     .foregroundColor(isSelected ? DesignTokens.Colors.Primary.base : .secondary)
@@ -32,7 +32,7 @@ struct SectionButton: View {
 /// Example: Using AppSections in a navigation item
 struct SectionNavigationItem: View {
     let section: AppSections.Section
-    
+
     var body: some View {
         NavigationLink(destination: destinationView(for: section)) {
             HStack {
@@ -44,9 +44,9 @@ struct SectionNavigationItem: View {
             }
         }
     }
-    
+
     @ViewBuilder
-    private func destinationView(for section: AppSections.Section) -> some View {
+    private func destinationView(for _: AppSections.Section) -> some View {
         // Return appropriate view based on section
         EmptyView()
     }
@@ -55,15 +55,15 @@ struct SectionNavigationItem: View {
 /// Example: Using AppSections in a widget or other UI element
 struct SectionInfoCard: View {
     let section: AppSections.Section
-    
+
     var body: some View {
         VStack(spacing: 12) {
             AppSections.makeIcon(for: section)
                 .font(.largeTitle)
-            
+
             Text(AppSections.label(for: section))
                 .font(.headline)
-            
+
             // Could include additional info like item counts, etc.
         }
         .padding()
@@ -76,7 +76,7 @@ struct SectionInfoCard: View {
 struct GenericEmptyView: View {
     let section: AppSections.Section
     let customAction: (@Sendable () -> Void)?
-    
+
     var body: some View {
         EmptyStateView(
             config: AppSections.emptyStateConfig(
@@ -91,7 +91,7 @@ struct GenericEmptyView: View {
 struct CustomTabBar: View {
     @Binding var selectedSection: AppSections.Section
     let sections: [AppSections.Section]
-    
+
     var body: some View {
         HStack(spacing: 0) {
             ForEach(sections, id: \.self) { section in
@@ -111,7 +111,7 @@ struct CustomTabBar: View {
 /// Example: Using AppSections for accessibility
 struct AccessibleSectionView: View {
     let section: AppSections.Section
-    
+
     var body: some View {
         AppSections.makeLabel(for: section)
             .accessibilityIdentifier(AppSections.accessibilityIdentifier(for: section))
@@ -130,17 +130,17 @@ struct AccessibleSectionView: View {
             SectionButton(section: .chat, isSelected: false, action: {})
             SectionButton(section: .lists, isSelected: false, action: {})
         }
-        
+
         Divider()
-        
+
         // Section info cards
         HStack(spacing: 20) {
             SectionInfoCard(section: .pantry)
             SectionInfoCard(section: .lists)
         }
-        
+
         Divider()
-        
+
         // Navigation items
         VStack(alignment: .leading) {
             SectionNavigationItem(section: .pantry)
@@ -159,9 +159,9 @@ struct AccessibleSectionView: View {
             print("Add pantry item")
         })
         .frame(height: 200)
-        
+
         Divider()
-        
+
         // Lists empty state
         GenericEmptyView(section: .lists, customAction: {
             print("Create list")
@@ -173,16 +173,16 @@ struct AccessibleSectionView: View {
 
 #Preview("Custom Tab Bar") {
     @Previewable @State var selectedSection: AppSections.Section = .pantry
-    
+
     VStack {
         Spacer()
-        
+
         // Content area
         AppSections.makeLabel(for: selectedSection)
             .font(.largeTitle)
-        
+
         Spacer()
-        
+
         // Custom tab bar
         CustomTabBar(
             selectedSection: $selectedSection,

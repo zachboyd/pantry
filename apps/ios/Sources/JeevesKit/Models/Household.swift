@@ -15,9 +15,9 @@ public struct Household: Codable, Identifiable, Sendable {
     public let createdBy: String
     public let createdAt: Date
     public let updatedAt: Date
-    
+
     // Client-side only properties
-    public var members: [HouseholdMember] = []  // Loaded separately via householdMembers query
+    public var members: [HouseholdMember] = [] // Loaded separately via householdMembers query
 
     /// Computed property for member count
     public var memberCount: Int {
@@ -31,7 +31,7 @@ public struct Household: Codable, Identifiable, Sendable {
         // For mock data, assume the owner is always the current user for the first household
         return members.contains { $0.role == .owner && $0.userId == "user_1" }
     }
-    
+
     public init(id: String, name: String, description: String?, createdBy: String, createdAt: Date, updatedAt: Date, members: [HouseholdMember] = []) {
         self.id = id
         self.name = name

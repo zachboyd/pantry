@@ -5,23 +5,23 @@ import SwiftUI
 public struct AIAvatarView: View {
     /// The size of the avatar circle
     let size: CGFloat
-    
+
     /// Whether the avatar should be tappable
     let isInteractive: Bool
-    
+
     /// Optional action to perform when tapped
     let onTap: (() -> Void)?
-    
+
     /// Hover state for iPadOS
     @State private var isHovered = false
-    
+
     /// Standard sizes for common use cases
     public enum Size {
         case small // Uses design token
         case medium // Uses design token (default for chat)
         case large // Uses design token
         case extraLarge // Uses design token
-        
+
         var value: CGFloat {
             switch self {
             case .small: return DesignTokens.ComponentSize.Avatar.small
@@ -31,7 +31,7 @@ public struct AIAvatarView: View {
             }
         }
     }
-    
+
     public init(
         size: Size = .medium,
         isInteractive: Bool = false,
@@ -41,7 +41,7 @@ public struct AIAvatarView: View {
         self.isInteractive = isInteractive
         self.onTap = onTap
     }
-    
+
     public init(
         customSize: CGFloat,
         isInteractive: Bool = false,
@@ -51,7 +51,7 @@ public struct AIAvatarView: View {
         self.isInteractive = isInteractive
         self.onTap = onTap
     }
-    
+
     public var body: some View {
         if isInteractive && onTap != nil {
             Button(action: { onTap?() }) {
@@ -69,12 +69,12 @@ public struct AIAvatarView: View {
             avatarContent
         }
     }
-    
+
     private var avatarContent: some View {
         ZStack {
             Circle()
                 .fill(DesignTokens.Colors.AI.gradient)
-            
+
             Image(systemName: "sparkles")
                 .font(.system(size: iconSize))
                 .foregroundColor(DesignTokens.Colors.AI.icon)
@@ -86,7 +86,7 @@ public struct AIAvatarView: View {
         .accessibilityLabel(L("accessibility.avatar.ai"))
         .accessibilityAddTraits(.isImage)
     }
-    
+
     private var iconSize: CGFloat {
         // Scale icon size proportionally to avatar size
         size * 0.45
@@ -102,19 +102,19 @@ public struct AIAvatarView: View {
             Text("Small")
                 .font(.caption)
         }
-        
+
         VStack {
             AIAvatarView(size: .medium)
             Text("Medium")
                 .font(.caption)
         }
-        
+
         VStack {
             AIAvatarView(size: .large)
             Text("Large")
                 .font(.caption)
         }
-        
+
         VStack {
             AIAvatarView(size: .extraLarge)
             Text("Extra Large")

@@ -39,10 +39,10 @@ public enum JeevesSubject: String {
     case householdMember = "HouseholdMember"
     case message = "Message"
     case pantry = "Pantry"
-    case all = "all" // Special subject meaning all subjects
+    case all // Special subject meaning all subjects
 }
 
-/// Jeeves-specific Ability class  
+/// Jeeves-specific Ability class
 /// Using typealias since we can't inherit from Ability directly
 public typealias JeevesAbility = Ability<JeevesAction, JeevesSubject>
 
@@ -95,9 +95,10 @@ public final class PermissionService: PermissionServiceProtocol {
         }
 
         // Extract permissions from the JSON field
-        guard let permissionsJSON = user.permissions, 
+        guard let permissionsJSON = user.permissions,
               !permissionsJSON.value.isEmpty,
-              permissionsJSON.value != "null" else {
+              permissionsJSON.value != "null"
+        else {
             // Return basic fallback permissions
             let rules = [
                 PermissionRule(
@@ -119,15 +120,15 @@ public final class PermissionService: PermissionServiceProtocol {
             ]
             return UserPermissions(rules: rules, version: "1.0.0")
         }
-        
+
         // Decode JSON data to array
         let permissionsArray: [[String: Any]]
-        
+
         // First, try to parse the JSON string
         if let jsonData = permissionsJSON.value.data(using: .utf8) {
             do {
                 let decoded = try JSONSerialization.jsonObject(with: jsonData)
-                
+
                 // Check if it's an array
                 if let array = decoded as? [[String: Any]] {
                     // Dictionary format array
@@ -135,93 +136,93 @@ public final class PermissionService: PermissionServiceProtocol {
                 } else if let compactArray = decoded as? [[Any]] {
                     // Compact format array (array of arrays)
                     var rules: [[String: Any]] = []
-                    
+
                     for compactRule in compactArray {
                         // Convert compact format to dictionary format
                         var ruleDict: [String: Any] = [:]
-                        
+
                         // Index 0: action (required)
                         if compactRule.count > 0 {
                             ruleDict["action"] = compactRule[0]
                         }
-                        
+
                         // Index 1: subject (optional)
                         if compactRule.count > 1 {
                             ruleDict["subject"] = compactRule[1]
                         }
-                        
+
                         // Index 2: conditions (optional)
                         if compactRule.count > 2 {
                             ruleDict["conditions"] = compactRule[2]
                         }
-                        
+
                         // Index 3: fields (optional)
                         if compactRule.count > 3 {
                             ruleDict["fields"] = compactRule[3]
                         }
-                        
+
                         // Index 4: inverted (optional)
                         if compactRule.count > 4 {
                             ruleDict["inverted"] = compactRule[4]
                         }
-                        
+
                         // Index 5: reason (optional)
                         if compactRule.count > 5 {
                             ruleDict["reason"] = compactRule[5]
                         }
-                        
+
                         rules.append(ruleDict)
                     }
-                    
+
                     permissionsArray = rules
                 } else if let nsArray = decoded as? NSArray {
                     // Handle NSArray case - could be compact format or dictionary format
-                    
+
                     // Check if it's compact format (array of arrays) or dictionary format
                     if let firstItem = nsArray.firstObject {
                         if firstItem is [Any] || firstItem is NSArray {
                             // Compact format - convert to dictionary format
                             var rules: [[String: Any]] = []
-                            
+
                             for item in nsArray {
                                 if let compactRule = item as? [Any] {
                                     // Convert compact format to dictionary format
                                     var ruleDict: [String: Any] = [:]
-                                    
+
                                     // Index 0: action (required)
                                     if compactRule.count > 0 {
                                         ruleDict["action"] = compactRule[0]
                                     }
-                                    
+
                                     // Index 1: subject (optional)
                                     if compactRule.count > 1 {
                                         ruleDict["subject"] = compactRule[1]
                                     }
-                                    
+
                                     // Index 2: conditions (optional)
                                     if compactRule.count > 2 {
                                         ruleDict["conditions"] = compactRule[2]
                                     }
-                                    
+
                                     // Index 3: fields (optional)
                                     if compactRule.count > 3 {
                                         ruleDict["fields"] = compactRule[3]
                                     }
-                                    
+
                                     // Index 4: inverted (optional)
                                     if compactRule.count > 4 {
                                         ruleDict["inverted"] = compactRule[4]
                                     }
-                                    
+
                                     // Index 5: reason (optional)
                                     if compactRule.count > 5 {
                                         ruleDict["reason"] = compactRule[5]
                                     }
-                                    
+
                                     rules.append(ruleDict)
                                 }
                             }
-                            
+
                             permissionsArray = rules
                         } else {
                             // Dictionary format
@@ -261,15 +262,15 @@ public final class PermissionService: PermissionServiceProtocol {
         }
 
         logger.debug("Processing \(permissionsArray.count) permission rules from GraphQL")
-        
+
         var rules: [PermissionRule] = []
-        
+
         for permissionDict in permissionsArray {
             // Extract action (required)
             guard let actionValue = permissionDict["action"] else {
                 continue
             }
-            
+
             let action: StringOrArray
             if let actionString = actionValue as? String {
                 action = .single(actionString)
@@ -278,7 +279,7 @@ public final class PermissionService: PermissionServiceProtocol {
             } else {
                 continue
             }
-            
+
             // Extract subject (optional)
             let subject: StringOrArray?
             if let subjectValue = permissionDict["subject"] {
@@ -292,7 +293,7 @@ public final class PermissionService: PermissionServiceProtocol {
             } else {
                 subject = nil
             }
-            
+
             // Extract fields (optional)
             let fields: StringOrArray?
             if let fieldsValue = permissionDict["fields"] {
@@ -306,7 +307,7 @@ public final class PermissionService: PermissionServiceProtocol {
             } else {
                 fields = nil
             }
-            
+
             // Extract conditions (optional)
             let conditions: [String: AnyCodable]?
             if let conditionsDict = permissionDict["conditions"] as? [String: Any] {
@@ -314,13 +315,13 @@ public final class PermissionService: PermissionServiceProtocol {
             } else {
                 conditions = nil
             }
-            
+
             // Extract inverted (optional)
             let inverted = permissionDict["inverted"] as? Bool
-            
+
             // Extract reason (optional)
             let reason = permissionDict["reason"] as? String
-            
+
             let rule = PermissionRule(
                 action: action,
                 subject: subject,
@@ -329,7 +330,7 @@ public final class PermissionService: PermissionServiceProtocol {
                 inverted: inverted,
                 reason: reason
             )
-            
+
             rules.append(rule)
         }
 
@@ -415,7 +416,7 @@ public extension JeevesAbility {
             properties: EmptyProperties(),
             subjectType: "Household"
         )
-        
+
         return canSync(.manage, household) ?? false
     }
 
@@ -427,7 +428,7 @@ public extension JeevesAbility {
             properties: EmptyProperties(),
             subjectType: "Household"
         )
-        
+
         return canSync(.read, household) ?? false
     }
 
@@ -439,7 +440,7 @@ public extension JeevesAbility {
             properties: EmptyProperties(),
             subjectType: "Household"
         )
-        
+
         return canSync(.update, household) ?? false
     }
 
@@ -451,7 +452,7 @@ public extension JeevesAbility {
             properties: EmptyProperties(),
             subjectType: "Household"
         )
-        
+
         return canSync(.delete, household) ?? false
     }
 
@@ -464,20 +465,20 @@ public extension JeevesAbility {
             subjectType: "Household"
         )
         let canManageHousehold = canSync(.manage, household) ?? false
-        
+
         // If they can manage the household, they can manage members
         if canManageHousehold {
             return true
         }
-        
+
         // Check if they have specific member management permissions
         // Create a HouseholdMember subject with the household_id condition
         let memberSubject = StringIdentifiableSubject<MemberProperties>(
-            id: "",  // Empty ID as we're checking general permission for members in this household
+            id: "", // Empty ID as we're checking general permission for members in this household
             properties: MemberProperties(household_id: householdId),
             subjectType: "HouseholdMember"
         )
-        
+
         return canSync(.manage, memberSubject) ?? false
     }
 }

@@ -12,7 +12,7 @@ public struct HouseholdMembersView: View {
     @Environment(\.safeViewModelFactory) private var factory
     @State private var viewModel: HouseholdMembersViewModel?
     @State private var membersWatch: WatchedResult<[HouseholdMember]>?
-    
+
     let householdId: String
 
     public init(householdId: String) {
@@ -54,12 +54,12 @@ public struct HouseholdMembersView: View {
             if viewModel == nil {
                 viewModel = try? factory?.makeHouseholdMembersViewModel(householdId: householdId)
             }
-            
+
             // Set up watch for household members
             if let householdService = viewModel?.dependencies.householdService {
                 membersWatch = householdService.watchHouseholdMembers(householdId: householdId)
             }
-            
+
             // Load initial data
             await viewModel?.onAppear()
         }
@@ -75,7 +75,7 @@ public struct HouseholdMembersView: View {
 struct HouseholdMemberRowView: View {
     let member: HouseholdMember
     let viewModel: HouseholdMembersViewModel?
-    
+
     @State private var userInfo: User?
 
     var body: some View {
@@ -142,12 +142,12 @@ struct HouseholdMemberRowView: View {
             }
         }
     }
-    
+
     // Computed properties for display
     private var displayName: String {
         userInfo?.name ?? member.name
     }
-    
+
     private var displayEmail: String? {
         userInfo?.email ?? member.email
     }

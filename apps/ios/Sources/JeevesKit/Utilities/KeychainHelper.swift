@@ -2,8 +2,7 @@ import Foundation
 import Security
 
 /// Helper for managing keychain operations
-public struct KeychainHelper {
-    
+public enum KeychainHelper {
     /// Clear all keychain items for the current app
     /// This only clears items accessible to this app, not the entire keychain
     public static func clearAllKeychainItems() {
@@ -12,16 +11,16 @@ public struct KeychainHelper {
             kSecClassInternetPassword,
             kSecClassCertificate,
             kSecClassKey,
-            kSecClassIdentity
+            kSecClassIdentity,
         ]
-        
+
         for secClass in secClasses {
             let query: [String: Any] = [
-                kSecClass as String: secClass
+                kSecClass as String: secClass,
             ]
-            
+
             let status = SecItemDelete(query as CFDictionary)
-            
+
             if status == errSecSuccess {
                 print("✅ Cleared keychain items for class: \(secClass)")
             } else if status == errSecItemNotFound {
@@ -31,7 +30,7 @@ public struct KeychainHelper {
             }
         }
     }
-    
+
     /// Clear specific keychain items by service/account
     /// - Parameters:
     ///   - service: The service identifier (e.g., "com.pantry.app")
@@ -39,15 +38,15 @@ public struct KeychainHelper {
     public static func clearKeychainItem(service: String, account: String? = nil) {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service
+            kSecAttrService as String: service,
         ]
-        
+
         if let account = account {
             query[kSecAttrAccount as String] = account
         }
-        
+
         let status = SecItemDelete(query as CFDictionary)
-        
+
         if status == errSecSuccess {
             print("✅ Cleared keychain item for service: \(service)")
         } else if status == errSecItemNotFound {
@@ -56,7 +55,7 @@ public struct KeychainHelper {
             print("❌ Error clearing keychain item: \(status)")
         }
     }
-    
+
     /// Clear all HTTP cookies
     /// This removes all cookies from the shared cookie storage
     public static func clearAllCookies() {
@@ -70,7 +69,7 @@ public struct KeychainHelper {
             print("ℹ️ No cookies found to clear")
         }
     }
-    
+
     /// Clear cookies for a specific domain
     /// - Parameter domain: The domain to clear cookies for (e.g., "localhost")
     public static func clearCookies(for domain: String) {
@@ -78,7 +77,7 @@ public struct KeychainHelper {
             let domainCookies = cookies.filter { cookie in
                 cookie.domain == domain || cookie.domain == ".\(domain)"
             }
-            
+
             print("🍪 Clearing \(domainCookies.count) cookies for domain: \(domain)")
             for cookie in domainCookies {
                 HTTPCookieStorage.shared.deleteCookie(cookie)
@@ -86,18 +85,18 @@ public struct KeychainHelper {
             }
         }
     }
-    
+
     /// Clear all authentication data (keychain + cookies)
     /// This is useful for completely logging out or debugging
     public static func clearAllAuthData() {
         print("🧹 Clearing all authentication data...")
-        
+
         // Clear keychain items
         clearAllKeychainItems()
-        
+
         // Clear cookies
         clearAllCookies()
-        
+
         print("✅ All authentication data cleared")
     }
 }

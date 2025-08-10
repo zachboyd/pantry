@@ -8,8 +8,7 @@
 import SwiftUI
 
 /// Centralized configuration for app sections/features used throughout the app
-public struct AppSections {
-    
+public enum AppSections {
     /// Section identifiers for the main features of the app
     public enum Section: String, CaseIterable {
         case pantry
@@ -18,9 +17,9 @@ public struct AppSections {
         case settings
         case profile // iPad only
     }
-    
+
     // MARK: - Private Icon Definitions (Single Source of Truth)
-    
+
     /// Single source of truth for all section icons
     /// To change any section's icon, update it here and it will be used everywhere
     private enum Icons {
@@ -30,7 +29,7 @@ public struct AppSections {
         static let settings = "gearshape"
         static let profile = "person.circle"
     }
-    
+
     /// Get the localized label for a section
     @MainActor
     public static func label(for section: Section) -> String {
@@ -47,7 +46,7 @@ public struct AppSections {
             return L("settings.profile")
         }
     }
-    
+
     /// Get the SF Symbol icon name for a section (used everywhere - tabs, empty states, etc.)
     public static func icon(for section: Section) -> String {
         switch section {
@@ -63,7 +62,7 @@ public struct AppSections {
             return Icons.profile
         }
     }
-    
+
     /// Get whether the section icon has symbol variants (for tab bar selection)
     public static func hasSymbolVariant(for section: Section) -> Bool {
         switch section {
@@ -73,7 +72,7 @@ public struct AppSections {
             return false
         }
     }
-    
+
     /// Get the accessibility identifier for a section
     public static func accessibilityIdentifier(for section: Section) -> String {
         switch section {
@@ -89,25 +88,25 @@ public struct AppSections {
             return "profileTab"
         }
     }
-    
+
     /// Get the Label view for a section (combines icon and text)
     @MainActor
     public static func makeLabel(for section: Section) -> some View {
         Label(label(for: section), systemImage: icon(for: section))
     }
-    
+
     /// Get just the icon view for a section
     public static func makeIcon(for section: Section, color: Color? = nil) -> some View {
         Image(systemName: icon(for: section))
             .foregroundColor(color ?? DesignTokens.Colors.Primary.base)
     }
-    
+
     /// Get the icon to use in empty states (same as section icon for consistency)
     public static func emptyStateIcon(for section: Section) -> String {
         // Returns the same icon as used everywhere for complete consistency
         return icon(for: section)
     }
-    
+
     /// Create an empty state configuration for a section
     @MainActor
     public static func emptyStateConfig(
@@ -180,7 +179,7 @@ extension AppSections.Section {
             self = .profile
         }
     }
-    
+
     /// Convert to MainTab enum (for backward compatibility)
     var toMainTab: MainTab? {
         switch self {
@@ -210,37 +209,37 @@ extension MainTab {
 
 // MARK: - Household Utilities
 
-extension AppSections {
+public extension AppSections {
     /// Common household-related icons used throughout the app
-    public enum HouseholdIcons {
+    enum HouseholdIcons {
         /// Icon for household (general)
         public static let household = "house.circle"
-        
+
         /// Icon for household members
         public static let members = "person.2.circle"
-        
+
         /// Icon for household settings
         public static let settings = "gearshape.circle"
-        
+
         /// Icon for creating a household
         public static let create = "plus.circle"
-        
+
         /// Icon for joining a household
         public static let join = "arrow.right.circle"
-        
+
         /// Icon for household switcher
         public static let switcher = "arrow.left.arrow.right.circle"
-        
+
         /// Icon for invite/share
         public static let invite = "square.and.arrow.up"
-        
+
         /// Icon for no household state
         public static let noHousehold = "house.circle"
     }
-    
+
     /// Create an empty state configuration for household-related states
     @MainActor
-    public static func householdEmptyStateConfig(
+    static func householdEmptyStateConfig(
         icon: String = HouseholdIcons.noHousehold,
         titleKey: String,
         subtitleKey: String,

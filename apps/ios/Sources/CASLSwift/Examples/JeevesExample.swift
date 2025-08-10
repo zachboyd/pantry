@@ -30,23 +30,23 @@ public enum JeevesSubject: String {
 /// Example Household subject
 public struct Household: Subject, IdentifiableSubject, Sendable {
     public static let subjectType: SubjectType = "Household"
-    
+
     public let id: String
     public let name: String
     public let ownerId: String
     public let memberCount: Int
-    
+
     public var subjectType: SubjectType { Self.subjectType }
 }
 
 /// Example User subject
 public struct User: Subject, IdentifiableSubject, Sendable {
     public static let subjectType: SubjectType = "User"
-    
+
     public let id: String
     public let email: String
     public let name: String
-    
+
     public var subjectType: SubjectType { Self.subjectType }
 }
 
@@ -60,7 +60,7 @@ public typealias JeevesAbility = Ability<JeevesAction, JeevesSubject>
 /// Example of building abilities for different user roles
 public func buildAbilitiesForUser(_ user: User, role: String) -> JeevesAbility {
     let builder = AbilityBuilder<JeevesAction, JeevesSubject>()
-    
+
     switch role {
     case "owner":
         // Owners can do everything
@@ -70,7 +70,7 @@ public func buildAbilitiesForUser(_ user: User, role: String) -> JeevesAbility {
             .can(.manage, .shoppingList)
             .can(.manage, .recipe)
             .can(.manage, .member)
-        
+
     case "admin":
         // Admins can manage most things but not delete household
         builder
@@ -83,7 +83,7 @@ public func buildAbilitiesForUser(_ user: User, role: String) -> JeevesAbility {
             .can(.invite, .member)
             .can(.changeRole, .member)
             .cannot(.delete, .household)
-        
+
     case "member":
         // Members have limited access
         builder
@@ -98,7 +98,7 @@ public func buildAbilitiesForUser(_ user: User, role: String) -> JeevesAbility {
             .can(.create, .recipe)
             .can(.update, .recipe) { ["authorId": user.id] }
             .can(.leave, .household)
-        
+
     case "viewer":
         // Viewers can only read
         builder
@@ -106,29 +106,30 @@ public func buildAbilitiesForUser(_ user: User, role: String) -> JeevesAbility {
             .can(.read, .item)
             .can(.read, .shoppingList)
             .can(.read, .recipe)
-        
+
     default:
         // No permissions
         break
     }
-    
+
     return builder.build()
 }
 
 /// Example of using PureAbility for dynamic permissions
 public func buildDynamicAbilities(permissions: [[String: Any]]) -> PureAbility {
     let builder = PureAbilityBuilder()
-    
+
     for permission in permissions {
         guard let action = permission["action"] as? String,
-              let subject = permission["subject"] as? String else {
+              let subject = permission["subject"] as? String
+        else {
             continue
         }
-        
+
         let inverted = permission["inverted"] as? Bool ?? false
         let conditions = permission["conditions"] as? [String: Any]
         let fields = permission["fields"] as? [String]
-        
+
         if inverted {
             if let conditions = conditions {
                 builder.cannot(action, subject, conditions)
@@ -145,6 +146,6 @@ public func buildDynamicAbilities(permissions: [[String: Any]]) -> PureAbility {
             }
         }
     }
-    
+
     return builder.build()
 }

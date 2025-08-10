@@ -210,7 +210,7 @@ public final class AuthClient: AuthClientProtocol {
                 } else {
                     Self.logger.warning("⚠️ No cookies received from sign up response")
                 }
-                
+
                 // If no session cookie but we have a token, create a cookie manually
                 // This is a workaround for Better Auth when cookies aren't being set properly
                 if sessionToken != nil && !hasCookieSession() {
@@ -291,7 +291,7 @@ public final class AuthClient: AuthClientProtocol {
                 } else {
                     Self.logger.warning("⚠️ No cookies received from sign in response")
                 }
-                
+
                 // If no session cookie but we have a token, create a cookie manually
                 // This is a workaround for Better Auth when cookies aren't being set properly
                 if sessionToken != nil && !hasCookieSession() {
@@ -423,23 +423,23 @@ public final class AuthClient: AuthClientProtocol {
         // Try to get session using cookies
         return try await getSession()
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Create a session cookie from the access token
     /// This is a workaround for when Better Auth doesn't set cookies properly
     private func createSessionCookie(from token: String, for url: URL) {
-        guard let host = url.host else { 
+        guard let host = url.host else {
             Self.logger.error("❌ Failed to extract host from URL: \(url)")
-            return 
+            return
         }
-        
+
         Self.logger.info("🍪 Creating cookies for host: \(host)")
-        
+
         // For localhost, we need to be more specific about the domain
         // Don't include the port in the domain
         let domain = host == "localhost" ? "localhost" : host.replacingOccurrences(of: ":3001", with: "")
-        
+
         // Create auth token cookie
         let authTokenCookie = HTTPCookie(properties: [
             .name: "auth-token",
@@ -447,9 +447,9 @@ public final class AuthClient: AuthClientProtocol {
             .domain: domain,
             .path: "/",
             .secure: "FALSE", // Always false for localhost
-            .expires: Date().addingTimeInterval(60 * 60 * 24 * 7) // 7 days
+            .expires: Date().addingTimeInterval(60 * 60 * 24 * 7), // 7 days
         ])
-        
+
         // Create better-auth session cookie
         let sessionCookie = HTTPCookie(properties: [
             .name: "better-auth.session_token",
@@ -457,9 +457,9 @@ public final class AuthClient: AuthClientProtocol {
             .domain: domain,
             .path: "/",
             .secure: "FALSE", // Always false for localhost
-            .expires: Date().addingTimeInterval(60 * 60 * 24 * 7) // 7 days
+            .expires: Date().addingTimeInterval(60 * 60 * 24 * 7), // 7 days
         ])
-        
+
         if let authTokenCookie = authTokenCookie {
             HTTPCookieStorage.shared.setCookie(authTokenCookie)
             Self.logger.info("🍪 Created auth-token cookie for domain: \(domain)")
@@ -467,7 +467,7 @@ public final class AuthClient: AuthClientProtocol {
         } else {
             Self.logger.error("❌ Failed to create auth-token cookie")
         }
-        
+
         if let sessionCookie = sessionCookie {
             HTTPCookieStorage.shared.setCookie(sessionCookie)
             Self.logger.info("🍪 Created better-auth.session_token cookie for domain: \(domain)")
@@ -475,10 +475,11 @@ public final class AuthClient: AuthClientProtocol {
         } else {
             Self.logger.error("❌ Failed to create session cookie")
         }
-        
+
         // Verify cookies were stored
         if let graphQLURL = URL(string: "http://localhost:3001/graphql"),
-           let cookies = HTTPCookieStorage.shared.cookies(for: graphQLURL) {
+           let cookies = HTTPCookieStorage.shared.cookies(for: graphQLURL)
+        {
             Self.logger.info("🍪 Cookies available for GraphQL endpoint: \(cookies.count)")
             for cookie in cookies {
                 Self.logger.info("   - \(cookie.name): \(cookie.value.prefix(20))...")

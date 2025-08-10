@@ -103,8 +103,8 @@ public final class AuthTokenManager {
     public init() {
         Self.logger.info("🔐 AuthTokenManager initialized")
         // Load token from keychain on initialization
-        self.cachedToken = loadTokenFromKeychain()
-        self.cachedUserData = try? loadUserDataFromKeychain()
+        cachedToken = loadTokenFromKeychain()
+        cachedUserData = try? loadUserDataFromKeychain()
     }
 
     // MARK: - Public Methods
@@ -133,7 +133,7 @@ public final class AuthTokenManager {
         }
 
         // Update in-memory cache
-        self.cachedToken = token
+        cachedToken = token
         Self.logger.debug("✅ Auth token saved")
     }
 
@@ -144,14 +144,14 @@ public final class AuthTokenManager {
             Self.logger.debug("📖 Returning cached auth token (valid: \(cached.isValid))")
             return cached
         }
-        
+
         // Otherwise load from keychain and cache it
         Self.logger.debug("📖 Cache miss - loading auth token from Keychain")
         let token = loadTokenFromKeychain()
-        self.cachedToken = token
+        cachedToken = token
         return token
     }
-    
+
     /// Load authentication token directly from Keychain (bypasses cache)
     private func loadTokenFromKeychain() -> AuthToken? {
         Self.logger.debug("🔑 Loading auth token from Keychain")
@@ -162,7 +162,7 @@ public final class AuthTokenManager {
         }
 
         let refreshToken = loadFromKeychain(key: Self.refreshTokenKey)
-        
+
         let userId: LowercaseUUID? = {
             guard let userIdString = loadFromKeychain(key: Self.userIdKey) else {
                 return nil
@@ -199,10 +199,10 @@ public final class AuthTokenManager {
         try deleteFromKeychain(key: Self.userIdKey)
         try deleteFromKeychain(key: Self.expirationKey)
         try deleteFromKeychain(key: Self.userDataKey)
-        
+
         // Clear in-memory cache
-        self.cachedToken = nil
-        self.cachedUserData = nil
+        cachedToken = nil
+        cachedUserData = nil
 
         Self.logger.info("✅ Auth token and cache cleared successfully")
     }
@@ -218,9 +218,9 @@ public final class AuthTokenManager {
         }
 
         try saveToKeychain(jsonString, key: Self.userDataKey)
-        
+
         // Update in-memory cache
-        self.cachedUserData = userData
+        cachedUserData = userData
         Self.logger.debug("✅ User data saved")
     }
 
@@ -231,14 +231,14 @@ public final class AuthTokenManager {
             Self.logger.debug("📖 Returning cached user data")
             return cached
         }
-        
+
         // Otherwise load from keychain and cache it
         Self.logger.debug("📖 Cache miss - loading user data from Keychain")
         let userData = try loadUserDataFromKeychain()
-        self.cachedUserData = userData
+        cachedUserData = userData
         return userData
     }
-    
+
     /// Load user data directly from Keychain (bypasses cache)
     private func loadUserDataFromKeychain() throws -> AuthUserData? {
         Self.logger.debug("🔑 Loading user data from Keychain")

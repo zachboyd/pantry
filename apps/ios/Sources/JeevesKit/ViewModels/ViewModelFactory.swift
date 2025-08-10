@@ -81,7 +81,7 @@ public struct SafeViewModelFactory {
     public func makeOnboardingCoordinator() -> OnboardingCoordinator {
         return OnboardingCoordinator()
     }
-    
+
     /// Create OnboardingContainerViewModel
     public func makeOnboardingContainerViewModel() throws -> OnboardingContainerViewModel {
         let authService = try container.getAuthService()
@@ -96,7 +96,7 @@ public struct SafeViewModelFactory {
 
         return OnboardingContainerViewModel(dependencies: dependencies)
     }
-    
+
     /// Create UserInfoViewModel
     public func makeUserInfoViewModel(currentUser: User?) throws -> UserInfoViewModel {
         let userService = try container.getUserService()
@@ -109,7 +109,7 @@ public struct SafeViewModelFactory {
 
         return UserInfoViewModel(dependencies: dependencies, currentUser: currentUser)
     }
-    
+
     /// Create HouseholdCreationViewModel
     public func makeHouseholdCreationViewModel() throws -> HouseholdCreationViewModel {
         let householdService = try container.getHouseholdService()
@@ -167,7 +167,7 @@ public struct SafeViewModelFactory {
         let householdService = try container.getHouseholdService()
         let userService = try container.getUserService()
         let authService = try container.getAuthService()
-        
+
         // Create permission provider from auth service's permission service
         let permissionProvider = PermissionProvider(permissionService: authService.permissionService)
 
@@ -241,7 +241,7 @@ public struct SafeViewModelFactory {
         let userService = try container.getUserService()
         let userPreferencesService = try container.getUserPreferencesService()
         let householdService = try container.getHouseholdService()
-        
+
         // Create permission provider from auth service's permission service
         let permissionProvider = PermissionProvider(permissionService: authService.permissionService)
 

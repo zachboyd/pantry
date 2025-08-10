@@ -5,7 +5,7 @@ let package = Package(
     name: "Jeeves",
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v18)
+        .iOS(.v18),
     ],
     products: [
         .library(
@@ -15,10 +15,10 @@ let package = Package(
         .library(
             name: "CASLSwift",
             targets: ["CASLSwift"]
-        )
+        ),
     ],
     dependencies: [
-        .package(url: "https://github.com/apollographql/apollo-ios.git", from: "1.23.0")
+        .package(url: "https://github.com/apollographql/apollo-ios.git", from: "1.23.0"),
     ],
     targets: [
         .target(
@@ -30,7 +30,7 @@ let package = Package(
                 "README.md",
                 "Examples",
                 "Tests",
-                "Package.swift"
+                "Package.swift",
             ],
             sources: [
                 "Core",
@@ -38,7 +38,7 @@ let package = Package(
                 "Rules",
                 "Builders",
                 "Extensions",
-                "Serialization"
+                "Serialization",
             ]
         ),
         .target(
@@ -46,23 +46,23 @@ let package = Package(
             dependencies: [
                 .product(name: "Apollo", package: "apollo-ios"),
                 .product(name: "ApolloWebSocket", package: "apollo-ios"),
-                "CASLSwift"
+                "CASLSwift",
             ],
             path: "Sources",
             exclude: [
                 "JeevesKit/GraphQL/README.md",
                 "JeevesKit/Localization/README.md",
-                "CASLSwift"
+                "CASLSwift",
             ],
             resources: [
                 .process("JeevesKit/Localization"),
-                .copy("JeevesKit/GraphQL/Operations")
+                .copy("JeevesKit/GraphQL/Operations"),
             ]
         ),
         .testTarget(
             name: "JeevesKitTests",
             dependencies: [
-                "JeevesKit"
+                "JeevesKit",
             ],
             path: "Tests"
         ),
@@ -70,6 +70,6 @@ let package = Package(
             name: "CASLSwiftTests",
             dependencies: ["CASLSwift"],
             path: "Sources/CASLSwift/Tests"
-        )
+        ),
     ]
 )

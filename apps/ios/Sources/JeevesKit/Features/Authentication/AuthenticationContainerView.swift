@@ -18,7 +18,7 @@ public struct AuthenticationContainerView: View {
 
     @State private var showSignUp = false
     @State private var email = ""
-    
+
     public var body: some View {
         NavigationStack {
             ZStack {
@@ -52,7 +52,7 @@ public struct AuthenticationContainerView: View {
             }
         }
     }
-    
+
     private func handleAuthenticationSuccess() async {
         if let appState = appState {
             Self.logger.info("📲 Notifying AppState of successful authentication")
@@ -61,5 +61,4 @@ public struct AuthenticationContainerView: View {
             Self.logger.error("❌ AppState not available to notify")
         }
     }
-    
 }

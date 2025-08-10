@@ -17,17 +17,17 @@ public extension View {
         onPrimaryAction: (() -> Void)? = nil,
         includeDebugOptions: Bool = true
     ) -> some View {
-        self.alert(title, isPresented: isPresented) {
+        alert(title, isPresented: isPresented) {
             Button(primaryButton) {
                 onPrimaryAction?()
             }
-            
+
             #if DEBUG
-            if includeDebugOptions {
-                Button("Clear Auth Data", role: .destructive) {
-                    clearAuthDataAndRestart()
+                if includeDebugOptions {
+                    Button("Clear Auth Data", role: .destructive) {
+                        clearAuthDataAndRestart()
+                    }
                 }
-            }
             #endif
         } message: {
             if let message = message {
@@ -35,22 +35,22 @@ public extension View {
             }
         }
     }
-    
+
     /// Shows an error alert with debug controls in DEBUG builds
     func errorAlert(
         isPresented: Binding<Bool>,
         error: String?,
         onDismiss: (() -> Void)? = nil
     ) -> some View {
-        self.alert("Error", isPresented: isPresented) {
+        alert("Error", isPresented: isPresented) {
             Button("OK") {
                 onDismiss?()
             }
-            
+
             #if DEBUG
-            Button("Clear Auth Data", role: .destructive) {
-                clearAuthDataAndRestart()
-            }
+                Button("Clear Auth Data", role: .destructive) {
+                    clearAuthDataAndRestart()
+                }
             #endif
         } message: {
             if let error = error {
@@ -61,19 +61,20 @@ public extension View {
 }
 
 #if DEBUG
-private func clearAuthDataAndRestart() {
-    // Clear all auth data
-    KeychainHelper.clearAllAuthData()
-    
-    // Force app to restart/refresh
-    Task { @MainActor in
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            window.rootViewController = UIHostingController(
-                rootView: AppRootView()
-                    .withAppState()
-            )
+    private func clearAuthDataAndRestart() {
+        // Clear all auth data
+        KeychainHelper.clearAllAuthData()
+
+        // Force app to restart/refresh
+        Task { @MainActor in
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first
+            {
+                window.rootViewController = UIHostingController(
+                    rootView: AppRootView()
+                        .withAppState()
+                )
+            }
         }
     }
-}
 #endif

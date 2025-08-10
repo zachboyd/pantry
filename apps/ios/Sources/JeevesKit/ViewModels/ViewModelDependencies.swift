@@ -1,7 +1,7 @@
 @preconcurrency import Apollo
+import CASLSwift
 import Foundation
 import SwiftUI
-import CASLSwift
 
 // MARK: - ViewModel Dependencies
 
@@ -15,7 +15,7 @@ public struct ViewModelDependencies {
     public let shoppingListService: ShoppingListServiceProtocol
     public let notificationService: NotificationServiceProtocol
     public let permissionProvider: PermissionProvider?
-    
+
     /// Current user's ability for permission checking (deprecated - use permissionProvider)
     /// Note: This must be accessed from MainActor context (which ViewModels are)
     @MainActor
@@ -56,7 +56,6 @@ public struct AuthenticationDependencies: Sendable {
         self.apolloClient = apolloClient
     }
 }
-
 
 /// Dependencies for OnboardingViewModel
 public struct OnboardingDependencies: Sendable {

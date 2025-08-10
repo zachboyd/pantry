@@ -5,27 +5,27 @@ import Foundation
 public enum StringOrArray: Codable, Sendable {
     case single(String)
     case array([String])
-    
+
     /// Get all string values as an array
     public var values: [String] {
         switch self {
-        case .single(let value):
+        case let .single(value):
             return [value]
-        case .array(let values):
+        case let .array(values):
             return values
         }
     }
-    
+
     /// Get the first value (useful for conversion)
     public var first: String? {
         switch self {
-        case .single(let value):
+        case let .single(value):
             return value
-        case .array(let values):
+        case let .array(values):
             return values.first
         }
     }
-    
+
     /// Check if this represents a single value
     public var isSingle: Bool {
         switch self {
@@ -35,12 +35,12 @@ public enum StringOrArray: Codable, Sendable {
             return false
         }
     }
-    
+
     // MARK: - Codable
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        
+
         if let single = try? container.decode(String.self) {
             self = .single(single)
         } else if let array = try? container.decode([String].self) {
@@ -55,14 +55,14 @@ public enum StringOrArray: Codable, Sendable {
             )
         }
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        
+
         switch self {
-        case .single(let value):
+        case let .single(value):
             try container.encode(value)
-        case .array(let values):
+        case let .array(values):
             try container.encode(values)
         }
     }
@@ -70,19 +70,19 @@ public enum StringOrArray: Codable, Sendable {
 
 // MARK: - Convenience Initializers
 
-extension StringOrArray {
+public extension StringOrArray {
     /// Initialize from a single string
-    public init(_ string: String) {
+    init(_ string: String) {
         self = .single(string)
     }
-    
+
     /// Initialize from an array of strings
-    public init(_ array: [String]) {
+    init(_ array: [String]) {
         self = .array(array)
     }
-    
+
     /// Initialize from an optional array (nil becomes empty array)
-    public init(array: [String]?) {
+    init(array: [String]?) {
         if let array = array, !array.isEmpty {
             self = .array(array)
         } else {
@@ -96,13 +96,13 @@ extension StringOrArray {
 extension StringOrArray: Equatable {
     public static func == (lhs: StringOrArray, rhs: StringOrArray) -> Bool {
         switch (lhs, rhs) {
-        case (.single(let l), .single(let r)):
+        case let (.single(l), .single(r)):
             return l == r
-        case (.array(let l), .array(let r)):
+        case let (.array(l), .array(r)):
             return l == r
-        case (.single(let l), .array(let r)):
+        case let (.single(l), .array(r)):
             return r.count == 1 && r.first == l
-        case (.array(let l), .single(let r)):
+        case let (.array(l), .single(r)):
             return l.count == 1 && l.first == r
         }
     }

@@ -3,27 +3,27 @@ import Foundation
 /// Represents conditions that must be met for a rule to apply
 public struct Conditions: Sendable {
     /// The raw condition data stored as sendable values
-    internal let sendableData: [String: AnySendable]
-    
+    let sendableData: [String: AnySendable]
+
     /// Access the raw data (computed property for compatibility)
     public var data: [String: Any] {
         sendableData.reduce(into: [:]) { result, item in
             result[item.key] = item.value.value
         }
     }
-    
+
     public init(_ data: [String: Any]) {
-        self.sendableData = data.compactMapValues { AnySendable($0) }
+        sendableData = data.compactMapValues { AnySendable($0) }
     }
-    
+
     /// Initialize with sendable data
     public init(sendable: [String: AnySendable]) {
-        self.sendableData = sendable
+        sendableData = sendable
     }
-    
+
     /// Empty conditions (always matches)
     public static let empty = Conditions(sendable: [:])
-    
+
     /// Check if conditions are empty
     public var isEmpty: Bool {
         sendableData.isEmpty
@@ -31,9 +31,9 @@ public struct Conditions: Sendable {
 }
 
 // Extension for sendable conversion
-extension Conditions {
+public extension Conditions {
     /// Convert to sendable dictionary
-    public var sendable: [String: AnySendable] {
+    var sendable: [String: AnySendable] {
         sendableData
     }
 }
@@ -47,20 +47,20 @@ public enum AnySendable: Sendable {
     case array([AnySendable])
     case dictionary([String: AnySendable])
     case null
-    
+
     /// Get the underlying value
     public var value: Any {
         switch self {
-        case .string(let value): return value
-        case .int(let value): return value
-        case .double(let value): return value
-        case .bool(let value): return value
-        case .array(let value): return value.map { $0.value }
-        case .dictionary(let value): return value.mapValues { $0.value }
+        case let .string(value): return value
+        case let .int(value): return value
+        case let .double(value): return value
+        case let .bool(value): return value
+        case let .array(value): return value.map { $0.value }
+        case let .dictionary(value): return value.mapValues { $0.value }
         case .null: return NSNull()
         }
     }
-    
+
     public init?(_ value: Any) {
         switch value {
         case let string as String:
@@ -89,17 +89,17 @@ public enum AnySendable: Sendable {
 
 /// Condition operators for MongoDB-style queries
 public enum ConditionOperator: String, Sendable {
-    case eq = "$eq"        // equals
-    case ne = "$ne"        // not equals
-    case gt = "$gt"        // greater than
-    case gte = "$gte"      // greater than or equal
-    case lt = "$lt"        // less than
-    case lte = "$lte"      // less than or equal
-    case `in` = "$in"      // in array
-    case nin = "$nin"      // not in array
+    case eq = "$eq" // equals
+    case ne = "$ne" // not equals
+    case gt = "$gt" // greater than
+    case gte = "$gte" // greater than or equal
+    case lt = "$lt" // less than
+    case lte = "$lte" // less than or equal
+    case `in` = "$in" // in array
+    case nin = "$nin" // not in array
     case exists = "$exists" // field exists
-    case regex = "$regex"   // regex match
-    
+    case regex = "$regex" // regex match
+
     // Logical operators
     case and = "$and"
     case or = "$or"

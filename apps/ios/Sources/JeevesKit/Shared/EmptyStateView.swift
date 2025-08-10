@@ -188,7 +188,7 @@ public extension EmptyStateConfig {
             action: nil
         )
     }
-    
+
     // Note: Tab-specific empty states have been moved to AppSections.emptyStateConfig(for:)
     // Use AppSections.emptyStateConfig(for: .pantry) instead of .emptyPantry
 }

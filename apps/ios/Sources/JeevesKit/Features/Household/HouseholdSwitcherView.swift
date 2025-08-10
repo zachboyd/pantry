@@ -13,7 +13,7 @@ public struct HouseholdSwitcherView: View {
     @State private var households: [Household] = Household.mockHouseholds
     @State private var showingCreateHousehold = false
     @State private var showingJoinHousehold = false
-    
+
     let currentHouseholdId: String?
     let onSelectHousehold: (Household) -> Void
 

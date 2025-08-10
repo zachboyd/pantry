@@ -158,14 +158,14 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
     }
 
     // MARK: - Public Methods
-    
+
     /// Set the current household
     public func setHousehold(_ household: Household?) {
         let newHouseholdId = household?.id
         guard newHouseholdId != state.selectedHouseholdId else { return }
-        
+
         Self.logger.info("🏠 Setting household to: \(household?.name ?? "none")")
-        updateState { 
+        updateState {
             $0.selectedHouseholdId = newHouseholdId
             // Clear items when household changes
             $0.items = []
@@ -175,7 +175,7 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
             $0.expiredItems = 0
             $0.categoryCounts = [:]
         }
-        
+
         // Load items for new household
         if let householdId = newHouseholdId {
             Task {
@@ -304,7 +304,6 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
     }
 
     // MARK: - Private Methods
-
 
     private func performLoadItems(for householdId: String) async {
         Self.logger.info("📡 Loading pantry items for household: \(householdId)")

@@ -4,7 +4,7 @@ import Foundation
 public protocol Subject: Sendable {
     /// The type identifier for this subject
     static var subjectType: SubjectType { get }
-    
+
     /// Instance method to get the subject type (can be overridden for dynamic types)
     var subjectType: SubjectType { get }
 }
@@ -25,31 +25,31 @@ public protocol IdentifiableSubject: Subject {
 /// A type-erased wrapper for any Subject
 public struct AnySubject: Subject, Sendable {
     public static let subjectType: SubjectType = "AnySubject"
-    
+
     public let subjectType: SubjectType
     private let wrapped: any Subject
-    
+
     public init<S: Subject>(_ subject: S) {
-        self.wrapped = subject
-        self.subjectType = subject.subjectType
+        wrapped = subject
+        subjectType = subject.subjectType
     }
-    
+
     /// Get the original wrapped subject if it matches the expected type
-    public func `as`<S: Subject>(_ type: S.Type) -> S? {
+    public func `as`<S: Subject>(_: S.Type) -> S? {
         wrapped as? S
     }
 }
 
 /// A subject implementation for dictionary-based objects
 public final class DictionarySubject: Subject, @unchecked Sendable {
-    public static let subjectType: SubjectType = SubjectType("Dictionary")
-    
+    public static let subjectType: SubjectType = .init("Dictionary")
+
     private let properties: [String: Any]
-    
+
     public init(properties: [String: Any]) {
         self.properties = properties
     }
-    
+
     /// Access property values
     public subscript(key: String) -> Any? {
         properties[key]

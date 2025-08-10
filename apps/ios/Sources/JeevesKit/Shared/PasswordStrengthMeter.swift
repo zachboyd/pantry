@@ -1,7 +1,7 @@
 /*
  PasswordStrengthMeter.swift
  JeevesKit
- 
+
  Visual password strength indicator with color-coded bar
  */
 
@@ -14,7 +14,7 @@ public enum PasswordStrength: CaseIterable {
     case fair
     case good
     case strong
-    
+
     var color: Color {
         switch self {
         case .veryWeak: return DesignTokens.Colors.Status.error
@@ -24,7 +24,7 @@ public enum PasswordStrength: CaseIterable {
         case .strong: return DesignTokens.Colors.Status.success
         }
     }
-    
+
     @MainActor
     var label: String {
         switch self {
@@ -35,7 +35,7 @@ public enum PasswordStrength: CaseIterable {
         case .strong: return L("password.strength.strong")
         }
     }
-    
+
     var progress: CGFloat {
         switch self {
         case .veryWeak: return 0.2
@@ -50,15 +50,15 @@ public enum PasswordStrength: CaseIterable {
 /// Visual password strength meter with progress bar
 public struct PasswordStrengthMeter: View {
     let password: String
-    
+
     private var strength: PasswordStrength {
         calculateStrength(for: password)
     }
-    
+
     public init(password: String) {
         self.password = password
     }
-    
+
     public var body: some View {
         if !password.isEmpty {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
@@ -66,20 +66,20 @@ public struct PasswordStrengthMeter: View {
                     Text(L("password.strength.label"))
                         .font(DesignTokens.Typography.Semantic.caption())
                         .foregroundColor(DesignTokens.Colors.Text.secondary)
-                    
+
                     Text(strength.label)
                         .font(DesignTokens.Typography.Semantic.caption())
                         .foregroundColor(strength.color)
                         .animation(.easeInOut(duration: 0.2), value: strength)
                 }
-                
+
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         // Background
                         RoundedRectangle(cornerRadius: 2)
                             .fill(DesignTokens.Colors.Surface.tertiary)
                             .frame(height: 4)
-                        
+
                         // Progress
                         RoundedRectangle(cornerRadius: 2)
                             .fill(strength.color)
@@ -93,13 +93,13 @@ public struct PasswordStrengthMeter: View {
             .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
-    
+
     /// Calculate password strength based on various criteria
     private func calculateStrength(for password: String) -> PasswordStrength {
         guard !password.isEmpty else { return .veryWeak }
-        
+
         var score = 0
-        
+
         // Length scoring
         if password.count >= PasswordConstants.minimumLength {
             score += 1
@@ -110,7 +110,7 @@ public struct PasswordStrengthMeter: View {
         if password.count >= 16 {
             score += 1
         }
-        
+
         // Character variety scoring
         if password.contains(where: { $0.isUppercase }) {
             score += 1
@@ -125,12 +125,12 @@ public struct PasswordStrengthMeter: View {
         if password.contains(where: { "!@#$%^&*()_+-=[]{}|;:,.<>?".contains($0) }) {
             score += 1
         }
-        
+
         // Map score to strength
         switch score {
-        case 0...1: return .veryWeak
-        case 2...3: return .weak
-        case 4...5: return .fair
+        case 0 ... 1: return .veryWeak
+        case 2 ... 3: return .weak
+        case 4 ... 5: return .fair
         case 6: return .good
         case 7...: return .strong
         default: return .veryWeak
@@ -147,25 +147,25 @@ public struct PasswordStrengthMeter: View {
                 .font(DesignTokens.Typography.Semantic.body())
             PasswordStrengthMeter(password: "pass")
         }
-        
+
         VStack(alignment: .leading) {
             Text("Weak")
                 .font(DesignTokens.Typography.Semantic.body())
             PasswordStrengthMeter(password: "password")
         }
-        
+
         VStack(alignment: .leading) {
             Text("Fair")
                 .font(DesignTokens.Typography.Semantic.body())
             PasswordStrengthMeter(password: "Password1")
         }
-        
+
         VStack(alignment: .leading) {
             Text("Good")
                 .font(DesignTokens.Typography.Semantic.body())
             PasswordStrengthMeter(password: "Password123")
         }
-        
+
         VStack(alignment: .leading) {
             Text("Strong")
                 .font(DesignTokens.Typography.Semantic.body())

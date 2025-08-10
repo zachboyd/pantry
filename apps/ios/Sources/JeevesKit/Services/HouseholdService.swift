@@ -42,7 +42,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     private var householdsCache: [Household] = []
     private var lastCacheUpdate: Date?
     private let cacheTimeout: TimeInterval = 300 // 5 minutes
-    
+
     /// Cached watched results for query deduplication
     private var householdWatches: [String: WatchedResult<Household>] = [:]
     private var householdsListWatch: WatchedResult<[Household]>?
@@ -431,62 +431,62 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     // MARK: - Reactive Watch Methods
-    
+
     /// Apollo watchers for reactive updates (stored to allow cancellation)
     private var apolloHouseholdWatchers: [String: GraphQLQueryWatcher<JeevesGraphQL.GetHouseholdQuery>] = [:]
     private var apolloHouseholdsListWatcher: GraphQLQueryWatcher<JeevesGraphQL.ListHouseholdsQuery>?
     private var apolloMemberWatchers: [String: GraphQLQueryWatcher<JeevesGraphQL.GetHouseholdMembersQuery>] = [:]
-    
+
     /// Watch specific household with reactive updates
     public func watchHousehold(id: String) -> WatchedResult<Household> {
         Self.logger.info("👁️ Creating watched result for household: \(id)")
-        
+
         // Return existing watch if available
         if let existing = householdWatches[id] {
             Self.logger.debug("♻️ Reusing existing watch for household: \(id)")
             return existing
         }
-        
+
         // Create the watched result
         let result = WatchedResult<Household>()
         result.setLoading(true)
-        
+
         // Get the Apollo client directly
         guard let graphQLService = graphQLService as? GraphQLService else {
             Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
             result.setError(ServiceError.serviceUnavailable("GraphQL"))
             return result
         }
-        
+
         // Create the query for the specific household
         let input = JeevesGraphQL.GetHouseholdInput(id: id)
         let query = JeevesGraphQL.GetHouseholdQuery(input: input)
-        
+
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
             cachePolicy: .returnCacheDataAndFetch
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetHouseholdQuery.Data>, Error>) in
             guard let self = self, let result = result else { return }
-            
+
             switch graphQLResult {
             case let .success(data):
                 if let householdData = data.data?.household {
                     // Transform GraphQL data to Household model
                     let household = self.mapGraphQLHouseholdToDomain(householdData)
-                    
+
                     // Update the watched result (this triggers view updates!)
                     Task { @MainActor in
-                        let source: WatchedResult<Household>.DataSource = 
+                        let source: WatchedResult<Household>.DataSource =
                             data.source == .cache ? .cache : .server
                         result.update(value: household, source: source)
                         result.setLoading(false)
-                        
+
                         // Also update our cache
                         if household.id == self.currentHouseholdCache?.id {
                             self.currentHouseholdCache = household
                         }
-                        
+
                         Self.logger.info("🔄 Household watch updated from \(source) for ID: \(id)")
                     }
                 } else {
@@ -495,14 +495,14 @@ public final class HouseholdService: HouseholdServiceProtocol {
                         result.setLoading(false)
                     }
                 }
-                
+
                 if let errors = data.errors, !errors.isEmpty {
                     Self.logger.warning("⚠️ Watch query returned errors for household ID: \(id)")
                     for error in errors {
                         Self.logger.warning("  - \(error.message ?? "Unknown error")")
                     }
                 }
-                
+
             case let .failure(error):
                 Task { @MainActor in
                     result.setError(error)
@@ -511,48 +511,48 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 }
             }
         }
-        
+
         // Store the watcher so we can cancel it later
         apolloHouseholdWatchers[id] = watcher
-        
+
         // Cache the watched result
         householdWatches[id] = result
-        
+
         Self.logger.info("✅ Household watch created with true reactive watching for ID: \(id)")
         return result
     }
-    
+
     /// Watch user's households list with reactive updates
     public func watchUserHouseholds() -> WatchedResult<[Household]> {
         Self.logger.info("👁️ Creating watched result for user households")
-        
+
         // Return existing watch if available
         if let existing = householdsListWatch {
             Self.logger.debug("♻️ Reusing existing user households watch")
             return existing
         }
-        
+
         // Create the watched result
         let result = WatchedResult<[Household]>()
         result.setLoading(true)
-        
+
         // Get the Apollo client directly
         guard let graphQLService = graphQLService as? GraphQLService else {
             Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
             result.setError(ServiceError.serviceUnavailable("GraphQL"))
             return result
         }
-        
+
         // Create the query for user households
         let query = JeevesGraphQL.ListHouseholdsQuery()
-        
+
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
             cachePolicy: .returnCacheDataAndFetch
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.ListHouseholdsQuery.Data>, Error>) in
             guard let self = self, let result = result else { return }
-            
+
             switch graphQLResult {
             case let .success(data):
                 if let householdsData = data.data?.households {
@@ -568,29 +568,29 @@ public final class HouseholdService: HouseholdServiceProtocol {
                             members: [] // Members will be loaded separately
                         )
                     }
-                    
+
                     // Update the watched result (this triggers view updates!)
                     Task { @MainActor in
-                        let source: WatchedResult<[Household]>.DataSource = 
+                        let source: WatchedResult<[Household]>.DataSource =
                             data.source == .cache ? .cache : .server
                         result.update(value: households, source: source)
                         result.setLoading(false)
-                        
+
                         // Also update our cache
                         self.householdsCache = households
                         self.lastCacheUpdate = Date()
-                        
+
                         Self.logger.info("🔄 User households watch updated from \(source) with \(households.count) households")
                     }
                 }
-                
+
                 if let errors = data.errors, !errors.isEmpty {
                     Self.logger.warning("⚠️ Watch query returned errors for user households")
                     for error in errors {
                         Self.logger.warning("  - \(error.message ?? "Unknown error")")
                     }
                 }
-                
+
             case let .failure(error):
                 Task { @MainActor in
                     result.setError(error)
@@ -599,49 +599,49 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 }
             }
         }
-        
+
         // Store the watcher so we can cancel it later
         apolloHouseholdsListWatcher = watcher
-        
+
         // Cache the watched result
         householdsListWatch = result
-        
+
         Self.logger.info("✅ User households watch created with true reactive watching")
         return result
     }
-    
+
     /// Watch household members with reactive updates
     public func watchHouseholdMembers(householdId: String) -> WatchedResult<[HouseholdMember]> {
         Self.logger.info("👁️ Creating watched result for household members: \(householdId)")
-        
+
         // Return existing watch if available
         if let existing = memberWatches[householdId] {
             Self.logger.debug("♻️ Reusing existing members watch for household: \(householdId)")
             return existing
         }
-        
+
         // Create the watched result
         let result = WatchedResult<[HouseholdMember]>()
         result.setLoading(true)
-        
+
         // Get the Apollo client directly
         guard let graphQLService = graphQLService as? GraphQLService else {
             Self.logger.error("❌ Cannot access Apollo client - GraphQLService is not the expected type")
             result.setError(ServiceError.serviceUnavailable("GraphQL"))
             return result
         }
-        
+
         // Create the query for household members
         let input = JeevesGraphQL.GetHouseholdMembersInput(householdId: householdId)
         let query = JeevesGraphQL.GetHouseholdMembersQuery(input: input)
-        
+
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
             cachePolicy: .returnCacheDataAndFetch
         ) { [weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetHouseholdMembersQuery.Data>, Error>) in
             guard let result = result else { return }
-            
+
             switch graphQLResult {
             case let .success(data):
                 if let membersData = data.data?.householdMembers {
@@ -655,25 +655,25 @@ public final class HouseholdService: HouseholdServiceProtocol {
                             joinedAt: DateUtilities.dateFromGraphQL(graphQLMember.joined_at) ?? Date()
                         )
                     }
-                    
+
                     // Update the watched result (this triggers view updates!)
                     Task { @MainActor in
-                        let source: WatchedResult<[HouseholdMember]>.DataSource = 
+                        let source: WatchedResult<[HouseholdMember]>.DataSource =
                             data.source == .cache ? .cache : .server
                         result.update(value: members, source: source)
                         result.setLoading(false)
-                        
+
                         Self.logger.info("🔄 Household members watch updated from \(source) with \(members.count) members for household: \(householdId)")
                     }
                 }
-                
+
                 if let errors = data.errors, !errors.isEmpty {
                     Self.logger.warning("⚠️ Watch query returned errors for household members: \(householdId)")
                     for error in errors {
                         Self.logger.warning("  - \(error.message ?? "Unknown error")")
                     }
                 }
-                
+
             case let .failure(error):
                 Task { @MainActor in
                     result.setError(error)
@@ -682,13 +682,13 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 }
             }
         }
-        
+
         // Store the watcher so we can cancel it later
         apolloMemberWatchers[householdId] = watcher
-        
+
         // Cache the watched result
         memberWatches[householdId] = result
-        
+
         Self.logger.info("✅ Household members watch created with true reactive watching for household: \(householdId)")
         return result
     }
@@ -777,12 +777,12 @@ public final class HouseholdService: HouseholdServiceProtocol {
         currentHouseholdCache = nil
         householdsCache = []
         lastCacheUpdate = nil
-        
+
         // Clear watched results
         householdWatches.removeAll()
         householdsListWatch = nil
         memberWatches.removeAll()
-        
+
         // Cancel all Apollo watchers
         apolloHouseholdWatchers.values.forEach { $0.cancel() }
         apolloHouseholdWatchers.removeAll()
@@ -790,7 +790,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
         apolloHouseholdsListWatcher = nil
         apolloMemberWatchers.values.forEach { $0.cancel() }
         apolloMemberWatchers.removeAll()
-        
+
         Self.logger.info("✅ Household cache and watchers cleared")
     }
 }

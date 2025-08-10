@@ -5,21 +5,21 @@ public struct UserProfileView: View {
     @Environment(\.safeViewModelFactory) private var viewModelFactory
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: UserSettingsViewModel?
-    
+
     let currentUser: User?
     let currentHousehold: Household?
     let households: [Household]
     let onSignOut: () async -> Void
     let onSelectHousehold: (Household) -> Void
-    
+
     @State private var showingCreateHousehold = false
     @State private var showingJoinHousehold = false
-    
+
     public init(
         currentUser: User? = nil,
         currentHousehold: Household? = nil,
         households: [Household] = [],
-        onSignOut: @escaping () async -> Void = { },
+        onSignOut: @escaping () async -> Void = {},
         onSelectHousehold: @escaping (Household) -> Void = { _ in }
     ) {
         self.currentUser = currentUser
@@ -28,7 +28,7 @@ public struct UserProfileView: View {
         self.onSignOut = onSignOut
         self.onSelectHousehold = onSelectHousehold
     }
-    
+
     public var body: some View {
         NavigationStack {
             Group {
@@ -86,7 +86,7 @@ public struct UserProfileView: View {
             NavigationStack {
                 HouseholdJoinView(
                     onBack: { showingJoinHousehold = false },
-                    onComplete: { householdId in
+                    onComplete: { _ in
                         showingJoinHousehold = false
                         Task {
                             await viewModel?.refresh()
@@ -116,33 +116,33 @@ public struct UserProfileView: View {
             Text(L("profile.signout.confirmation"))
         }
     }
-    
+
     // MARK: - Profile Content
-    
+
     @ViewBuilder
     private var profileContent: some View {
         List {
             // User Info Section
             userInfoSection
-            
+
             // Households Section
             householdsSection
-            
+
             // App Settings Section
             appSettingsSection
-            
+
             // Debug Section (only shown in debug builds)
             #if DEBUG
-            debugSection
+                debugSection
             #endif
-            
+
             // Sign Out Section
             signOutSection
         }
     }
-    
+
     // MARK: - User Info Section
-    
+
     @ViewBuilder
     private var userInfoSection: some View {
         Section {
@@ -151,19 +151,19 @@ public struct UserProfileView: View {
                     user: viewModel?.currentUser ?? currentUser,
                     size: .large
                 )
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     // Use watched data
                     Text(viewModel?.currentUser?.name ?? currentUser?.name ?? L("user.unknown"))
                         .font(.headline)
-                    
+
                     Text(viewModel?.currentUser?.email ?? currentUser?.email ?? "")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 // Show loading indicator if user data is being refreshed
                 if viewModel?.currentUserWatch.isLoading == true {
                     ProgressView()
@@ -173,9 +173,9 @@ public struct UserProfileView: View {
             .padding(.vertical, 8)
         }
     }
-    
+
     // MARK: - Households Section
-    
+
     @ViewBuilder
     private var householdsSection: some View {
         Section {
@@ -200,14 +200,13 @@ public struct UserProfileView: View {
                         }
                     )
                 }
-                
-                
+
                 // Create/Join buttons
                 Button(action: { showingCreateHousehold = true }) {
                     Label(L("household.create_new"), systemImage: "plus.circle")
                         .foregroundColor(.accentColor)
                 }
-                
+
                 Button(action: { showingJoinHousehold = true }) {
                     Label(L("household.join_existing"), systemImage: "person.badge.plus")
                         .foregroundColor(.accentColor)
@@ -217,12 +216,12 @@ public struct UserProfileView: View {
                 Text(L("household.no_households"))
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
-                
+
                 Button(action: { showingCreateHousehold = true }) {
                     Label(L("household.create_new"), systemImage: "plus.circle")
                         .foregroundColor(.accentColor)
                 }
-                
+
                 Button(action: { showingJoinHousehold = true }) {
                     Label(L("household.join_existing"), systemImage: "person.badge.plus")
                         .foregroundColor(.accentColor)
@@ -244,42 +243,42 @@ public struct UserProfileView: View {
             }
         }
     }
-    
+
     // MARK: - App Settings Section
-    
+
     @ViewBuilder
     private var appSettingsSection: some View {
         Section(L("settings")) {
             NavigationLink(destination: AppearanceSettingsView()) {
                 Label(L("settings.appearance"), systemImage: "paintbrush")
             }
-            
+
             // Placeholder for future settings
             Label(L("settings.notifications"), systemImage: "bell")
                 .foregroundColor(.secondary)
                 .badge(L("coming.soon"))
-            
+
             Label(L("settings.language"), systemImage: "globe")
                 .foregroundColor(.secondary)
                 .badge(L("coming.soon"))
         }
     }
-    
+
     // MARK: - Debug Section
-    
+
     #if DEBUG
-    @ViewBuilder
-    private var debugSection: some View {
-        Section("Debug Tools") {
-            NavigationLink(destination: PermissionDebugView()) {
-                Label("Permission Debug", systemImage: "lock.shield")
+        @ViewBuilder
+        private var debugSection: some View {
+            Section("Debug Tools") {
+                NavigationLink(destination: PermissionDebugView()) {
+                    Label("Permission Debug", systemImage: "lock.shield")
+                }
             }
         }
-    }
     #endif
-    
+
     // MARK: - Sign Out Section
-    
+
     @ViewBuilder
     private var signOutSection: some View {
         Section {
@@ -293,7 +292,6 @@ public struct UserProfileView: View {
             }
         }
     }
-    
 }
 
 // MARK: - Household Row
@@ -302,7 +300,7 @@ private struct HouseholdRow: View {
     let household: Household
     let isSelected: Bool
     let onTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
             HStack {
@@ -310,14 +308,14 @@ private struct HouseholdRow: View {
                     Text(household.name)
                         .font(.body)
                         .foregroundColor(.primary)
-                    
+
                     Text(Lp("household.members.count", household.memberCount))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.accentColor)
@@ -334,21 +332,21 @@ private struct HouseholdRow: View {
 private struct ProfileErrorView: View {
     let error: Error
     let onRetry: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 50))
                 .foregroundColor(.orange)
-            
+
             Text(L("error.generic_title"))
                 .font(.headline)
-            
+
             Text(error.localizedDescription)
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-            
+
             Button(action: onRetry) {
                 Label(L("retry"), systemImage: "arrow.clockwise")
             }

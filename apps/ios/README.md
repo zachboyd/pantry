@@ -10,6 +10,10 @@ Smart home management iOS application built with SwiftUI and Swift Package Manag
   - Includes SDKs for iOS 26, iPadOS 26, tvOS 26, watchOS 26, macOS Tahoe 26, and visionOS 26
 - iOS 18.0+
 - Swift 6.0
+- **SwiftFormat** (for code formatting)
+  ```bash
+  brew install swiftformat
+  ```
 
 ## VS Code / Cursor Setup
 

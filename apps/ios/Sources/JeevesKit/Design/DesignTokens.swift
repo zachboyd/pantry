@@ -46,7 +46,7 @@ public enum DesignTokens {
             public static let inverse = Color.white
             public static let link = Color.accentColor
         }
-        
+
         /// AI-specific colors
         public enum AI {
             public static let gradient = LinearGradient(

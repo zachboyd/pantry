@@ -4,7 +4,7 @@ import SwiftUI
 // MARK: - @Permitted Property Wrapper
 
 /// A property wrapper that checks permissions before accessing a value
-/// 
+///
 /// Usage:
 /// ```swift
 /// @Permitted(action: "read", subject: "Article")
@@ -17,49 +17,51 @@ public struct Permitted<Value> {
     private let ability: PureAbility?
     private let defaultValue: Value
     private var storedValue: Value
-    
+
     public init(
         wrappedValue: Value,
         action: String,
         subject: String,
         ability: PureAbility? = nil
     ) {
-        self.storedValue = wrappedValue
+        storedValue = wrappedValue
         self.action = Action(action)
         self.subject = SubjectType(subject)
         self.ability = ability
-        self.defaultValue = wrappedValue
+        defaultValue = wrappedValue
     }
-    
+
     public var wrappedValue: Value {
         get {
             // Get ability from environment if not provided
             let currentAbility = ability ?? PermissionContext.shared.currentAbility
-            
+
             // Check permission synchronously
             if let currentAbility = currentAbility,
-               currentAbility.canSync(action.value, subject.value) ?? false {
+               currentAbility.canSync(action.value, subject.value) ?? false
+            {
                 return storedValue
             }
-            
+
             // Return default value if no permission
             return defaultValue
         }
         set {
             // Check write permission before setting
             let currentAbility = ability ?? PermissionContext.shared.currentAbility
-            
+
             if let currentAbility = currentAbility,
-               currentAbility.canSync(action.value, subject.value) ?? false {
+               currentAbility.canSync(action.value, subject.value) ?? false
+            {
                 storedValue = newValue
             }
         }
     }
-    
+
     public var projectedValue: PermissionState {
         let currentAbility = ability ?? PermissionContext.shared.currentAbility
         let hasPermission = currentAbility?.canSync(action.value, subject.value) ?? false
-        
+
         return PermissionState(
             hasPermission: hasPermission,
             action: action,
@@ -78,7 +80,7 @@ public struct PermissionState {
 // MARK: - @CanAccess Property Wrapper
 
 /// A property wrapper that protects method/property access based on permissions
-/// 
+///
 /// Usage:
 /// ```swift
 /// @CanAccess(action: "update", subject: "Post")
@@ -91,7 +93,7 @@ public struct CanAccess<Value> {
     private let ability: PureAbility?
     private let onDenied: (() -> Void)?
     private var value: Value
-    
+
     public init(
         wrappedValue: Value,
         action: String,
@@ -99,48 +101,50 @@ public struct CanAccess<Value> {
         ability: PureAbility? = nil,
         onDenied: (() -> Void)? = nil
     ) {
-        self.value = wrappedValue
+        value = wrappedValue
         self.action = Action(action)
         self.subject = SubjectType(subject)
         self.ability = ability
         self.onDenied = onDenied
     }
-    
+
     public var wrappedValue: Value {
         get {
             // Check permission
             let currentAbility = ability ?? PermissionContext.shared.currentAbility
-            
+
             if let currentAbility = currentAbility,
-               !(currentAbility.canSync(action.value, subject.value) ?? false) {
+               !(currentAbility.canSync(action.value, subject.value) ?? false)
+            {
                 // Call denied handler if permission check fails
                 onDenied?()
-                
+
                 // For functions, return a no-op function
                 if Value.self == (() -> Void).self {
-                    return { } as! Value
+                    return {} as! Value
                 }
             }
-            
+
             return value
         }
         set {
             // Check write permission
             let currentAbility = ability ?? PermissionContext.shared.currentAbility
-            
+
             if let currentAbility = currentAbility,
-               currentAbility.canSync(action.value, subject.value) ?? false {
+               currentAbility.canSync(action.value, subject.value) ?? false
+            {
                 value = newValue
             } else {
                 onDenied?()
             }
         }
     }
-    
+
     public var projectedValue: CanAccessState {
         let currentAbility = ability ?? PermissionContext.shared.currentAbility
         let canAccess = currentAbility?.canSync(action.value, subject.value) ?? false
-        
+
         return CanAccessState(
             canAccess: canAccess,
             action: action,
@@ -162,11 +166,11 @@ public struct CanAccessState {
 @MainActor
 public class PermissionContext: ObservableObject {
     public static let shared = PermissionContext()
-    
+
     @Published public var currentAbility: PureAbility?
-    
+
     private init() {}
-    
+
     public func setAbility(_ ability: PureAbility) {
         currentAbility = ability
     }
@@ -185,7 +189,7 @@ public protocol PermissionRequired {
 public struct RequiresPermission {
     public let action: String
     public let subject: String
-    
+
     public init(action: String, subject: String) {
         self.action = action
         self.subject = subject
@@ -195,9 +199,9 @@ public struct RequiresPermission {
 // MARK: - Dynamic Permission Updates
 
 /// Extension to support dynamic updates
-extension PermissionContext {
+public extension PermissionContext {
     /// Notify all observers of permission changes
-    public func permissionsDidChange() {
+    func permissionsDidChange() {
         objectWillChange.send()
     }
 }
@@ -207,19 +211,19 @@ extension PermissionContext {
 public class PermissionAwareViewModel: ObservableObject {
     @Permitted(wrappedValue: "", action: "read", subject: "user")
     var userData: String
-    
+
     @Permitted(wrappedValue: "", action: "update", subject: "household")
     var householdName: String
-    
+
     @CanAccess(wrappedValue: {
         print("Deleting post...")
     }, action: "delete", subject: "post", onDenied: {
         print("Delete permission denied")
     })
     var deletePost: () -> Void
-    
+
     public init() {}
-    
+
     // Method with permission requirement documentation
     // @RequiresPermission(action: "manage", subject: "content")
     public func manageContent() {

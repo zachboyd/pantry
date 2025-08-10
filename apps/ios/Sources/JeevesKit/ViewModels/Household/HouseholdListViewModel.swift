@@ -7,9 +7,9 @@ import Observation
 @Observable @MainActor
 public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListViewModel.State, HouseholdListDependencies> {
     private static let logger = Logger.household
-    
+
     // MARK: - Watched Data
-    
+
     /// Watched household list that updates reactively
     public let householdsWatch: WatchedResult<[Household]>
 
@@ -77,16 +77,16 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
 
     public required init(dependencies: HouseholdListDependencies) {
         // Start watching households immediately
-        self.householdsWatch = dependencies.householdService.watchUserHouseholds()
-        
+        householdsWatch = dependencies.householdService.watchUserHouseholds()
+
         let initialState = State()
         super.init(dependencies: dependencies, initialState: initialState)
-        
+
         // Register watch for automatic cleanup
         registerWatch(householdsWatch)
-        
+
         Self.logger.info("🏠 HouseholdListViewModel initialized")
-        
+
         // Update state when watched data changes
         Task { @MainActor in
             await self.observeHouseholds()
@@ -95,13 +95,13 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
 
     public required init(dependencies: HouseholdListDependencies, initialState: State) {
         // Start watching households immediately
-        self.householdsWatch = dependencies.householdService.watchUserHouseholds()
-        
+        householdsWatch = dependencies.householdService.watchUserHouseholds()
+
         super.init(dependencies: dependencies, initialState: initialState)
-        
+
         // Register watch for automatic cleanup
         registerWatch(householdsWatch)
-        
+
         // Update state when watched data changes
         Task { @MainActor in
             await self.observeHouseholds()
@@ -113,14 +113,14 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
     override public func onAppear() async {
         Self.logger.debug("👁️ HouseholdListViewModel appeared")
         await super.onAppear()
-        
+
         // No need to load manually - watched data will provide updates
         // Just update state from watched data if available
         if let households = householdsWatch.value {
             updateState { state in
                 state.households = households
                 state.viewState = households.isEmpty ? .empty : .loaded
-                
+
                 // Restore selected household from UserDefaults
                 if let savedSelectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
                    households.contains(where: { $0.id == savedSelectedId })
@@ -145,7 +145,6 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
         }
         await super.refresh()
     }
-    
 
     // MARK: - Public Methods
 
@@ -388,9 +387,9 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
             $0.viewState = .error(currentError ?? .unknown(errorMessage))
         }
     }
-    
+
     // MARK: - Private Methods (Reactive)
-    
+
     /// Observe changes to the household list
     private func observeHouseholds() async {
         // The WatchedResult is @Observable, so changes will trigger UI updates automatically
@@ -403,17 +402,17 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
             filterHouseholds()
         }
     }
-    
+
     // MARK: - WatchedResult Helpers Override
-    
+
     override public var isWatchedDataLoading: Bool {
         householdsWatch.isLoading
     }
-    
+
     override public var watchedDataError: Error? {
         householdsWatch.error
     }
-    
+
     override public func retryFailedWatches() async {
         if householdsWatch.error != nil {
             await householdsWatch.retry()

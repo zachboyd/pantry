@@ -11,11 +11,11 @@ import Foundation
 /// Custom JSON scalar implementation that handles conversion between JSON data and String
 public struct JSONValue: JSONDecodable, JSONEncodable, OutputTypeConvertible, AnyScalarType, ScalarType, Hashable, Sendable {
     public let value: String
-    
+
     public init(value: String) {
         self.value = value
     }
-    
+
     public init(_jsonValue value: ApolloAPI.JSONValue) throws {
         // Handle different types of JSON values from server
         if let stringValue = value as? String {
@@ -29,7 +29,8 @@ public struct JSONValue: JSONDecodable, JSONEncodable, OutputTypeConvertible, An
                     // Check if it's double-encoded (a string containing JSON)
                     if let innerString = parsed as? String,
                        let innerData = innerString.data(using: .utf8),
-                       let _ = try? JSONSerialization.jsonObject(with: innerData) {
+                       let _ = try? JSONSerialization.jsonObject(with: innerData)
+                    {
                         // Double-encoded - use the inner JSON string
                         self.value = innerString
                     } else {
@@ -55,20 +56,20 @@ public struct JSONValue: JSONDecodable, JSONEncodable, OutputTypeConvertible, An
             self.value = jsonString
         }
     }
-    
+
     public var _jsonValue: ApolloAPI.JSONValue {
         // When sending to server, keep as string
         return value
     }
-    
+
     public static func == (lhs: JSONValue, rhs: JSONValue) -> Bool {
         return lhs.value == rhs.value
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(value)
     }
-    
+
     // OutputTypeConvertible conformance
     public static var _asOutputType: ApolloAPI.Selection.Field.OutputType {
         return .scalar(JSONValue.self)
@@ -76,7 +77,7 @@ public struct JSONValue: JSONDecodable, JSONEncodable, OutputTypeConvertible, An
 }
 
 public extension JeevesGraphQL {
-  /// The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-  /// This custom implementation handles conversion between server JSON arrays/objects and String storage.
-  typealias JSON = JSONValue
+    /// The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+    /// This custom implementation handles conversion between server JSON arrays/objects and String storage.
+    typealias JSON = JSONValue
 }

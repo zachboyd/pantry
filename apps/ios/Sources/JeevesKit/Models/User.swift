@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// User model representing an authenticated user  
+/// User model representing an authenticated user
 public struct User: Identifiable, Sendable {
     public let id: String
     public let authUserId: String?
@@ -41,7 +41,7 @@ public struct User: Identifiable, Sendable {
     public var createdAtDate: Date {
         DateUtilities.dateFromGraphQLOrNow(createdAt)
     }
-    
+
     /// Computed property to get user initials for avatar display
     public var initials: String {
         if !firstName.isEmpty || !lastName.isEmpty {

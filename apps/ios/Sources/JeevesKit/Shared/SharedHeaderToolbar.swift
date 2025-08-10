@@ -4,13 +4,13 @@ import SwiftUI
 public struct SharedHeaderToolbar: View {
     @Environment(\.appState) private var appState
     @State private var showingProfile = false
-    
+
     private let title: String
-    
+
     public init(title: String) {
         self.title = title
     }
-    
+
     public var body: some View {
         HStack {
             // Title
@@ -19,7 +19,7 @@ public struct SharedHeaderToolbar: View {
                     Text(household.name)
                         .font(.headline)
                         .foregroundColor(.primary)
-                    
+
                     Text(title)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -29,9 +29,9 @@ public struct SharedHeaderToolbar: View {
                         .foregroundColor(.primary)
                 }
             }
-            
+
             Spacer()
-            
+
             // Profile Avatar
             AvatarView(
                 user: appState?.currentUser,
@@ -66,9 +66,9 @@ public struct SharedHeaderToolbar: View {
                         showingProfile = false
                     }
                 )
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-                    .presentationCornerRadius(20)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(20)
             } else {
                 UserProfileView(
                     currentUser: currentAppState?.currentUser,
@@ -97,13 +97,13 @@ public struct SharedHeaderToolbar: View {
 /// A view modifier to add the shared header toolbar to any view
 public struct SharedHeaderToolbarModifier: ViewModifier {
     let title: String
-    
+
     public func body(content: Content) -> some View {
         VStack(spacing: 0) {
             SharedHeaderToolbar(title: title)
-            
+
             Divider()
-            
+
             content
         }
         .navigationBarHidden(true)

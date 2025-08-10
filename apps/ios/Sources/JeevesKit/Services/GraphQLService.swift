@@ -57,39 +57,41 @@ public final class GraphQLService: GraphQLServiceProtocol {
     }
 
     // MARK: - Helper Methods
-    
+
     /// Check if a GraphQL error represents an authentication error
     private func isAuthenticationError(_ error: GraphQLError) -> Bool {
         // Check message-based errors
         if let message = error.message {
             let lowercasedMessage = message.lowercased()
             if lowercasedMessage == "authentication required" ||
-               lowercasedMessage == "invalid token" ||
-               lowercasedMessage == "user not found" ||
-               lowercasedMessage.contains("invalid token") ||
-               lowercasedMessage.contains("token expired") ||
-               lowercasedMessage.contains("unauthorized") ||
-               lowercasedMessage.contains("user not found") {
+                lowercasedMessage == "invalid token" ||
+                lowercasedMessage == "user not found" ||
+                lowercasedMessage.contains("invalid token") ||
+                lowercasedMessage.contains("token expired") ||
+                lowercasedMessage.contains("unauthorized") ||
+                lowercasedMessage.contains("user not found")
+            {
                 return true
             }
         }
-        
+
         // Check extension code-based errors
         if let extensions = error.extensions,
-           let code = extensions["code"] as? String {
+           let code = extensions["code"] as? String
+        {
             return code == "UNAUTHENTICATED" ||
-                   code == "UNAUTHORIZED" ||
-                   code == "AUTH_ERROR" ||
-                   code == "TOKEN_EXPIRED" ||
-                   code == "INVALID_TOKEN" ||
-                   code == "AUTHENTICATION_REQUIRED" ||
-                   code == "FORBIDDEN" ||
-                   code == "USER_NOT_FOUND"
+                code == "UNAUTHORIZED" ||
+                code == "AUTH_ERROR" ||
+                code == "TOKEN_EXPIRED" ||
+                code == "INVALID_TOKEN" ||
+                code == "AUTHENTICATION_REQUIRED" ||
+                code == "FORBIDDEN" ||
+                code == "USER_NOT_FOUND"
         }
-        
+
         return false
     }
-    
+
     // MARK: - GraphQLServiceProtocol Implementation
 
     /// Execute a GraphQL query
@@ -118,12 +120,12 @@ public final class GraphQLService: GraphQLServiceProtocol {
 
                     if let errors = graphQLResult.errors, !errors.isEmpty {
                         Self.logger.warning("⚠️ Query returned with GraphQL errors: \(errors)")
-                        
+
                         // Check for authentication errors
                         let hasAuthError = errors.contains { error in
                             self.isAuthenticationError(error)
                         }
-                        
+
                         if hasAuthError {
                             Self.logger.error("🔐 Authentication error detected in query")
                             continuation.resume(throwing: ServiceError.unauthorized)
@@ -182,12 +184,12 @@ public final class GraphQLService: GraphQLServiceProtocol {
 
                         if let errors = graphQLResult.errors, !errors.isEmpty {
                             Self.logger.warning("⚠️ Mutation returned with GraphQL errors: \(errors)")
-                            
+
                             // Check for authentication errors
                             let hasAuthError = errors.contains { error in
                                 self.isAuthenticationError(error)
                             }
-                            
+
                             if hasAuthError {
                                 Self.logger.error("🔐 Authentication error detected in mutation")
                                 continuation.resume(throwing: ServiceError.unauthorized)

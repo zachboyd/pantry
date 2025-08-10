@@ -83,7 +83,7 @@ public extension EnvironmentValues {
         }
         set { self[UserPreferencesManagerKey.self] = newValue }
     }
-    
+
     /// Theme manager for centralized theme management
     var themeManager: ThemeManager {
         get {

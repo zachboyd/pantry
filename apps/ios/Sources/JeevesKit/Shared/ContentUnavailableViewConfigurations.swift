@@ -2,9 +2,8 @@ import SwiftUI
 
 /// Reusable configurations for ContentUnavailableView throughout the app
 public enum ContentUnavailableViewConfiguration {
-    
     // MARK: - Common Empty States
-    
+
     /// Configuration for when no items exist in a list
     @MainActor
     public static func noItems(
@@ -23,7 +22,7 @@ public enum ContentUnavailableViewConfiguration {
             }
         }
     }
-    
+
     /// Configuration for search with no results
     @MainActor
     public static func noSearchResults(
@@ -35,7 +34,7 @@ public enum ContentUnavailableViewConfiguration {
             Text(L("search.no_results_for", searchText))
         }
     }
-    
+
     /// Configuration for network errors
     @MainActor
     public static func networkError(
@@ -49,7 +48,7 @@ public enum ContentUnavailableViewConfiguration {
             SecondaryButton(L("error.try_again"), action: retry)
         }
     }
-    
+
     /// Configuration for general errors
     @MainActor
     public static func error(
@@ -66,9 +65,9 @@ public enum ContentUnavailableViewConfiguration {
             }
         }
     }
-    
+
     // MARK: - Feature-Specific Empty States
-    
+
     /// Configuration for empty pantry
     @MainActor
     public static func emptyPantry(
@@ -83,7 +82,7 @@ public enum ContentUnavailableViewConfiguration {
                 .frame(maxWidth: 300)
         }
     }
-    
+
     /// Configuration for no shopping lists
     @MainActor
     public static func noShoppingLists(
@@ -98,7 +97,7 @@ public enum ContentUnavailableViewConfiguration {
                 .frame(maxWidth: 300)
         }
     }
-    
+
     /// Configuration for no recipes
     @MainActor
     public static func noRecipes(
@@ -113,7 +112,7 @@ public enum ContentUnavailableViewConfiguration {
                 .frame(maxWidth: 300)
         }
     }
-    
+
     /// Configuration for no household members
     @MainActor
     public static func noHouseholdMembers(
@@ -128,7 +127,7 @@ public enum ContentUnavailableViewConfiguration {
                 .frame(maxWidth: 300)
         }
     }
-    
+
     /// Configuration for no notifications
     @MainActor
     public static var noNotifications: some View {
@@ -138,7 +137,7 @@ public enum ContentUnavailableViewConfiguration {
             Text(L("notifications.all_caught_up"))
         }
     }
-    
+
     /// Configuration for feature coming soon
     @MainActor
     public static func comingSoon(
