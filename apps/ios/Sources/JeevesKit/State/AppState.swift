@@ -91,6 +91,24 @@ public final class AppState {
         Self.logger.debug("🏗️ AppState initialized")
     }
 
+    /// Perform early synchronous initialization checks
+    /// This should be called immediately after AppState creation to check for existing auth
+    public func performEarlyAuthCheck() {
+        Self.logger.debug("🔍 Performing early auth check...")
+
+        // Create a temporary auth token manager to check for stored tokens
+        // This is a lightweight synchronous check that doesn't require full service initialization
+        let tokenManager = AuthTokenManager()
+        if let storedToken = tokenManager.loadToken(), storedToken.isValid {
+            Self.logger.info("🔐 Found valid stored token during early check")
+            // Set phase to authenticated early to avoid showing unnecessary loading
+            // The full initialization will still happen, but UI won't flash loading state
+            phase = .authenticating // Will quickly transition to authenticated
+        } else {
+            Self.logger.debug("🔓 No valid stored token found during early check")
+        }
+    }
+
     // MARK: - Lifecycle Methods
 
     /// Initialize the app and all services
@@ -118,12 +136,10 @@ public final class AppState {
                 Self.logger.info("🔐 Authentication state: \(isAuthenticated)")
 
                 if isAuthenticated {
-                    // Move to authenticated phase, hydration will happen separately
-                    phase = .authenticated
-                    // Start hydration process
-                    Task {
-                        await startHydration()
-                    }
+                    // Don't immediately transition to authenticated
+                    // Instead, start hydration and let it manage phase transitions
+                    Self.logger.info("🔐 User is authenticated, starting hydration...")
+                    await startHydration()
                 } else {
                     phase = .unauthenticated
                 }
@@ -282,7 +298,14 @@ public final class AppState {
     private func startHydration() async {
         Self.logger.info("💧 Starting hydration process")
 
-        // Transition to hydrating phase
+        // First transition to authenticated to show we're past login
+        // This allows UI to show authenticated state while loading data
+        phase = .authenticated
+
+        // Small delay to ensure UI updates before heavy hydration work
+        try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
+        // Now transition to hydrating phase for data loading
         phase = .hydrating
 
         do {

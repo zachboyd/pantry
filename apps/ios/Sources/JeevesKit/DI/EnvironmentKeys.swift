@@ -147,6 +147,7 @@ private struct AppStateProviderView<Content: View>: View {
     let contentBuilder: () -> Content
     @State private var appState: AppState?
     @State private var isInitializing = false
+    @State private var hasCheckedAuth = false
 
     init(@ViewBuilder contentBuilder: @escaping () -> Content) {
         self.contentBuilder = contentBuilder
@@ -198,22 +199,28 @@ private struct AppStateProviderView<Content: View>: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.background)
-                .task {
-                    guard !isInitializing else { return }
-                    isInitializing = true
+                .onAppear {
+                    // Use onAppear for immediate synchronous execution
+                    guard !hasCheckedAuth else { return }
+                    hasCheckedAuth = true
 
                     #if DEBUG
-                        logger.debug("Task started - creating AppState...")
+                        logger.debug("Creating AppState synchronously on appear...")
                     #endif
-                    await MainActor.run {
-                        #if DEBUG
-                            logger.debug("Creating new AppState instance...")
-                        #endif
-                        appState = AppState()
-                        #if DEBUG
-                            logger.debug("AppState created and assigned: \(String(describing: appState))")
-                        #endif
-                    }
+
+                    // Create AppState synchronously to avoid race condition
+                    // This ensures AppState exists before any UI tries to access it
+                    let newAppState = AppState()
+
+                    // Perform early synchronous auth check to prevent loading flash
+                    // This checks for stored tokens without full service initialization
+                    newAppState.performEarlyAuthCheck()
+
+                    #if DEBUG
+                        logger.debug("AppState created with early auth check complete, phase: \(newAppState.phase)")
+                    #endif
+
+                    appState = newAppState
                 }
             }
         }
