@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { Insertable } from 'kysely';
+import type { Insertable, Updateable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
 import { HouseholdRole } from '../../common/enums.js';
 import { TOKENS } from '../../common/tokens.js';
@@ -480,6 +480,63 @@ export class HouseholdServiceImpl implements HouseholdService {
     } catch (error) {
       this.logger.error(
         `Failed to get household members for household ${householdId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async updateHousehold(
+    id: string,
+    data: Updateable<Household>,
+  ): Promise<HouseholdRecord> {
+    this.logger.log(`Updating household ${id}`);
+
+    try {
+      const updatedHousehold = await this.householdRepository.updateHousehold(
+        id,
+        data,
+      );
+
+      this.logger.log(`Successfully updated household ${id}`);
+      return updatedHousehold;
+    } catch (error) {
+      this.logger.error(`Failed to update household ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getHouseholdMemberCount(
+    householdId: string,
+    userId: string,
+  ): Promise<number> {
+    this.logger.log(
+      `Getting member count for household ${householdId} requested by user ${userId}`,
+    );
+
+    try {
+      const household = await this.householdRepository.getHouseholdByIdForUser(
+        householdId,
+        userId,
+      );
+
+      if (!household) {
+        this.logger.warn(
+          `Household ${householdId} not found or user ${userId} does not have access`,
+        );
+        throw new NotFoundException('Household not found');
+      }
+
+      const count =
+        await this.householdRepository.getHouseholdMemberCount(householdId);
+
+      this.logger.log(
+        `Retrieved member count ${count} for household ${householdId}`,
+      );
+      return count;
+    } catch (error) {
+      this.logger.error(
+        `Failed to get member count for household ${householdId}:`,
         error,
       );
       throw error;

@@ -7,8 +7,8 @@ export type UserRecord = Selectable<User>;
 // Server-side type for user preferences (flexible JSON)
 export type UserPreferences = Record<string, unknown>;
 
-// Server-side type for user permissions (flexible JSON)
-export type UserPermissions = Record<string, unknown>;
+// Server-side type for user permissions (stored as stringified JSON)
+export type UserPermissions = string;
 
 /**
  * Interface for User repository operations (pure data access)

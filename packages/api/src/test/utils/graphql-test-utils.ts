@@ -59,6 +59,7 @@ export class GraphQLTestUtils {
           created_by
           created_at
           updated_at
+          memberCount
         }
       }
     `,
@@ -104,6 +105,18 @@ export class GraphQLTestUtils {
     CREATE_HOUSEHOLD: `
       mutation CreateHousehold($input: CreateHouseholdInput!) {
         createHousehold(input: $input) {
+          id
+          name
+          description
+          created_by
+          created_at
+          updated_at
+        }
+      }
+    `,
+    UPDATE_HOUSEHOLD: `
+      mutation UpdateHousehold($input: UpdateHouseholdInput!) {
+        updateHousehold(input: $input) {
           id
           name
           description
@@ -181,7 +194,7 @@ export class GraphQLTestUtils {
     variables?: Record<string, unknown>,
   ) {
     return this.executeQuery(request, query, variables, {
-      Cookie: `pantry.session_token=${sessionToken}`,
+      Cookie: `jeeves.session_token=${sessionToken}`,
     });
   }
 
@@ -249,6 +262,7 @@ export class GraphQLTestUtils {
       birth_date?: Date;
       email?: string;
       primary_household_id?: string;
+      preferences?: Record<string, unknown>;
     },
   ) {
     return {
@@ -267,6 +281,20 @@ export class GraphQLTestUtils {
       input: {
         name,
         ...(description && { description }),
+      },
+    };
+  }
+
+  static updateHouseholdInput(
+    id: string,
+    name?: string,
+    description?: string | null,
+  ) {
+    return {
+      input: {
+        id,
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
       },
     };
   }

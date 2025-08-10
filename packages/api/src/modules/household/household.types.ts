@@ -1,4 +1,4 @@
-import type { Insertable, Selectable } from 'kysely';
+import type { Insertable, Selectable, Updateable } from 'kysely';
 import type { Household, HouseholdMember } from '../../generated/database.js';
 
 // Runtime types for Household queries - what Kysely actually returns
@@ -91,6 +91,24 @@ export interface HouseholdRepository {
     userId: string,
     newRole: string,
   ): Promise<HouseholdMemberRecord | null>;
+
+  /**
+   * Update household details
+   * @param id - Household ID
+   * @param data - Fields to update
+   * @returns Promise with updated household record
+   */
+  updateHousehold(
+    id: string,
+    data: Updateable<Household>,
+  ): Promise<HouseholdRecord>;
+
+  /**
+   * Get the count of members in a household
+   * @param householdId - Household ID
+   * @returns Promise with the number of members
+   */
+  getHouseholdMemberCount(householdId: string): Promise<number>;
 }
 
 /**
@@ -181,4 +199,23 @@ export interface HouseholdService {
     householdId: string,
     userId: string,
   ): Promise<HouseholdMemberRecord[]>;
+
+  /**
+   * Update household details
+   * @param id - Household ID
+   * @param data - Fields to update
+   * @returns Promise with updated household record
+   */
+  updateHousehold(
+    id: string,
+    data: Updateable<Household>,
+  ): Promise<HouseholdRecord>;
+
+  /**
+   * Get the count of members in a household with access control
+   * @param householdId - Household ID
+   * @param userId - User ID requesting access (for permission checks)
+   * @returns Promise with the number of members
+   */
+  getHouseholdMemberCount(householdId: string, userId: string): Promise<number>;
 }

@@ -1,18 +1,26 @@
-import { Resolver, Mutation, Query, Args } from '@nestjs/graphql';
+import {
+  Resolver,
+  Mutation,
+  Query,
+  Args,
+  ResolveField,
+  Parent,
+} from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { ObjectType, Field, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, InputType, ID } from '@nestjs/graphql';
 import { CurrentUser } from '../../auth/auth.decorator.js';
 import { TOKENS } from '../../../common/tokens.js';
 import type { UserRecord } from '../../user/user.types.js';
 import {
   GuardedHouseholdService,
   CreateHouseholdInput as CreateHouseholdRequest,
+  UpdateHouseholdInput as UpdateHouseholdRequest,
 } from './guarded-household.service.js';
 
 // GraphQL Types
 @ObjectType()
 export class Household {
-  @Field()
+  @Field(() => ID)
   id: string;
 
   @Field()
@@ -29,11 +37,14 @@ export class Household {
 
   @Field()
   updated_at: Date;
+
+  @Field({ nullable: true })
+  memberCount?: number;
 }
 
 @ObjectType()
 export class HouseholdMember {
-  @Field()
+  @Field(() => ID)
   id: string;
 
   @Field()
@@ -101,6 +112,18 @@ export class ChangeHouseholdMemberRoleInput {
 export class GetHouseholdMembersInput {
   @Field()
   householdId: string;
+}
+
+@InputType()
+export class UpdateHouseholdInput implements UpdateHouseholdRequest {
+  @Field()
+  id: string;
+
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field(() => String, { nullable: true })
+  description?: string | null;
 }
 
 @Resolver(() => Household)
@@ -187,6 +210,29 @@ export class HouseholdResolver {
     return this.guardedHouseholdService.changeHouseholdMemberRole(
       input.householdId,
       { userId: input.userId, newRole: input.newRole },
+      user,
+    );
+  }
+
+  @Mutation(() => Household)
+  async updateHousehold(
+    @Args('input') input: UpdateHouseholdInput,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<Household> {
+    const result = await this.guardedHouseholdService.updateHousehold(
+      input,
+      user,
+    );
+    return result.household;
+  }
+
+  @ResolveField(() => Number)
+  async memberCount(
+    @Parent() household: Household,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<number> {
+    return this.guardedHouseholdService.getHouseholdMemberCount(
+      household.id,
       user,
     );
   }

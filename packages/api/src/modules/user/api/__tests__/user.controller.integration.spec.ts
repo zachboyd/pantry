@@ -65,7 +65,7 @@ describe('User Controller Integration Tests', () => {
       // Act
       const response = await testRequest
         .get('/api/user/current')
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .expect(200);
 
       // Assert
@@ -101,7 +101,7 @@ describe('User Controller Integration Tests', () => {
       // Act
       const response = await testRequest
         .get(`/api/user/${userId}`)
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .expect(200);
 
       // Assert
@@ -152,7 +152,7 @@ describe('User Controller Integration Tests', () => {
       // Act
       const response = await testRequest
         .put(`/api/user/${userId}`)
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send(updateData)
         .expect(200);
 
@@ -183,7 +183,7 @@ describe('User Controller Integration Tests', () => {
       // First, update user with initial values to establish known state
       await testRequest
         .put(`/api/user/${userId}`)
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send({
           display_name: 'Original Display',
           phone: '+0000000000',
@@ -193,7 +193,7 @@ describe('User Controller Integration Tests', () => {
       // Act - Update only first name
       const response = await testRequest
         .put(`/api/user/${userId}`)
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send({
           first_name: 'UpdatedFirst',
         })
@@ -238,7 +238,7 @@ describe('User Controller Integration Tests', () => {
       // Act & Assert
       await testRequest
         .put(`/api/user/${nonExistentUserId}`)
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send({
           first_name: 'DoesNotExist',
         })
@@ -270,7 +270,7 @@ describe('User Controller Integration Tests', () => {
       // Act & Assert - User1 tries to update User2 (who they don't manage)
       await testRequest
         .put(`/api/user/${user2Id}`)
-        .set('Cookie', `pantry.session_token=${user1Token}`)
+        .set('Cookie', `jeeves.session_token=${user1Token}`)
         .send({
           first_name: 'Hacked',
         })
@@ -309,7 +309,7 @@ describe('User Controller Integration Tests', () => {
       // Act - Manager updates managed user's profile
       const response = await testRequest
         .put(`/api/user/${managedUserId}`)
-        .set('Cookie', `pantry.session_token=${managerToken}`)
+        .set('Cookie', `jeeves.session_token=${managerToken}`)
         .send({
           first_name: 'UpdatedByManager',
           display_name: 'Managed User',
@@ -349,7 +349,7 @@ describe('User Controller Integration Tests', () => {
 
       const response = await testRequest
         .put(`/api/user/${userId}`)
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send(updateData)
         .expect(200);
 
@@ -382,7 +382,7 @@ describe('User Controller Integration Tests', () => {
       // Act - Send empty update
       const response = await testRequest
         .put(`/api/user/${userId}`)
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send({})
         .expect(200);
 
@@ -404,7 +404,7 @@ describe('User Controller Integration Tests', () => {
       // Act
       const response = await testRequest
         .get('/api/user/current')
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .expect(200);
 
       // Assert
@@ -426,7 +426,7 @@ describe('User Controller Integration Tests', () => {
       // Act
       const response = await testRequest
         .get('/api/user/current')
-        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${manager.sessionToken}`)
         .expect(200);
 
       // Assert
@@ -464,7 +464,7 @@ describe('User Controller Integration Tests', () => {
       // Act - Update primary household via REST API
       const response = await testRequest
         .put(`/api/user/${manager.userId}`)
-        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${manager.sessionToken}`)
         .send({
           primary_household_id: secondHouseholdId,
         })
@@ -496,7 +496,7 @@ describe('User Controller Integration Tests', () => {
       // Act - Update primary household and other fields via REST API
       const response = await testRequest
         .put(`/api/user/${manager.userId}`)
-        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${manager.sessionToken}`)
         .send({
           primary_household_id: secondHouseholdId,
           first_name: 'Updated',
@@ -525,7 +525,7 @@ describe('User Controller Integration Tests', () => {
       // Act - Set primary household to null
       const response = await testRequest
         .put(`/api/user/${manager.userId}`)
-        .set('Cookie', `pantry.session_token=${manager.sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${manager.sessionToken}`)
         .send({
           primary_household_id: null,
         })

@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 
 type User {
-  id: String!
+  id: ID!
   auth_user_id: String
   email: String
   first_name: String!
@@ -23,31 +23,30 @@ type User {
 }
 
 """
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
-"""
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSON
 
 type Household {
-  id: String!
+  id: ID!
   name: String!
   description: String
   created_by: String!
   created_at: DateTime!
   updated_at: DateTime!
+  memberCount: Float
 }
 
 type HouseholdMember {
-  id: String!
+  id: ID!
   household_id: String!
   user_id: String!
   role: String!
   joined_at: DateTime!
 }
+
+"""A null-safe DateTime scalar"""
+scalar DateTime
 
 type Query {
   user(input: GetUserInput!): User!
@@ -75,6 +74,7 @@ type Mutation {
   addHouseholdMember(input: AddHouseholdMemberInput!): HouseholdMember!
   removeHouseholdMember(input: RemoveHouseholdMemberInput!): Boolean!
   changeHouseholdMemberRole(input: ChangeHouseholdMemberRoleInput!): HouseholdMember!
+  updateHousehold(input: UpdateHouseholdInput!): Household!
 }
 
 input UpdateUserInput {
@@ -110,4 +110,14 @@ input ChangeHouseholdMemberRoleInput {
   householdId: String!
   userId: String!
   newRole: String!
+}
+
+input UpdateHouseholdInput {
+  id: String!
+  name: String
+  description: String
+}
+
+type Subscription {
+  userUpdated: User!
 }

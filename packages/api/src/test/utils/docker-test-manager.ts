@@ -39,7 +39,7 @@ export class DockerTestManager {
         '-f',
         this.COMPOSE_FILE,
         '-p',
-        'pantry-test', // Use project name to avoid conflicts
+        'jeeves-test', // Use project name to avoid conflicts
         'up',
         '-d',
         '--wait',
@@ -80,7 +80,7 @@ export class DockerTestManager {
         '-f',
         this.COMPOSE_FILE,
         '-p',
-        'pantry-test',
+        'jeeves-test',
         'down',
         '-v',
         '--remove-orphans', // Remove volumes and orphaned containers
@@ -116,7 +116,7 @@ export class DockerTestManager {
       try {
         // Check if all services are healthy
         const healthOutput = execSync(
-          `docker compose -f ${this.COMPOSE_FILE} -p pantry-test ps --format json`,
+          `docker compose -f ${this.COMPOSE_FILE} -p jeeves-test ps --format json`,
           {
             stdio: 'pipe',
             cwd: this.projectRoot,
@@ -160,7 +160,7 @@ export class DockerTestManager {
    */
   private static setTestEnvironmentVariables(): void {
     process.env.DATABASE_URL =
-      'postgresql://pantry_test:pantry_test_pass@localhost:5433/pantry_test';
+      'postgresql://jeeves_test:jeeves_test_pass@localhost:5433/jeeves_test';
     process.env.REDIS_URL = 'redis://localhost:6380';
 
     this.logger.log('🔧 Test environment variables set');
@@ -170,7 +170,7 @@ export class DockerTestManager {
    * Get the test database connection string
    */
   static getTestDatabaseUrl(): string {
-    return 'postgresql://pantry_test:pantry_test_pass@localhost:5433/pantry_test';
+    return 'postgresql://jeeves_test:jeeves_test_pass@localhost:5433/jeeves_test';
   }
 
   /**
@@ -192,12 +192,12 @@ export class DockerTestManager {
       const resetCommand = [
         'docker',
         'exec',
-        'pantry-test-pantry-test-postgres-1', // Container name pattern
+        'jeeves-test-jeeves-test-postgres-1', // Container name pattern
         'psql',
         '-U',
-        'pantry_test',
+        'jeeves_test',
         '-d',
-        'pantry_test',
+        'jeeves_test',
         '-c',
         'DROP SCHEMA public CASCADE; CREATE SCHEMA public;',
       ];

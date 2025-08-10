@@ -145,15 +145,6 @@ export interface MessageRead {
   user_id: string;
 }
 
-export interface Pantry {
-  created_at: Generated<Timestamp>;
-  description: string | null;
-  household_id: string;
-  id: string;
-  name: string;
-  updated_at: Generated<Timestamp>;
-}
-
 export interface TypingIndicator {
   created_at: Generated<Timestamp>;
   expires_at: Generated<Timestamp>;
@@ -195,7 +186,6 @@ export interface DB {
   household_member: HouseholdMember;
   message: Message;
   message_read: MessageRead;
-  pantry: Pantry;
   typing_indicator: TypingIndicator;
   user: User;
 }

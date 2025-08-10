@@ -698,7 +698,7 @@ describe('User Resolver Integration Tests', () => {
 
     it('should forbid household member from updating AI user', async () => {
       // Arrange - Create household with manager, member, and AI user
-      const { manager, members, householdId } =
+      const { members, householdId } =
         await IntegrationTestModuleFactory.createHouseholdWithMembers(
           testRequest,
           db,
@@ -740,14 +740,14 @@ describe('User Resolver Integration Tests', () => {
 
     it('should forbid user from updating AI user in different household', async () => {
       // Arrange - Create two separate households
-      const { manager: manager1, householdId: household1Id } =
+      const { manager: manager1 } =
         await IntegrationTestModuleFactory.createHouseholdWithMembers(
           testRequest,
           db,
           0,
         );
 
-      const { manager: manager2, householdId: household2Id } =
+      const { householdId: household2Id } =
         await IntegrationTestModuleFactory.createHouseholdWithMembers(
           testRequest,
           db,

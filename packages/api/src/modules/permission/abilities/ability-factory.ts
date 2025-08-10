@@ -133,14 +133,6 @@ export class AbilityFactory {
       }
     }
 
-    // Pantry permissions
-    if (managerHouseholdIds.length > 0) {
-      can('manage', 'Pantry', { household_id: { $in: managerHouseholdIds } });
-    }
-    if (allHouseholdIds.length > 0) {
-      can('read', 'Pantry', { household_id: { $in: allHouseholdIds } });
-    }
-
     // User permissions - using pre-packed context for household members
     if (allHouseholdIds.length > 0) {
       const readableUsers: string[] = [userId]; // Always include own profile

@@ -241,60 +241,6 @@ export class PermissionEvaluator {
   }
 
   // ============================================================================
-  // PANTRY PERMISSIONS
-  // ============================================================================
-
-  /**
-   * Check if the user can manage pantry in a specific household (full access)
-   */
-  canManagePantry(householdId: string): boolean {
-    return this.ability.can(
-      'manage',
-      subject('Pantry', { household_id: householdId }),
-    );
-  }
-
-  /**
-   * Check if the user can read pantry information for a specific household
-   */
-  canReadPantry(householdId: string): boolean {
-    return this.ability.can(
-      'read',
-      subject('Pantry', { household_id: householdId }),
-    );
-  }
-
-  /**
-   * Check if the user can create pantry items in a specific household
-   */
-  canCreatePantryItem(householdId: string): boolean {
-    return this.ability.can(
-      'create',
-      subject('Pantry', { household_id: householdId }),
-    );
-  }
-
-  /**
-   * Check if the user can update pantry items in a specific household
-   */
-  canUpdatePantryItem(householdId: string): boolean {
-    return this.ability.can(
-      'update',
-      subject('Pantry', { household_id: householdId }),
-    );
-  }
-
-  /**
-   * Check if the user can delete pantry items in a specific household
-   */
-  canDeletePantryItem(householdId: string): boolean {
-    return this.ability.can(
-      'delete',
-      subject('Pantry', { household_id: householdId }),
-    );
-  }
-
-  // ============================================================================
   // UTILITY METHODS
   // ============================================================================
 
@@ -315,8 +261,7 @@ export class PermissionEvaluator {
       | 'User'
       | 'Household'
       | 'HouseholdMember'
-      | 'Message'
-      | 'Pantry';
+      | 'Message';
     return (
       this.ability.can('read', subjectType) ||
       this.ability.can('create', subjectType) ||

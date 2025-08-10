@@ -1,6 +1,6 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Subscription, Args } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { ObjectType, Field, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, InputType, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 import { CurrentUser } from '../../auth/auth.decorator.js';
 import { TOKENS } from '../../../common/tokens.js';
@@ -9,13 +9,14 @@ import type {
   UserPreferences,
   UserPermissions,
 } from '../user.types.js';
+import type { PubSubService } from '../../pubsub/pubsub.types.js';
 import { GuardedUserService } from './guarded-user.service.js';
 
 // GraphQL Types
 
 @ObjectType()
 export class User {
-  @Field()
+  @Field(() => ID)
   id: string;
 
   @Field({ nullable: true })
@@ -111,6 +112,8 @@ export class UserResolver {
   constructor(
     @Inject(TOKENS.USER.GUARDED_SERVICE)
     private readonly guardedUserService: GuardedUserService,
+    @Inject(TOKENS.PUBSUB.SERVICE)
+    private readonly pubsubService: PubSubService,
   ) {}
 
   private transformUserForGraphQL(user: UserRecord): User {
@@ -143,5 +146,14 @@ export class UserResolver {
   ): Promise<User> {
     const result = await this.guardedUserService.updateUser(input, user);
     return this.transformUserForGraphQL(result.user);
+  }
+
+  @Subscription(() => User)
+  async userUpdated(@CurrentUser() user: UserRecord | null) {
+    if (!user) {
+      throw new Error('You must be authenticated to subscribe to user updates');
+    }
+
+    return this.pubsubService.getUserUpdatedIterator(user.id);
   }
 }

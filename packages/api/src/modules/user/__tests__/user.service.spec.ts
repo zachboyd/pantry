@@ -9,15 +9,29 @@ import {
   UserRepositoryMock,
   type UserRepositoryMockType,
 } from '../../../test/mocks/user-repository.mock.js';
+import {
+  PubSubServiceMock,
+  type PubSubServiceMockType,
+} from '../../../test/mocks/pubsub-service.mock.js';
+import { CacheManagerMock } from '../../../test/mocks/cache-manager.mock.js';
+import { CacheHelperMock } from '../../../test/mocks/cache-helper.mock.js';
+import type { CacheManagerMockType } from '../../../test/mocks/cache-manager.mock.js';
+import type { CacheHelperMockType } from '../../../test/mocks/cache-helper.mock.js';
 import { DatabaseFixtures } from '../../../test/fixtures/database-fixtures.js';
 
 describe('UserService', () => {
   let userService: UserServiceImpl;
   let mockUserRepository: UserRepositoryMockType;
+  let mockPubSubService: PubSubServiceMockType;
+  let mockCache: CacheManagerMockType;
+  let mockCacheHelper: CacheHelperMockType;
 
   beforeEach(async () => {
     // Create mocks
     mockUserRepository = UserRepositoryMock.createUserRepositoryMock();
+    mockPubSubService = PubSubServiceMock.createPubSubServiceMock();
+    mockCache = CacheManagerMock.createCacheManagerMock();
+    mockCacheHelper = CacheHelperMock.createCacheHelperMock();
 
     // Create test module
     const module = await Test.createTestingModule({
@@ -26,6 +40,18 @@ describe('UserService', () => {
         {
           provide: TOKENS.USER.REPOSITORY,
           useValue: mockUserRepository,
+        },
+        {
+          provide: TOKENS.PUBSUB.SERVICE,
+          useValue: mockPubSubService,
+        },
+        {
+          provide: TOKENS.CACHE.MANAGER,
+          useValue: mockCache,
+        },
+        {
+          provide: TOKENS.CACHE.HELPER,
+          useValue: mockCacheHelper,
         },
       ],
     }).compile();
@@ -120,6 +146,31 @@ describe('UserService', () => {
         `Error getting user by auth ID ${authUserId}:`,
         repositoryError,
       );
+    });
+    it('should use cache when available and not call repository', async () => {
+      // Arrange
+      const authUserId = 'cached-auth-user-id';
+      const cachedUser = DatabaseFixtures.createUserResult({
+        auth_user_id: authUserId,
+      });
+
+      // Mock cache hit
+      mockCache.get.mockResolvedValue(cachedUser);
+      mockCacheHelper.getCacheConfig.mockReturnValue({
+        key: 'users:auth:cached-auth-user-id',
+        ttl: 300000,
+      });
+
+      // Act
+      const result = await userService.getUserByAuthId(authUserId);
+
+      // Assert
+      expect(result).toEqual(cachedUser);
+      expect(mockCache.get).toHaveBeenCalledWith(
+        'users:auth:cached-auth-user-id',
+      );
+      // Repository should not be called when cache hits
+      expect(mockUserRepository.getUserByAuthId).not.toHaveBeenCalled();
     });
   });
 

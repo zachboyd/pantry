@@ -1,4 +1,4 @@
-# Pantry API - Development Patterns
+# Jeeves API - Development Patterns
 
 ## 1. Interface + Implementation Pattern
 

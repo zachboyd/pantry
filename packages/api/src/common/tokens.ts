@@ -75,6 +75,11 @@ export const TOKENS = {
     HELPER: 'CACHE_HELPER',
     REDIS_CLIENT: 'REDIS_CLIENT',
   },
+
+  // PubSub related tokens
+  PUBSUB: {
+    SERVICE: 'PUBSUB_SERVICE',
+  },
 } as const;
 
 // Type helpers for better type safety
@@ -89,3 +94,4 @@ export type WorkerTokens = typeof TOKENS.WORKER;
 export type HealthTokens = typeof TOKENS.HEALTH;
 export type PermissionTokens = typeof TOKENS.PERMISSION;
 export type CacheTokens = typeof TOKENS.CACHE;
+export type PubSubTokens = typeof TOKENS.PUBSUB;

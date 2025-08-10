@@ -26,6 +26,7 @@ import {
   CreateHouseholdInput,
   AddHouseholdMemberInput,
   GetHouseholdMembersResponse,
+  UpdateHouseholdInput,
 } from './guarded-household.service.js';
 
 @ApiTags('household')
@@ -127,6 +128,44 @@ export class HouseholdController {
   ): Promise<HouseholdRecord> {
     const result = await this.guardedHouseholdService.getHousehold(
       householdId,
+      user,
+    );
+    return result.household;
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update household details' })
+  @ApiSecurity('session')
+  @ApiResponse({
+    status: 200,
+    description: 'Household updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        created_by: { type: 'string' },
+        created_at: { type: 'string' },
+        updated_at: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - User not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Insufficient permissions',
+  })
+  @ApiResponse({ status: 404, description: 'Household not found' })
+  async updateHousehold(
+    @Param('id') householdId: string,
+    @Body() updateData: Omit<UpdateHouseholdInput, 'id'>,
+    @CurrentUser() user: UserRecord | null,
+  ): Promise<HouseholdRecord> {
+    // Combine path param with body data to match the service interface
+    const input: UpdateHouseholdInput = { id: householdId, ...updateData };
+    const result = await this.guardedHouseholdService.updateHousehold(
+      input,
       user,
     );
     return result.household;

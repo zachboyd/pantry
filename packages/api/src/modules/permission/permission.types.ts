@@ -10,7 +10,6 @@ export type Subject =
   | 'Household'
   | 'HouseholdMember'
   | 'Message'
-  | 'Pantry'
   | 'all'; // all means all subjects
 
 // CASL Ability type with MongoDB support - using flexible conditions
@@ -75,11 +74,6 @@ export interface PermissionEvaluator {
   ): boolean;
   canUpdateAnyMessage(messageId: string, householdId: string): boolean;
   canDeleteAnyMessage(messageId: string, householdId: string): boolean;
-  canManagePantry(householdId: string): boolean;
-  canReadPantry(householdId: string): boolean;
-  canCreatePantryItem(householdId: string): boolean;
-  canUpdatePantryItem(householdId: string): boolean;
-  canDeletePantryItem(householdId: string): boolean;
   getRawAbility(): AppAbility;
   hasAnyPermission(subject: string): boolean;
 }

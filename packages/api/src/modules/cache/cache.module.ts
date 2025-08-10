@@ -18,7 +18,7 @@ import type { ConfigService } from '../config/config.types.js';
         // Create Keyv with Redis store
         const keyv = new Keyv({
           store: new KeyvRedis(redisUrl),
-          namespace: 'pantry-api',
+          namespace: 'jeeves-api',
         });
 
         keyv.on('error', (error) => {

@@ -21,7 +21,7 @@ export function createAuth(onUserCreated?: UserCreatedCallback): AuthInstance {
     baseURL: process.env.BETTER_AUTH_URL,
     basePath: '/api/auth',
     advanced: {
-      cookiePrefix: 'pantry',
+      cookiePrefix: 'jeeves',
     },
     emailAndPassword: {
       enabled: true,

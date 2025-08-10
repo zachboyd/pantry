@@ -14,15 +14,21 @@ import { TOKENS } from '../../../../common/tokens.js';
 import { DatabaseFixtures } from '../../../../test/fixtures/database-fixtures.js';
 import { GuardedUserServiceMock } from '../../../../test/mocks/guarded-user-service.mock.js';
 import type { GuardedUserServiceMockType } from '../../../../test/mocks/guarded-user-service.mock.js';
+import {
+  PubSubServiceMock,
+  type PubSubServiceMockType,
+} from '../../../../test/mocks/pubsub-service.mock.js';
 
 describe('UserResolver', () => {
   let userResolver: UserResolver;
   let mockGuardedUserService: GuardedUserServiceMockType;
+  let mockPubSubService: PubSubServiceMockType;
 
   beforeEach(async () => {
-    // Create reusable mock
+    // Create reusable mocks
     mockGuardedUserService =
       GuardedUserServiceMock.createGuardedUserServiceMock();
+    mockPubSubService = PubSubServiceMock.createPubSubServiceMock();
 
     // Create test module
     const module = await Test.createTestingModule({
@@ -31,6 +37,10 @@ describe('UserResolver', () => {
         {
           provide: TOKENS.USER.GUARDED_SERVICE,
           useValue: mockGuardedUserService,
+        },
+        {
+          provide: TOKENS.PUBSUB.SERVICE,
+          useValue: mockPubSubService,
         },
       ],
     }).compile();

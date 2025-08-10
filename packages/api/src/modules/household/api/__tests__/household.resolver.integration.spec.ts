@@ -50,6 +50,35 @@ describe('Household Resolver Integration Tests', () => {
     await IntegrationTestModuleFactory.closeApp(app, testDbService);
   });
 
+  describe('household query', () => {
+    it('should return household with memberCount field', async () => {
+      // Arrange - Create household with multiple members
+      const { manager, members, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          3, // Create 3 members + 1 manager = 4 total
+        );
+
+      // Act - Query the household
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.QUERIES.GET_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.createGetHouseholdInput(householdId),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const household = response.body.data.household;
+      expect(household).toBeDefined();
+      expect(household.id).toBe(householdId);
+      expect(household.memberCount).toBe(5); // 3 members + 1 manager + 1 AI user
+    });
+  });
+
   describe('householdMembers query', () => {
     it('should return household members when user is a household member', async () => {
       // Arrange - Create household with multiple members
@@ -693,7 +722,7 @@ describe('Household Resolver Integration Tests', () => {
       // Act
       const response = await testRequest
         .post('/api/household')
-        .set('Cookie', `pantry.session_token=${sessionToken}`)
+        .set('Cookie', `jeeves.session_token=${sessionToken}`)
         .send(createHouseholdInput);
 
       // Assert
@@ -737,6 +766,241 @@ describe('Household Resolver Integration Tests', () => {
       expect(response.status).toBe(200);
       GraphQLTestUtils.assertHasErrors(response);
       GraphQLTestUtils.assertErrorMessage(response, 'Authentication required');
+    });
+  });
+
+  describe('updateHousehold mutation', () => {
+    it('should update household name and description successfully', async () => {
+      // Arrange - Create household first
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      const updateInput = {
+        name: 'Updated Household Name',
+        description: 'Updated household description',
+      };
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.updateHouseholdInput(
+          householdId,
+          updateInput.name,
+          updateInput.description,
+        ),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const updatedHousehold = response.body.data.updateHousehold;
+      expect(updatedHousehold).toMatchObject({
+        id: householdId,
+        name: 'Updated Household Name',
+        description: 'Updated household description',
+        created_by: manager.userId,
+      });
+
+      // Verify the updated_at timestamp changed
+      expect(new Date(updatedHousehold.updated_at).getTime()).toBeGreaterThan(
+        new Date(updatedHousehold.created_at).getTime(),
+      );
+    });
+
+    it('should update only name when description is not provided', async () => {
+      // Arrange - Create household with description
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+          { name: 'Original Name', description: 'Original description' },
+        );
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.updateHouseholdInput(householdId, 'New Name Only'),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const updatedHousehold = response.body.data.updateHousehold;
+      expect(updatedHousehold).toMatchObject({
+        id: householdId,
+        name: 'New Name Only',
+        description: 'Original description', // Should remain unchanged
+      });
+    });
+
+    it('should update description to null', async () => {
+      // Arrange - Create household with description
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+          { name: 'Test Name', description: 'Will be removed' },
+        );
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.updateHouseholdInput(
+          householdId,
+          undefined,
+          null, // Explicitly set to null
+        ),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertNoErrors(response);
+
+      const updatedHousehold = response.body.data.updateHousehold;
+      expect(updatedHousehold).toMatchObject({
+        id: householdId,
+        name: 'Test Name', // Should remain unchanged
+        description: null, // Should be null
+      });
+    });
+
+    it('should require authentication for updateHousehold mutation', async () => {
+      // Arrange - Create a household first
+      const { householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Act - Try to update without authentication
+      const response = await GraphQLTestUtils.executeQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_HOUSEHOLD,
+        GraphQLTestUtils.updateHouseholdInput(
+          householdId,
+          'Unauthorized Update',
+        ),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(response, 'Authentication required');
+    });
+
+    it('should require proper permissions to update household', async () => {
+      // Arrange - Create household with manager
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0, // Start with just the manager
+        );
+
+      // Create a separate user to be a member (non-manager)
+      const memberUser = await IntegrationTestModuleFactory.signUpTestUser(
+        testRequest,
+        { first_name: 'Member', last_name: 'User' },
+        db,
+      );
+
+      // Add the member user to the household as a 'member' (not manager)
+      await IntegrationTestModuleFactory.addUserToHousehold(
+        testRequest,
+        db,
+        householdId,
+        memberUser.userId,
+        'member',
+        manager.sessionToken,
+      );
+
+      // Act - Try to update as member (should fail)
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_HOUSEHOLD,
+        memberUser.sessionToken, // Use the member's session token
+        GraphQLTestUtils.updateHouseholdInput(
+          householdId,
+          'Unauthorized Update',
+        ),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'Insufficient permissions to update this household',
+      );
+    });
+
+    it('should validate household name is not empty', async () => {
+      // Arrange
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      // Act - Try to update with empty name
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.updateHouseholdInput(householdId, ''), // Empty name
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'Household name cannot be empty',
+      );
+    });
+
+    it('should validate household name length', async () => {
+      // Arrange
+      const { manager, householdId } =
+        await IntegrationTestModuleFactory.createHouseholdWithMembers(
+          testRequest,
+          db,
+          0,
+        );
+
+      const longName = 'a'.repeat(101); // 101 characters
+
+      // Act
+      const response = await GraphQLTestUtils.executeAuthenticatedQuery(
+        testRequest,
+        GraphQLTestUtils.MUTATIONS.UPDATE_HOUSEHOLD,
+        manager.sessionToken,
+        GraphQLTestUtils.updateHouseholdInput(householdId, longName),
+      );
+
+      // Assert
+      expect(response.status).toBe(200);
+      GraphQLTestUtils.assertHasErrors(response);
+      GraphQLTestUtils.assertErrorMessage(
+        response,
+        'Household name must be 100 characters or less',
+      );
     });
   });
 });

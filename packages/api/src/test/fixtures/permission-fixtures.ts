@@ -195,9 +195,6 @@ export class PermissionFixtures {
     // Managers can manage all messages in their households
     can('manage', 'Message', { household_id: { $in: householdIds } });
 
-    // Managers can manage pantries
-    can('manage', 'Pantry', { household_id: { $in: householdIds } });
-
     return build();
   }
 
@@ -226,9 +223,6 @@ export class PermissionFixtures {
 
     // AI can create and read messages but not update/delete
     can(['create', 'read'], 'Message', { household_id: { $in: householdIds } });
-
-    // AI can read pantries
-    can('read', 'Pantry', { household_id: { $in: householdIds } });
 
     // AI restrictions - cannot modify user profiles or household structure
     cannot('update', 'User', { id: { $ne: userId } });

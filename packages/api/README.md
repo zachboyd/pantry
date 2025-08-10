@@ -1,4 +1,4 @@
-# Pantry API
+# Jeeves API
 
 ## Technology Stack
 
