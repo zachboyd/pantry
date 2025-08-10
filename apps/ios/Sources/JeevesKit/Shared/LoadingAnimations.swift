@@ -17,6 +17,7 @@ public struct EnhancedLoadingView: View {
     @State private var rotation: Double = 0
     @State private var scale: Double = 1.0
     @State private var opacity: Double = 0.7
+    @State private var isAnimating: Bool = false
 
     public init(message: String = "Loading...", showLogo: Bool = true) {
         self.message = message
@@ -33,12 +34,19 @@ public struct EnhancedLoadingView: View {
                     .scaleEffect(scale)
                     .rotationEffect(.degrees(rotation))
                     .onAppear {
+                        isAnimating = true
                         withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
                             scale = 1.1
                         }
                         withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
                             rotation = 360
                         }
+                    }
+                    .onDisappear {
+                        isAnimating = false
+                        // Reset animation states
+                        scale = 1.0
+                        rotation = 0
                     }
 
                 Text(L("app.name"))
@@ -70,10 +78,17 @@ public struct EnhancedLoadingView: View {
                 }
             }
             .onAppear {
-                withAnimation {
-                    scale = 1.5
-                    opacity = 1.0
+                if isAnimating {
+                    withAnimation {
+                        scale = 1.5
+                        opacity = 1.0
+                    }
                 }
+            }
+            .onDisappear {
+                // Reset animation states
+                scale = 1.0
+                opacity = 0.7
             }
 
             Text(message)
@@ -130,6 +145,9 @@ public struct SkeletonListItemView: View {
         .padding(.vertical, 8)
         .onAppear {
             isAnimating = true
+        }
+        .onDisappear {
+            isAnimating = false
         }
     }
 }
@@ -194,6 +212,9 @@ public struct SkeletonCardView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .onAppear {
             isAnimating = true
+        }
+        .onDisappear {
+            isAnimating = false
         }
     }
 }
@@ -289,6 +310,12 @@ public struct SuccessAnimationView: View {
                 checkmarkScale = 1.0
             }
         }
+        .onDisappear {
+            // Reset animation states
+            circleScale = 0
+            opacity = 0
+            checkmarkScale = 0
+        }
     }
 }
 
@@ -337,6 +364,13 @@ public struct ErrorAnimationView: View {
             withAnimation(.easeInOut(duration: 0.1).repeatCount(3, autoreverses: true).delay(0.5)) {
                 shake = 5
             }
+        }
+        .onDisappear {
+            // Reset animation states
+            circleScale = 0
+            opacity = 0
+            xScale = 0
+            shake = 0
         }
     }
 }

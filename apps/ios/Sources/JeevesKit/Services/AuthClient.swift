@@ -15,13 +15,35 @@ public struct AuthResponse: Codable {
 }
 
 /// Response from session validation endpoint
+/// Better Auth returns either a session object or null
 public struct SessionResponse: Codable {
     public let user: APIUser
-    public let token: String
+    public let session: SessionInfo?
 
-    public init(user: APIUser, token: String) {
+    // Token is optional - Better Auth doesn't always return it
+    // We'll synthesize it from the session token if needed
+    public var token: String {
+        // If we have a stored session token, use that
+        // Otherwise return empty string (session cookie auth)
+        return "" // Token is managed via cookies, not in response
+    }
+
+    public init(user: APIUser, session: SessionInfo? = nil) {
         self.user = user
-        self.token = token
+        self.session = session
+    }
+}
+
+/// Better Auth session information
+public struct SessionInfo: Codable {
+    public let id: String
+    public let userId: String?
+    public let expiresAt: String?
+
+    public init(id: String, userId: String? = nil, expiresAt: String? = nil) {
+        self.id = id
+        self.userId = userId
+        self.expiresAt = expiresAt
     }
 }
 
@@ -371,11 +393,22 @@ public final class AuthClient: AuthClientProtocol {
 
             switch httpResponse.statusCode {
             case 200 ... 299:
+                // Better Auth returns null for no session
+                if data.isEmpty || String(data: data, encoding: .utf8) == "null" {
+                    Self.logger.warning("⚠️ Get session returned null - no active session")
+                    throw AuthClientError.unauthorized
+                }
+
                 let sessionResponse = try JSONDecoder().decode(SessionResponse.self, from: data)
 
                 // Update current user
                 currentAuthUser = sessionResponse.user
-                sessionToken = sessionResponse.token
+                // Note: Better Auth doesn't return token in getSession, uses cookies
+                // Keep existing token if we have one
+                if sessionToken == nil || sessionToken?.isEmpty == true {
+                    // Token is managed via cookies
+                    Self.logger.debug("📝 Session validated via cookies, no token in response")
+                }
 
                 // Session validated
                 return sessionResponse

@@ -171,5 +171,9 @@ public struct StandardLoadingView: View {
         .onAppear {
             isPulsing = true
         }
+        .onDisappear {
+            // Cancel animation by resetting the state
+            isPulsing = false
+        }
     }
 }

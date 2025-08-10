@@ -36,6 +36,8 @@ public final class HydrationService {
         let currentUser = hydrateData.currentUser
 
         Self.logger.info("✅ Fetched current user")
+        Self.logger.info("👤 Business User ID: \(currentUser.id)")
+        Self.logger.info("🔑 Auth User ID: \(currentUser.auth_user_id ?? "nil")")
 
         // Convert GraphQL user to our User model
         let user = User(

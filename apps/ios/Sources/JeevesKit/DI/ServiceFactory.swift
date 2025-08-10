@@ -22,11 +22,11 @@ public final class ServiceFactory {
     ) throws -> AuthService {
         logger.info("🏭 Creating AuthService")
 
-        let apiClient = AuthClient(authEndpoint: authEndpoint)
+        let authClient = AuthClient(authEndpoint: authEndpoint)
         let authTokenManager = AuthTokenManager()
 
         let service = AuthService(
-            apiClient: apiClient,
+            authClient: authClient,
             authTokenManager: authTokenManager,
             apolloClient: apolloClient
         )

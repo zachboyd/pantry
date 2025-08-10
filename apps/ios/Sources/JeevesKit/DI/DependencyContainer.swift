@@ -51,9 +51,10 @@ public final class DependencyContainer {
 
     // MARK: - Lifecycle Management
 
-    /// Initialize services for authenticated user
-    public func initializeForUser(_ userId: String) async throws {
-        Self.logger.info("🚀 Initializing services for userId: \(userId)")
+    /// Initialize services for authenticated user using their auth user ID
+    public func initializeForAuthUser(_ authUserId: String) async throws {
+        Self.logger.info("🚀 Initializing services for auth user")
+        Self.logger.info("🔑 Auth User ID: \(authUserId)")
 
         // Check if we need to upgrade from basic to full initialization
         let needsFullInit = _householdService == nil ||
@@ -72,7 +73,7 @@ public final class DependencyContainer {
 
             // Only initialize what's missing
             if needsFullInit {
-                try await initializeMissingServices(userId: userId)
+                try await initializeMissingServices(authUserId: authUserId)
             }
 
             Self.logger.info("✅ All services initialization completed")
@@ -80,7 +81,7 @@ public final class DependencyContainer {
             isInitialized = true
             isConnected = true
             initializationError = nil
-            Self.logger.info("✅ All services initialized successfully for userId: \(userId)")
+            Self.logger.info("✅ All services initialized successfully for auth user: \(authUserId)")
 
         } catch {
             Self.logger.error("❌ Service initialization failed: \(error)")
@@ -104,7 +105,7 @@ public final class DependencyContainer {
         let authEndpoint = getAuthEndpoint()
         Self.logger.info("🔗 Auth endpoint: \(authEndpoint)")
 
-        let apiClient = AuthClient(authEndpoint: authEndpoint)
+        let authClient = AuthClient(authEndpoint: authEndpoint)
         let authTokenManager = AuthTokenManager()
 
         // Initialize Apollo Client service first (needed for permissions)
@@ -113,7 +114,7 @@ public final class DependencyContainer {
 
         Self.logger.info("🔑 Creating AuthService with Apollo client...")
         _authService = AuthService(
-            apiClient: apiClient,
+            authClient: authClient,
             authTokenManager: authTokenManager,
             apolloClient: apolloClientService.apolloClient
         )
@@ -122,11 +123,17 @@ public final class DependencyContainer {
         // Update Apollo client service with auth service
         apolloClientService.updateAuthService(_authService)
 
-        // Initialize GraphQL service
+        // Initialize GraphQL service AFTER Apollo client has been updated with auth
+        // This ensures the GraphQL service's connection test uses the authenticated client
         guard let apolloClientService = _apolloClientService else {
             Self.logger.error("❌ ApolloClientService not initialized")
             return
         }
+
+        // Small delay to ensure Apollo client update is fully processed
+        // This prevents the GraphQL service's init connection test from using the old client
+        try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
+
         _graphQLService = GraphQLService(apolloClientService: apolloClientService)
 
         isInitialized = true
@@ -177,7 +184,7 @@ public final class DependencyContainer {
     }
 
     /// Initialize only the missing services (for upgrading from basic to full initialization)
-    private func initializeMissingServices(userId _: String) async throws {
+    private func initializeMissingServices(authUserId _: String) async throws {
         Self.logger.info("🔧 Checking for missing services...")
 
         // Validate we have the basic services first
@@ -246,7 +253,7 @@ public final class DependencyContainer {
         Self.logger.info("✅ All missing services created successfully")
     }
 
-    private func initializeServices(userId _: String) async throws {
+    private func initializeServices(authUserId _: String) async throws {
         do {
             // Validate configuration before proceeding
             try ServiceFactory.validateServiceConfiguration()

@@ -42,12 +42,22 @@ public final class AppState {
 
     // MARK: - State Properties
 
-    public private(set) var phase: AppPhase = .launching
+    private var _phase: AppPhase = .launching
+    public var phase: AppPhase { _phase }
+
     public private(set) var needsOnboarding: Bool = false
     public private(set) var currentHousehold: Household?
     public private(set) var currentUser: User?
     public private(set) var error: Error?
     public private(set) var isInitialized: Bool = false
+
+    // MARK: - Phase Transition Management
+
+    private var lastPhaseTransition: Date = .init()
+    private var phaseTransitionQueue: [AppPhase] = []
+    private var isProcessingPhaseTransition: Bool = false
+    private let minimumPhaseDuration: TimeInterval = 0.1 // 100ms minimum between transitions
+    private let minimumLoadingDuration: TimeInterval = 0.15 // 200ms minimum for loading states
 
     // MARK: - Reactive Watchers
 
@@ -103,7 +113,7 @@ public final class AppState {
             Self.logger.info("🔐 Found valid stored token during early check")
             // Set phase to authenticated early to avoid showing unnecessary loading
             // The full initialization will still happen, but UI won't flash loading state
-            phase = .authenticating // Will quickly transition to authenticated
+            setPhaseImmediate(.authenticating) // Will quickly transition to authenticated
         } else {
             Self.logger.debug("🔓 No valid stored token found during early check")
         }
@@ -122,13 +132,13 @@ public final class AppState {
         Self.logger.info("🚀 Starting app initialization")
 
         do {
-            phase = .initializing
+            setPhaseImmediate(.initializing)
 
             // Initialize services
             try await container.initializeServices()
 
             // Check authentication state
-            phase = .authenticating
+            await setPhase(.authenticating)
             Self.logger.info("🔍 Checking for authService...")
             if let authService = authService {
                 Self.logger.info("✅ AuthService found, checking authentication state")
@@ -141,11 +151,11 @@ public final class AppState {
                     Self.logger.info("🔐 User is authenticated, starting hydration...")
                     await startHydration()
                 } else {
-                    phase = .unauthenticated
+                    await setPhase(.unauthenticated)
                 }
             } else {
                 Self.logger.warning("⚠️ AuthService not found, setting phase to unauthenticated")
-                phase = .unauthenticated
+                await setPhase(.unauthenticated)
             }
 
             isInitialized = true
@@ -154,29 +164,14 @@ public final class AppState {
         } catch {
             Self.logger.error("❌ App initialization failed: \(error)")
             self.error = error
-            phase = .error
+            await setPhase(.error)
         }
     }
 
     /// Sign out the current user
     public func signOut() async {
         Self.logger.info("🚪 Starting sign out")
-        phase = .signingOut
-
-        // Always clear local state regardless of network sign out success
-        defer {
-            // Clear reactive watchers (they'll be cancelled when tasks are cancelled)
-
-            // Clear user data
-            currentHousehold = nil
-            currentUser = nil
-            needsOnboarding = false
-
-            // Always go to unauthenticated state - user should be able to sign in again
-            // even if network sign out failed
-            phase = .unauthenticated
-            Self.logger.info("✅ Sign out complete - user can sign in again")
-        }
+        await setPhase(.signingOut)
 
         do {
             // Attempt to sign out from auth service
@@ -191,8 +186,20 @@ public final class AppState {
         } catch {
             Self.logger.warning("⚠️ Network sign out failed, but continuing with local sign out: \(error)")
             // Don't set error state - local sign out should still proceed
-            // The defer block will ensure we go to unauthenticated state
         }
+
+        // Always clear local state regardless of network sign out success
+        // Clear reactive watchers (they'll be cancelled when tasks are cancelled)
+
+        // Clear user data
+        currentHousehold = nil
+        currentUser = nil
+        needsOnboarding = false
+
+        // Always go to unauthenticated state - user should be able to sign in again
+        // even if network sign out failed
+        await setPhase(.unauthenticated)
+        Self.logger.info("✅ Sign out complete - user can sign in again")
     }
 
     /// Retry after an error
@@ -207,7 +214,7 @@ public final class AppState {
         Self.logger.info("🔐 Handling successful authentication")
 
         // Update to authenticated state
-        phase = .authenticated
+        await setPhase(.authenticated)
         Self.logger.info("✅ Successfully transitioned to authenticated state")
 
         // Start hydration process
@@ -279,7 +286,7 @@ public final class AppState {
                 let household = try await householdService.getHousehold(id: householdId)
                 currentHousehold = household
                 needsOnboarding = false
-                phase = .hydrated
+                await setPhase(.hydrated)
 
                 // Persist selection
                 await userPreferencesService?.setLastSelectedHouseholdId(householdId)
@@ -300,26 +307,28 @@ public final class AppState {
 
         // First transition to authenticated to show we're past login
         // This allows UI to show authenticated state while loading data
-        phase = .authenticated
+        await setPhase(.authenticated)
 
         // Small delay to ensure UI updates before heavy hydration work
         try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
 
         // Now transition to hydrating phase for data loading
-        phase = .hydrating
+        await setPhase(.hydrating)
 
         do {
-            // First, get the user ID from auth service
+            // First, get the auth user ID from auth service
             guard let authService = authService,
-                  let userId = authService.currentUser?.id
+                  let authUserId = authService.currentAuthUser?.id
             else {
                 Self.logger.error("❌ No authenticated user found for service initialization")
                 throw AppError.authenticationFailed
             }
 
             // Initialize all services for the authenticated user
-            Self.logger.info("🔧 Initializing all services for authenticated user: \(userId)")
-            try await container.initializeForUser(userId)
+            // NOTE: We're using auth user ID here since services need it for API calls
+            Self.logger.info("🔧 Initializing all services for authenticated user")
+            Self.logger.info("🔑 Auth User ID: \(authUserId)")
+            try await container.initializeForAuthUser(authUserId)
             Self.logger.info("✅ All services initialized successfully")
 
             // Don't setup cache observers yet - wait until after hydration
@@ -338,7 +347,7 @@ public final class AppState {
             setupHouseholdWatcher()
 
             // Transition to hydrated phase
-            phase = .hydrated
+            await setPhase(.hydrated)
             Self.logger.info("✅ Hydration complete, app ready")
         } catch ServiceError.unauthorized {
             // Handle authentication errors by signing out
@@ -347,7 +356,7 @@ public final class AppState {
         } catch {
             Self.logger.error("❌ Hydration failed: \(error)")
             self.error = error
-            phase = .error
+            await setPhase(.error)
         }
     }
 
@@ -355,19 +364,23 @@ public final class AppState {
     private func hydrateUserData() async throws {
         Self.logger.info("💧 Hydrating user data")
 
-        // Use HydrationService with the actual hydrate query
-        guard let apolloClientService = container.apolloClientService else {
-            Self.logger.warning("⚠️ Apollo client service not available for hydration")
-            throw ServiceError.operationFailed("Apollo client service not available")
+        // Use the existing GraphQLService from the container which has proper auth setup
+        guard let graphQLService = container.graphQLService else {
+            Self.logger.warning("⚠️ GraphQL service not available for hydration")
+            throw ServiceError.operationFailed("GraphQL service not available")
         }
 
-        // Create a GraphQLService instance for HydrationService
-        let graphQLService = await MainActor.run {
-            GraphQLService(apolloClientService: apolloClientService)
-        }
-
-        let hydrationService = await MainActor.run {
-            HydrationService(graphQLService: graphQLService)
+        // Use the existing HydrationService from the container if available,
+        // or create one with the properly configured GraphQLService
+        let hydrationService: HydrationService
+        if let existingHydrationService = container.hydrationService {
+            hydrationService = existingHydrationService
+            Self.logger.debug("✅ Using existing HydrationService from container")
+        } else {
+            hydrationService = await MainActor.run {
+                HydrationService(graphQLService: graphQLService)
+            }
+            Self.logger.debug("📦 Created temporary HydrationService for hydration")
         }
         let result = try await hydrationService.hydrateUserData()
 
@@ -381,7 +394,9 @@ public final class AppState {
         // Store current user
         self.currentUser = currentUser
         Self.logger.info("📊 Initial user from hydration: \(currentUser.name ?? "Unknown")")
-        Self.logger.info("   First: '\(currentUser.firstName)', Last: '\(currentUser.lastName)', Display: '\(currentUser.displayName ?? "nil")'")
+        Self.logger.info("👤 Business User ID: \(currentUser.id)")
+        Self.logger.info("🔑 Auth User ID: \(currentUser.authUserId ?? "not set")")
+        Self.logger.info("📝 User Details - First: '\(currentUser.firstName)', Last: '\(currentUser.lastName)', Display: '\(currentUser.displayName ?? "nil")'")
 
         // Check if user needs onboarding based on missing user info OR no households
         let needsUserInfo = currentUser.firstName.isEmpty || currentUser.lastName.isEmpty
@@ -470,6 +485,78 @@ public final class AppState {
         }
 
         Self.logger.info("✅ Household watcher setup complete")
+    }
+
+    // MARK: - Phase Transition Management Methods
+
+    /// Set phase immediately (synchronous) - use for critical transitions
+    private func setPhaseImmediate(_ newPhase: AppPhase) {
+        Self.logger.info("📱 Phase transition (immediate): \(_phase) → \(newPhase)")
+        _phase = newPhase
+        lastPhaseTransition = Date()
+    }
+
+    /// Set phase with debouncing to prevent rapid transitions
+    private func setPhase(_ newPhase: AppPhase) async {
+        // Check if this is a loading phase that needs minimum duration
+        let wasLoadingPhase = isLoadingPhase(phase)
+
+        // Calculate time since last transition
+        let timeSinceLastTransition = Date().timeIntervalSince(lastPhaseTransition)
+
+        // Determine minimum duration needed
+        var minimumDuration = minimumPhaseDuration
+        if wasLoadingPhase {
+            // If we're transitioning FROM a loading state, ensure it was shown long enough
+            minimumDuration = max(minimumDuration, minimumLoadingDuration)
+        }
+
+        // If not enough time has passed, wait before transitioning
+        if timeSinceLastTransition < minimumDuration {
+            let remainingTime = minimumDuration - timeSinceLastTransition
+            Self.logger.debug("⏱️ Delaying phase transition by \(remainingTime)s to prevent rapid changes")
+            try? await Task.sleep(nanoseconds: UInt64(remainingTime * 1_000_000_000))
+        }
+
+        // Queue the phase transition if one is already processing
+        if isProcessingPhaseTransition {
+            Self.logger.debug("🔄 Queueing phase transition to \(newPhase)")
+            phaseTransitionQueue.append(newPhase)
+            return
+        }
+
+        // Process the phase transition
+        isProcessingPhaseTransition = true
+        defer {
+            isProcessingPhaseTransition = false
+            // Process any queued transitions
+            Task {
+                await processQueuedPhaseTransitions()
+            }
+        }
+
+        // Update the phase
+        Self.logger.info("📱 Phase transition: \(_phase) → \(newPhase)")
+        _phase = newPhase
+        lastPhaseTransition = Date()
+    }
+
+    /// Process any queued phase transitions
+    private func processQueuedPhaseTransitions() async {
+        while !phaseTransitionQueue.isEmpty {
+            let nextPhase = phaseTransitionQueue.removeFirst()
+            await setPhase(nextPhase)
+        }
+    }
+
+    /// Check if a phase is a loading phase that needs minimum display time
+    private func isLoadingPhase(_ phase: AppPhase) -> Bool {
+        switch phase {
+        case .launching, .initializing, .authenticating, .hydrating, .signingOut:
+            return true
+        default:
+            return false
+        }
     }
 
     // MARK: - Computed Properties

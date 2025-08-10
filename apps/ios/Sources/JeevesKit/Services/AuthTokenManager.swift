@@ -3,9 +3,10 @@ import Security
 
 // MARK: - Auth User Data
 
-/// Represents user data stored for offline use
+/// Represents auth user data stored for offline use
+/// This matches the structure returned by Better Auth
 public struct AuthUserData: Codable {
-    public let userId: String
+    public let id: String // Auth user ID from Better Auth
     public let email: String
     public let name: String?
     public let image: String?
@@ -14,7 +15,7 @@ public struct AuthUserData: Codable {
     public let updatedAt: String
 
     public init(
-        userId: String,
+        id: String,
         email: String,
         name: String? = nil,
         image: String? = nil,
@@ -22,7 +23,7 @@ public struct AuthUserData: Codable {
         createdAt: String = "",
         updatedAt: String = ""
     ) {
-        self.userId = userId
+        self.id = id
         self.email = email
         self.name = name
         self.image = image
@@ -31,9 +32,9 @@ public struct AuthUserData: Codable {
         self.updatedAt = updatedAt
     }
 
-    /// Initialize from APIUser
+    /// Initialize from APIUser (Better Auth response)
     public init(from apiUser: APIUser) {
-        userId = apiUser.id
+        id = apiUser.id
         email = apiUser.email
         name = apiUser.name
         image = apiUser.image
@@ -207,9 +208,9 @@ public final class AuthTokenManager {
         Self.logger.info("✅ Auth token and cache cleared successfully")
     }
 
-    /// Save user data for offline use
+    /// Save auth user data for offline use
     public func saveUserData(_ userData: AuthUserData) throws {
-        Self.logger.debug("💾 Saving user data")
+        Self.logger.debug("💾 Saving auth user data")
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(userData)
@@ -221,27 +222,27 @@ public final class AuthTokenManager {
 
         // Update in-memory cache
         cachedUserData = userData
-        Self.logger.debug("✅ User data saved")
+        Self.logger.debug("✅ Auth user data saved")
     }
 
-    /// Load user data from cache (or Keychain if not cached)
+    /// Load auth user data from cache (or Keychain if not cached)
     public func loadUserData() throws -> AuthUserData? {
         // Return cached data if available
         if let cached = cachedUserData {
-            Self.logger.debug("📖 Returning cached user data")
+            Self.logger.debug("📖 Returning cached auth user data")
             return cached
         }
 
         // Otherwise load from keychain and cache it
-        Self.logger.debug("📖 Cache miss - loading user data from Keychain")
-        let userData = try loadUserDataFromKeychain()
-        cachedUserData = userData
-        return userData
+        Self.logger.debug("📖 Cache miss - loading auth user data from Keychain")
+        let authUserData = try loadUserDataFromKeychain()
+        cachedUserData = authUserData
+        return authUserData
     }
 
-    /// Load user data directly from Keychain (bypasses cache)
+    /// Load auth user data directly from Keychain (bypasses cache)
     private func loadUserDataFromKeychain() throws -> AuthUserData? {
-        Self.logger.debug("🔑 Loading user data from Keychain")
+        Self.logger.debug("🔑 Loading auth user data from Keychain")
 
         guard let jsonString = loadFromKeychain(key: Self.userDataKey),
               let data = jsonString.data(using: .utf8)
@@ -251,9 +252,9 @@ public final class AuthTokenManager {
         }
 
         let decoder = JSONDecoder()
-        let userData = try decoder.decode(AuthUserData.self, from: data)
-        Self.logger.debug("✅ User data loaded from Keychain")
-        return userData
+        let authUserData = try decoder.decode(AuthUserData.self, from: data)
+        Self.logger.debug("✅ Auth user data loaded from Keychain")
+        return authUserData
     }
 
     /// Check if a valid token exists

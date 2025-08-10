@@ -106,11 +106,18 @@ final class MockAuthClient: AuthClientProtocol {
             throw AuthClientError.unauthorized
         }
 
-        guard let user = currentAuthUser, let token = mockToken else {
+        guard let user = currentAuthUser else {
             throw AuthClientError.unauthorized
         }
 
-        return SessionResponse(user: user, token: token)
+        return SessionResponse(
+            user: user,
+            session: SessionInfo(
+                id: "test-session-id",
+                userId: user.id,
+                expiresAt: nil
+            )
+        )
     }
 
     func validateExistingSession() async throws -> SessionResponse {

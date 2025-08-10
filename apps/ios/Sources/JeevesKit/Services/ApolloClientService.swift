@@ -54,12 +54,14 @@ public final class ApolloClientService {
 
     // MARK: - Public Methods
 
-    /// Update the authentication service reference
-    /// - Parameter authService: The authentication service
-    public func setAuthService(_ authService: AuthServiceProtocol?) {
+    /// Update the auth service after initialization
+    /// This recreates the Apollo client to ensure authentication interceptors are properly configured
+    public func updateAuthService(_ authService: AuthServiceProtocol?) {
         self.authService = authService
 
-        // Recreate Apollo Client with new auth service
+        // CRITICAL: We must recreate the Apollo Client to ensure the authentication
+        // interceptors get the updated authService reference. Otherwise, requests
+        // will fail with "Authentication required" even when the user is signed in.
         let (client, store) = Self.createApolloClient(
             endpoint: graphqlEndpoint,
             authService: authService
@@ -67,13 +69,7 @@ public final class ApolloClientService {
         apollo = client
         self.store = store
 
-        Self.logger.info("🔄 Apollo Client updated with new auth service")
-    }
-
-    /// Update the auth service after initialization
-    public func updateAuthService(_ authService: AuthServiceProtocol?) {
-        self.authService = authService
-        Self.logger.info("🔄 Updated AuthService in ApolloClientService")
+        Self.logger.info("🔄 Updated AuthService in ApolloClientService and recreated Apollo Client")
     }
 
     /// Clear any cached data and reset Apollo Client
@@ -238,18 +234,29 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
         completion: @escaping @Sendable (Result<Apollo.GraphQLResult<Operation.Data>, Error>) -> Void
     ) async where Operation: GraphQLOperation & Sendable {
         // Safely access auth service properties on main actor
-        guard let authService = authService,
-              authService.isAuthenticated,
-              let currentUser = authService.currentAuthUser
-        else {
-            Self.logger.debug("🔓 No authentication - proceeding without auth headers")
+        guard let authService = authService else {
+            Self.logger.warning("⚠️ No authService available in interceptor")
             proceedWithChain(chain: chain, request: request, response: response, completion: completion)
             return
         }
 
-        Self.logger.debug("🔐 Adding authentication headers for user: \(currentUser.email)")
+        guard authService.isAuthenticated else {
+            Self.logger.debug("🔓 User not authenticated - proceeding without auth headers")
+            proceedWithChain(chain: chain, request: request, response: response, completion: completion)
+            return
+        }
 
-        // Add user ID header
+        guard let currentUser = authService.currentAuthUser else {
+            Self.logger.warning("⚠️ User is authenticated but no currentAuthUser available")
+            proceedWithChain(chain: chain, request: request, response: response, completion: completion)
+            return
+        }
+
+        Self.logger.debug("🔐 Adding authentication headers")
+        Self.logger.debug("📧 User Email: \(currentUser.email)")
+        Self.logger.debug("🔑 Auth User ID: \(currentUser.id)")
+
+        // Add auth user ID header
         request.addHeader(name: "X-User-ID", value: currentUser.id)
 
         // Add authentication token if available

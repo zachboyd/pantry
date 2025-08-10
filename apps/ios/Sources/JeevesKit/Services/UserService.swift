@@ -59,7 +59,7 @@ public final class UserService: UserServiceProtocol {
 
     /// Get a user by ID
     public func getUser(id: String) async throws -> User? {
-        Self.logger.info("🔍 Getting user by ID: \(id)")
+        Self.logger.info("🔍 Getting business user by ID: \(id)")
 
         // Check cache first
         if let cachedUser = userCache[id] {
@@ -76,7 +76,7 @@ public final class UserService: UserServiceProtocol {
 
     /// Get multiple users by IDs
     public func getUsersByIds(_ ids: [String]) async throws -> [User] {
-        Self.logger.info("🔍 Getting \(ids.count) users by IDs")
+        Self.logger.info("🔍 Getting \(ids.count) business users by IDs")
 
         var users: [User] = []
 
@@ -92,7 +92,7 @@ public final class UserService: UserServiceProtocol {
 
     /// Update user information
     public func updateUser(_ user: User) async throws -> User {
-        Self.logger.info("🔧 Updating user: \(user.id)")
+        Self.logger.info("🔧 Updating business user: \(user.id)")
 
         guard authService.isAuthenticated else {
             Self.logger.warning("⚠️ User not authenticated")
@@ -387,7 +387,7 @@ private extension UserService {
 
     /// Fetch user by ID from GraphQL
     func fetchUserFromGraphQL(userId: String) async throws -> User? {
-        Self.logger.info("🌐 Fetching user \(userId) from GraphQL")
+        Self.logger.info("🌐 Fetching business user \(userId) from GraphQL")
 
         let input = JeevesGraphQL.GetUserInput(id: userId)
         let query = JeevesGraphQL.GetUserQuery(input: input)
@@ -422,7 +422,7 @@ private extension UserService {
 
     /// Update user in GraphQL
     func updateUserInGraphQL(user: User) async throws -> User {
-        Self.logger.info("🌐 Updating user in GraphQL: \(user.id)")
+        Self.logger.info("🌐 Updating business user in GraphQL: \(user.id)")
 
         // Use the actual first and last name from the User model
         let input = JeevesGraphQL.UpdateUserInput(
