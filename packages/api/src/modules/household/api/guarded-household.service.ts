@@ -51,6 +51,16 @@ export interface GetHouseholdMembersResponse {
   members: HouseholdMemberRecord[];
 }
 
+export interface UpdateHouseholdInput {
+  id: string;
+  name?: string;
+  description?: string | null;
+}
+
+export interface UpdateHouseholdResponse {
+  household: HouseholdRecord;
+}
+
 /**
  * GuardedHouseholdService provides permission-enforced access to household operations
  * This service wraps the core HouseholdService and adds permission guards
@@ -304,5 +314,59 @@ export class GuardedHouseholdService {
     );
 
     return { members };
+  }
+
+  async updateHousehold(
+    input: UpdateHouseholdInput,
+    user: UserRecord | null,
+  ): Promise<UpdateHouseholdResponse> {
+    // Validation
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!input.id || input.id.trim().length === 0) {
+      throw new BadRequestException('Household ID is required');
+    }
+
+    // Validate name if provided
+    if (input.name !== undefined) {
+      if (!input.name || input.name.trim().length === 0) {
+        throw new BadRequestException('Household name cannot be empty');
+      }
+
+      if (input.name.trim().length > 100) {
+        throw new BadRequestException(
+          'Household name must be 100 characters or less',
+        );
+      }
+    }
+
+    // Check permissions - user must be able to update this household
+    const evaluator = await this.permissionService.getPermissionEvaluator(
+      user.id,
+    );
+    if (!evaluator.canUpdateHousehold(input.id.trim())) {
+      throw new ForbiddenException(
+        'Insufficient permissions to update this household',
+      );
+    }
+
+    // Prepare update data, filtering out undefined values
+    const updateData: { name?: string; description?: string | null } = {};
+    if (input.name !== undefined) {
+      updateData.name = input.name.trim();
+    }
+    if (input.description !== undefined) {
+      updateData.description = input.description?.trim() || null;
+    }
+
+    // Delegate to service
+    const household = await this.householdService.updateHousehold(
+      input.id.trim(),
+      updateData,
+    );
+
+    return { household };
   }
 }

@@ -275,6 +275,44 @@ paths:
         - session: []
       summary: Get household by ID
       tags: *ref_1
+    put:
+      operationId: HouseholdController_updateHousehold
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Household updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  created_by:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '401':
+          description: Unauthorized - User not found
+        '403':
+          description: Forbidden - Insufficient permissions
+        '404':
+          description: Household not found
+      security:
+        - session: []
+      summary: Update household details
+      tags: *ref_1
   /api/household/{id}/members:
     get:
       operationId: HouseholdController_getHouseholdMembers

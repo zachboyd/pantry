@@ -73,6 +73,7 @@ type Mutation {
   addHouseholdMember(input: AddHouseholdMemberInput!): HouseholdMember!
   removeHouseholdMember(input: RemoveHouseholdMemberInput!): Boolean!
   changeHouseholdMemberRole(input: ChangeHouseholdMemberRoleInput!): HouseholdMember!
+  updateHousehold(input: UpdateHouseholdInput!): Household!
 }
 
 input UpdateUserInput {
@@ -108,6 +109,12 @@ input ChangeHouseholdMemberRoleInput {
   householdId: String!
   userId: String!
   newRole: String!
+}
+
+input UpdateHouseholdInput {
+  id: String!
+  name: String
+  description: String
 }
 
 type Subscription {

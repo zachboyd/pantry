@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { Insertable } from 'kysely';
+import type { Insertable, Updateable } from 'kysely';
 import { v4 as uuidv4 } from 'uuid';
 import { TOKENS } from '../../common/tokens.js';
 import type {
@@ -297,6 +297,33 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       return updatedMember as HouseholdMemberRecord;
     } catch (error) {
       this.logger.error(`Failed to update household member role:`, error);
+      throw error;
+    }
+  }
+
+  async updateHousehold(
+    id: string,
+    data: Updateable<Household>,
+  ): Promise<HouseholdRecord> {
+    this.logger.log(`Updating household: ${id}`);
+
+    const db = this.databaseService.getConnection();
+
+    try {
+      const [updatedHousehold] = await db
+        .updateTable('household')
+        .set({
+          ...data,
+          updated_at: new Date(),
+        })
+        .where('id', '=', id)
+        .returningAll()
+        .execute();
+
+      this.logger.log(`Household updated successfully: ${id}`);
+      return updatedHousehold as HouseholdRecord;
+    } catch (error) {
+      this.logger.error(`Failed to update household ${id}:`, error);
       throw error;
     }
   }

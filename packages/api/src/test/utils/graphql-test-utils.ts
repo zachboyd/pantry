@@ -113,6 +113,18 @@ export class GraphQLTestUtils {
         }
       }
     `,
+    UPDATE_HOUSEHOLD: `
+      mutation UpdateHousehold($input: UpdateHouseholdInput!) {
+        updateHousehold(input: $input) {
+          id
+          name
+          description
+          created_by
+          created_at
+          updated_at
+        }
+      }
+    `,
 
     ADD_HOUSEHOLD_MEMBER: `
       mutation AddHouseholdMember($input: AddHouseholdMemberInput!) {
@@ -268,6 +280,20 @@ export class GraphQLTestUtils {
       input: {
         name,
         ...(description && { description }),
+      },
+    };
+  }
+
+  static updateHouseholdInput(
+    id: string,
+    name?: string,
+    description?: string | null,
+  ) {
+    return {
+      input: {
+        id,
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
       },
     };
   }
