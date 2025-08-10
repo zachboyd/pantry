@@ -11,22 +11,14 @@ import SwiftUI
 public struct AppearanceSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeManager) private var themeManager
-    @Environment(\.colorScheme) private var systemColorScheme
 
-    @State private var selectedTheme: ThemePreference
-    @State private var originalTheme: ThemePreference
+    @State private var selectedTheme: ThemePreference = .system
+    @State private var originalTheme: ThemePreference = .system
+    @State private var hasInitialized = false
 
-    public init() {
-        // Initialize with the saved theme from ThemeManager, fallback to system
-        let savedTheme = ThemeManager.shared.userSavedTheme ?? .system
-        _selectedTheme = State(initialValue: savedTheme)
-        _originalTheme = State(initialValue: savedTheme)
-    }
+    public init() {}
 
     public var body: some View {
-        let osColorScheme: ColorScheme = systemColorScheme
-        let selectedColorScheme: ColorScheme = selectedTheme == .light ? .light : .dark
-
         NavigationStack {
             List {
                 Section {
@@ -36,7 +28,7 @@ public struct AppearanceSettingsView: View {
                                 Text(theme.displayName)
                                     .foregroundColor(DesignTokens.Colors.Text.primary)
 
-                                Text(themeDescription(for: theme))
+                                Text(theme.description)
                                     .font(DesignTokens.Typography.Semantic.caption())
                                     .foregroundColor(DesignTokens.Colors.Text.secondary)
                             }
@@ -51,8 +43,11 @@ public struct AppearanceSettingsView: View {
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedTheme = theme
-                            // Apply theme temporarily for preview
+                            // Update theme in manager for preview
                             themeManager.updateTheme(theme)
+                            // Always apply to UIKit for immediate preview
+                            // This ensures both modal and background app show the same theme
+                            themeManager.applyThemeToWindow()
                         }
                         .padding(.vertical, 4)
                     }
@@ -113,30 +108,30 @@ public struct AppearanceSettingsView: View {
                     .disabled(selectedTheme == originalTheme)
                 }
             }
-            .onDisappear {
-                // If the theme wasn't saved, revert to original theme
-                if themeManager.currentTheme != originalTheme {
-                    themeManager.updateTheme(originalTheme)
+            .onAppear {
+                // Initialize themes from the manager on first appear
+                if !hasInitialized {
+                    let savedTheme = themeManager.userSavedTheme ?? ThemePreference.system
+                    selectedTheme = savedTheme
+                    originalTheme = savedTheme
+                    hasInitialized = true
                 }
             }
-        }
-        .preferredColorScheme(selectedTheme == .system ? osColorScheme : selectedColorScheme)
-    }
-
-    private func themeDescription(for theme: ThemePreference) -> String {
-        switch theme {
-        case .system:
-            return L("settings.appearance.theme.system.description")
-        case .light:
-            return L("settings.appearance.theme.light.description")
-        case .dark:
-            return L("settings.appearance.theme.dark.description")
+            .onDisappear {
+                // If user didn't save, restore the original theme
+                if selectedTheme != originalTheme {
+                    themeManager.updateTheme(originalTheme)
+                    // Always apply the original theme to UIKit when cancelling
+                    themeManager.applyThemeToWindow()
+                }
+            }
         }
     }
 
     private func saveAppearanceSettings() {
-        // Save theme to persistent storage
+        // Save theme to persistent storage and apply to UIKit
         themeManager.setUserSavedTheme(selectedTheme)
+        themeManager.applyThemeToWindow() // Ensure UIKit is updated when saving
         originalTheme = selectedTheme
         dismiss()
     }

@@ -21,6 +21,9 @@ public struct MainTabView: View {
     @State private var showingCreateHousehold = false
     @State private var showingJoinHousehold = false
 
+    // iOS 26 liquid glass fix - force single re-render after appearance
+    @State private var hasAppearedOnce = false
+
     public init() {}
 
     public var body: some View {
@@ -39,12 +42,23 @@ public struct MainTabView: View {
             }
         }
         .withSizeClassInfo()
+        // iOS 26 liquid glass fix: Force exactly one re-render after first appearance
+        // This is the minimal approach that actually works for the glass effect bug
+        .id(hasAppearedOnce ? "rendered" : "initial")
         .onReceive(NotificationCenter.default.publisher(for: .householdChanged)) { _ in
             // Reset all navigation paths when household changes
             pantryPath = NavigationPath()
             chatPath = NavigationPath()
             listsPath = NavigationPath()
             settingsPath = NavigationPath()
+        }
+        .onAppear {
+            // Only trigger once, with a minimal delay to ensure glass effects are initialized
+            if !hasAppearedOnce {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    hasAppearedOnce = true
+                }
+            }
         }
         .sheet(isPresented: $showingCreateHousehold) {
             HouseholdCreationView()

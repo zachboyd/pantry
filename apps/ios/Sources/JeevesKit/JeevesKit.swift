@@ -25,10 +25,8 @@ public struct AppRootView: View {
     public var body: some View {
         if let appState = appState {
             AppRootContentView(appState: appState)
-                .preferredColorScheme(themeManager.colorScheme)
         } else {
             StandardLoadingView(showLogo: true)
-                .preferredColorScheme(themeManager.colorScheme)
         }
     }
 }
@@ -102,7 +100,7 @@ struct AppRootContentView: View {
         }
         .animation(TransitionConstants.standardEasing(duration: TransitionConstants.totalTransitionDuration), value: appState.phase)
         .tint(DesignTokens.Colors.Primary.base)
-        .preferredColorScheme(ThemeManager.shared.colorScheme)
+        // Theme is now applied at WindowGroup level in JeevesApp - no need to apply here
     }
 }
 
