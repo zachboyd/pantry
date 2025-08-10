@@ -67,7 +67,7 @@ public final class HydrationService {
                 createdBy: graphQLHousehold.created_by,
                 createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                 updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                members: [] // Members will be loaded separately
+                memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
             )
         }
 
@@ -75,8 +75,7 @@ public final class HydrationService {
 
         let result = HydrationResult(
             currentUser: user,
-            households: households,
-            totalMembers: households.count // This is a placeholder - we'll need to fetch actual member counts
+            households: households
         )
 
         Self.logger.info("✅ Hydration completed successfully")
@@ -151,14 +150,13 @@ public final class HydrationService {
                             createdBy: graphQLHousehold.created_by,
                             createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                             updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                            members: [] // Members will be loaded separately
+                            memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
                         )
                     }
 
                     let hydrationResult = HydrationResult(
                         currentUser: user,
-                        households: households,
-                        totalMembers: households.count // This is a placeholder - we'll need to fetch actual member counts
+                        households: households
                     )
 
                     // Update the watched result (this triggers view updates!)
@@ -218,11 +216,9 @@ public final class HydrationService {
 public struct HydrationResult: Sendable {
     public let currentUser: User
     public let households: [Household]
-    public let totalMembers: Int
 
-    public init(currentUser: User, households: [Household], totalMembers: Int) {
+    public init(currentUser: User, households: [Household]) {
         self.currentUser = currentUser
         self.households = households
-        self.totalMembers = totalMembers
     }
 }

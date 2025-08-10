@@ -136,7 +136,7 @@ struct HouseholdRowView: View {
                         }
                     }
 
-                    Text(Lp("household.members.count", household.members.count))
+                    Text(Lp("household.members.count", household.memberCount))
                         .font(DesignTokens.Typography.Semantic.caption())
                         .foregroundColor(DesignTokens.Colors.Text.tertiary)
                 }

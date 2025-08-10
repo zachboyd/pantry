@@ -388,10 +388,13 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
                 throw ViewModelError.householdNotFound
             }
 
+            // Load household members separately
+            let members = try await dependencies.householdService.getHouseholdMembers(householdId: householdId)
+
             // Load detailed member information
             var memberInfos: [HouseholdMemberInfo] = []
 
-            for member in household.members {
+            for member in members {
                 do {
                     let user = try await dependencies.userService.getUser(id: member.userId)
                     let memberInfo = HouseholdMemberInfo(member: member, user: user)

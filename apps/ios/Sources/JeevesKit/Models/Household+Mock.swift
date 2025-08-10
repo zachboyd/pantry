@@ -16,12 +16,7 @@ public extension Household {
         createdBy: "user_1",
         createdAt: Date().addingTimeInterval(-86400 * 30),
         updatedAt: Date().addingTimeInterval(-86400 * 2),
-        members: [
-            HouseholdMember(id: "member_1", userId: "user_1", householdId: "household_mock_1", role: .owner, joinedAt: Date().addingTimeInterval(-86400 * 30)),
-            HouseholdMember(id: "member_2", userId: "user_2", householdId: "household_mock_1", role: .admin, joinedAt: Date().addingTimeInterval(-86400 * 20)),
-            HouseholdMember(id: "member_3", userId: "user_3", householdId: "household_mock_1", role: .member, joinedAt: Date().addingTimeInterval(-86400 * 10)),
-            HouseholdMember(id: "member_4", userId: "user_4", householdId: "household_mock_1", role: .member, joinedAt: Date().addingTimeInterval(-86400 * 5)),
-        ]
+        memberCount: 4
     )
 
     /// Secondary mock household for testing multiple households
@@ -32,10 +27,7 @@ public extension Household {
         createdBy: "user_1",
         createdAt: Date().addingTimeInterval(-86400 * 15),
         updatedAt: Date().addingTimeInterval(-86400 * 1),
-        members: [
-            HouseholdMember(id: "member_5", userId: "user_1", householdId: "household_mock_2", role: .owner, joinedAt: Date().addingTimeInterval(-86400 * 15)),
-            HouseholdMember(id: "member_6", userId: "user_5", householdId: "household_mock_2", role: .member, joinedAt: Date().addingTimeInterval(-86400 * 7)),
-        ]
+        memberCount: 2
     )
 
     /// Array of mock households for testing lists

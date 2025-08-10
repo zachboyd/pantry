@@ -15,6 +15,6 @@ extension Household: Equatable {
             lhs.createdBy == rhs.createdBy &&
             lhs.createdAt == rhs.createdAt &&
             lhs.updatedAt == rhs.updatedAt &&
-            lhs.members == rhs.members
+            lhs.memberCount == rhs.memberCount
     }
 }

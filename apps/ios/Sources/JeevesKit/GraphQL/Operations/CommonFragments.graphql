@@ -29,6 +29,7 @@ fragment HouseholdFields on Household {
   created_by
   created_at
   updated_at
+  memberCount
 }
 
 # HouseholdMember fragment containing all member fields

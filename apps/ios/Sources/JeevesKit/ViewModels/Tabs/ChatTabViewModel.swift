@@ -259,7 +259,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
 
             updateState { state in
                 state.householdName = household.name
-                state.memberCount = household.members.count
+                state.memberCount = household.memberCount
             }
 
             Self.logger.info("✅ Loaded household info: \(household.name)")

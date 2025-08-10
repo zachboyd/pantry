@@ -4,24 +4,25 @@
 import ApolloAPI
 
 public extension JeevesGraphQL {
-    struct GetHouseholdInput: InputObject {
-        public private(set) var __data: InputDict
+  struct GetHouseholdInput: InputObject {
+    public private(set) var __data: InputDict
 
-        public init(_ data: InputDict) {
-            __data = data
-        }
-
-        public init(
-            id: String
-        ) {
-            __data = InputDict([
-                "id": id,
-            ])
-        }
-
-        public var id: String {
-            get { __data["id"] }
-            set { __data["id"] = newValue }
-        }
+    public init(_ data: InputDict) {
+      __data = data
     }
+
+    public init(
+      id: String
+    ) {
+      __data = InputDict([
+        "id": id
+      ])
+    }
+
+    public var id: String {
+      get { __data["id"] }
+      set { __data["id"] = newValue }
+    }
+  }
+
 }

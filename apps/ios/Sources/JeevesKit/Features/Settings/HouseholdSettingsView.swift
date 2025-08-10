@@ -4,7 +4,6 @@ import SwiftUI
 public struct HouseholdSettingsView: View {
     @Environment(\.safeViewModelFactory) private var factory
     @State private var settingsViewModel: UserSettingsViewModel?
-    @State private var membersWatch: WatchedResult<[HouseholdMember]>?
 
     let household: Household?
 
@@ -30,13 +29,6 @@ public struct HouseholdSettingsView: View {
             // Create ViewModel if needed
             if settingsViewModel == nil {
                 settingsViewModel = try? factory?.makeUserSettingsViewModel()
-            }
-
-            // Set up watch for household members
-            if let household = household,
-               let householdService = settingsViewModel?.dependencies.householdService
-            {
-                membersWatch = householdService.watchHouseholdMembers(householdId: household.id)
             }
 
             await settingsViewModel?.onAppear()
@@ -96,18 +88,8 @@ public struct HouseholdSettingsView: View {
 
                     Spacer()
 
-                    if let membersWatch = membersWatch {
-                        if membersWatch.isLoading {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else {
-                            Text("\(membersWatch.value?.count ?? 0)")
-                                .foregroundColor(.secondary)
-                        }
-                    } else {
-                        Text("0")
-                            .foregroundColor(.secondary)
-                    }
+                    Text("\(household.memberCount)")
+                        .foregroundColor(.secondary)
                 }
             }
 

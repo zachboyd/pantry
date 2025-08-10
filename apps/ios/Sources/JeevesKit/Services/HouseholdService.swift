@@ -20,6 +20,7 @@ private protocol GraphQLHouseholdSelectionSet {
     var created_by: String { get }
     var created_at: JeevesGraphQL.DateTime { get }
     var updated_at: JeevesGraphQL.DateTime { get }
+    var memberCount: Double? { get }
 }
 
 // Conformance for existing GraphQL types
@@ -137,7 +138,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                     createdBy: graphQLHousehold.created_by,
                     createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                     updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                    members: [] // Members will be loaded separately
+                    memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
                 )
             }
 
@@ -296,7 +297,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             createdBy: "other-user-id",
             createdAt: Date(),
             updatedAt: Date(),
-            members: []
+            memberCount: 0
         )
 
         // Update cache
@@ -565,7 +566,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                             createdBy: graphQLHousehold.created_by,
                             createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                             updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                            members: [] // Members will be loaded separately
+                            memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
                         )
                     }
 
@@ -704,7 +705,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             createdBy: graphqlHousehold.created_by,
             createdAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.created_at.description),
             updatedAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.updated_at.description),
-            members: [] // Members are not included in this query
+            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0
         )
     }
 
@@ -717,7 +718,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             createdBy: graphqlHousehold.created_by,
             createdAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.created_at.description),
             updatedAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.updated_at.description),
-            members: [] // Members are not included in this mutation response
+            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0
         )
     }
 
@@ -730,7 +731,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             createdBy: graphqlHousehold.created_by,
             createdAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.created_at.description),
             updatedAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.updated_at.description),
-            members: []
+            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0
         )
     }
 

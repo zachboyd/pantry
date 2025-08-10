@@ -117,7 +117,7 @@ public final class AuthClient: AuthClientProtocol {
 
         urlSession = URLSession(configuration: configuration)
 
-        Self.logger.info("🔧 AuthClient initialized with endpoint: \(authEndpoint)")
+        // AuthClient initialized
     }
 
     // MARK: - AuthClientProtocol Implementation
@@ -143,7 +143,7 @@ public final class AuthClient: AuthClientProtocol {
 
     public func setBetterAuthSessionToken(_ token: String) {
         sessionToken = token
-        Self.logger.info("📝 Session token set")
+        // Session token set
     }
 
     public func clearAuthenticationState() {
@@ -158,11 +158,11 @@ public final class AuthClient: AuthClientProtocol {
             }
         }
 
-        Self.logger.info("🧹 Authentication state cleared")
+        // Authentication state cleared
     }
 
     public func signUp(email: String, password: String, name: String?) async throws -> AuthResponse {
-        Self.logger.info("📝 Signing up user: \(email)")
+        Self.logger.info("Signing up: \(email)")
 
         let signUpPath = "/sign-up/email"
         let fullURLString = "\(authEndpoint)\(signUpPath)"
@@ -203,22 +203,15 @@ public final class AuthClient: AuthClientProtocol {
                 // Store cookies
                 if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
                     sessionCookies = cookies
-                    Self.logger.info("🍪 Received \(cookies.count) cookies from sign up:")
-                    for cookie in cookies {
-                        Self.logger.info("   Cookie: \(cookie.name) = \(cookie.value.prefix(20))... Domain: \(cookie.domain)")
-                    }
-                } else {
-                    Self.logger.warning("⚠️ No cookies received from sign up response")
                 }
 
                 // If no session cookie but we have a token, create a cookie manually
                 // This is a workaround for Better Auth when cookies aren't being set properly
                 if sessionToken != nil && !hasCookieSession() {
-                    Self.logger.info("🍪 Creating session cookie from access token")
                     createSessionCookie(from: authResponse.token, for: url)
                 }
 
-                Self.logger.info("✅ Sign up successful for user: \(authResponse.user.email)")
+                Self.logger.info("Sign up successful")
                 return authResponse
 
             case 401:
@@ -244,7 +237,7 @@ public final class AuthClient: AuthClientProtocol {
     }
 
     public func signIn(email: String, password: String) async throws -> AuthResponse {
-        Self.logger.info("🔐 Signing in user: \(email)")
+        Self.logger.info("Signing in: \(email)")
 
         let signInPath = "/sign-in/email"
         let fullURLString = "\(authEndpoint)\(signInPath)"
@@ -284,22 +277,15 @@ public final class AuthClient: AuthClientProtocol {
                 // Store cookies
                 if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
                     sessionCookies = cookies
-                    Self.logger.info("🍪 Received \(cookies.count) cookies from sign in:")
-                    for cookie in cookies {
-                        Self.logger.info("   Cookie: \(cookie.name) = \(cookie.value.prefix(20))... Domain: \(cookie.domain)")
-                    }
-                } else {
-                    Self.logger.warning("⚠️ No cookies received from sign in response")
                 }
 
                 // If no session cookie but we have a token, create a cookie manually
                 // This is a workaround for Better Auth when cookies aren't being set properly
                 if sessionToken != nil && !hasCookieSession() {
-                    Self.logger.info("🍪 Creating session cookie from access token")
                     createSessionCookie(from: authResponse.token, for: url)
                 }
 
-                Self.logger.info("✅ Sign in successful for user: \(authResponse.user.email)")
+                Self.logger.info("Sign in successful")
                 return authResponse
 
             case 401:
@@ -320,7 +306,7 @@ public final class AuthClient: AuthClientProtocol {
     }
 
     public func signOut() async throws {
-        Self.logger.info("🚪 Signing out user")
+        Self.logger.info("Signing out")
 
         guard let url = URL(string: "\(authEndpoint)/sign-out") else {
             throw AuthClientError.invalidURL
@@ -343,7 +329,7 @@ public final class AuthClient: AuthClientProtocol {
 
             if httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
                 clearAuthenticationState()
-                Self.logger.info("✅ Sign out successful")
+                // Sign out successful
             } else {
                 Self.logger.error("❌ Sign out failed with status: \(httpResponse.statusCode)")
                 // Clear state anyway on sign out attempt
@@ -359,7 +345,7 @@ public final class AuthClient: AuthClientProtocol {
     }
 
     public func getSession() async throws -> SessionResponse {
-        Self.logger.info("📋 Getting current session")
+        // Getting current session
 
         guard let url = URL(string: "\(authEndpoint)/get-session") else {
             throw AuthClientError.invalidURL
@@ -371,9 +357,9 @@ public final class AuthClient: AuthClientProtocol {
         // Add session token if available
         if let token = sessionToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            Self.logger.debug("🔑 Adding Bearer token to request: \(String(token.prefix(10)))...")
+            // Adding Bearer token to request
         } else {
-            Self.logger.warning("⚠️ No session token available for getSession request")
+            // No session token available
         }
 
         do {
@@ -391,7 +377,7 @@ public final class AuthClient: AuthClientProtocol {
                 currentAuthUser = sessionResponse.user
                 sessionToken = sessionResponse.token
 
-                Self.logger.info("✅ Session validated for user: \(sessionResponse.user.email)")
+                // Session validated
                 return sessionResponse
 
             case 401:
@@ -412,11 +398,11 @@ public final class AuthClient: AuthClientProtocol {
     }
 
     public func validateExistingSession() async throws -> SessionResponse {
-        Self.logger.info("🔍 Validating existing session from cookies")
+        // Validating existing session
 
         // First check if we have session cookies
         guard hasCookieSession() else {
-            Self.logger.info("❌ No session cookies found")
+            // No session cookies found
             throw AuthClientError.unauthorized
         }
 
@@ -433,8 +419,6 @@ public final class AuthClient: AuthClientProtocol {
             Self.logger.error("❌ Failed to extract host from URL: \(url)")
             return
         }
-
-        Self.logger.info("🍪 Creating cookies for host: \(host)")
 
         // For localhost, we need to be more specific about the domain
         // Don't include the port in the domain
@@ -462,30 +446,10 @@ public final class AuthClient: AuthClientProtocol {
 
         if let authTokenCookie = authTokenCookie {
             HTTPCookieStorage.shared.setCookie(authTokenCookie)
-            Self.logger.info("🍪 Created auth-token cookie for domain: \(domain)")
-            Self.logger.info("   Cookie details: \(authTokenCookie)")
-        } else {
-            Self.logger.error("❌ Failed to create auth-token cookie")
         }
 
         if let sessionCookie = sessionCookie {
             HTTPCookieStorage.shared.setCookie(sessionCookie)
-            Self.logger.info("🍪 Created better-auth.session_token cookie for domain: \(domain)")
-            Self.logger.info("   Cookie details: \(sessionCookie)")
-        } else {
-            Self.logger.error("❌ Failed to create session cookie")
-        }
-
-        // Verify cookies were stored
-        if let graphQLURL = URL(string: "http://localhost:3001/graphql"),
-           let cookies = HTTPCookieStorage.shared.cookies(for: graphQLURL)
-        {
-            Self.logger.info("🍪 Cookies available for GraphQL endpoint: \(cookies.count)")
-            for cookie in cookies {
-                Self.logger.info("   - \(cookie.name): \(cookie.value.prefix(20))...")
-            }
-        } else {
-            Self.logger.warning("⚠️ No cookies found for GraphQL endpoint after creation")
         }
     }
 }
