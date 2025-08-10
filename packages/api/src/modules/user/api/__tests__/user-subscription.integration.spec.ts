@@ -270,13 +270,22 @@ describe('User Subscription Integration Tests', () => {
         sessionToken,
       });
 
+      // Wait for both clients to establish connections
+      await Promise.all([
+        GraphQLWebSocketTestUtils.waitForConnection(client1, 10000),
+        GraphQLWebSocketTestUtils.waitForConnection(client2, 10000),
+      ]);
+
+      // Small delay to ensure connection stability
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Start subscriptions on both clients
       const subscription1Promise =
         GraphQLWebSocketTestUtils.executeSubscription({
           client: client1,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
-          timeout: 8000,
+          timeout: 12000, // Increased timeout for multiple clients
         });
 
       const subscription2Promise =
@@ -284,8 +293,11 @@ describe('User Subscription Integration Tests', () => {
           client: client2,
           query: GraphQLWebSocketTestUtils.SUBSCRIPTIONS.USER_UPDATED,
           expectedMessages: 1,
-          timeout: 8000,
+          timeout: 12000, // Increased timeout for multiple clients
         });
+
+      // Small delay to ensure subscriptions are established
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Act - Update user profile
       await GraphQLTestUtils.executeAuthenticatedQuery(

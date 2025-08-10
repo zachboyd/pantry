@@ -153,7 +153,11 @@ export class GraphQLWebSocketTestUtils {
 
       const timeoutId = setTimeout(() => {
         if (!connected) {
-          reject(new Error(`WebSocket connection timeout after ${timeout}ms`));
+          reject(
+            new Error(
+              `WebSocket connection timeout after ${timeout}ms. Ensure the server is running and WebSocket endpoint is accessible.`,
+            ),
+          );
         }
       }, timeout);
 
@@ -263,12 +267,20 @@ export class GraphQLWebSocketTestUtils {
    * Assert that a subscription received expected number of messages
    */
   static assertMessageCount(
-    result: { results: any[]; completed: boolean },
+    result: { results: any[]; errors: any[]; completed: boolean },
     expectedCount: number,
   ): void {
     if (result.results.length !== expectedCount) {
+      const errorInfo =
+        result.errors.length > 0
+          ? ` Errors encountered: ${JSON.stringify(result.errors)}`
+          : '';
+      const completionInfo = result.completed
+        ? ' (subscription completed)'
+        : ' (subscription timed out or failed)';
+
       throw new Error(
-        `Expected ${expectedCount} subscription messages, got ${result.results.length}`,
+        `Expected ${expectedCount} subscription messages, got ${result.results.length}.${completionInfo}${errorInfo}`,
       );
     }
   }
