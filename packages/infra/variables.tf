@@ -1,6 +1,6 @@
-variable "environment" {
-  description = "Environment name (dev, prod)"
-  type        = string
+# Environment is determined by Terraform workspace
+locals {
+  environment = terraform.workspace
 }
 
 variable "app_name" {
@@ -19,3 +19,12 @@ variable "bucket_suffix" {
   description = "Random suffix for bucket names to ensure global uniqueness"
   type        = string
 }
+
+# Domain Configuration
+variable "domain_name" {
+  description = "Main domain name (e.g., jeevesapp.com)"
+  type        = string
+  default     = "jeevesapp.com"
+}
+
+

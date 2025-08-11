@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.858.0",
+    "@aws-sdk/client-ses": "^3.864.0",
     "@aws-sdk/s3-request-presigner": "^3.858.0",
     "@casl/ability": "^6.7.3",
     "@keyv/redis": "^5.0.0",
