@@ -59,7 +59,7 @@ export class ConfigServiceImpl implements ConfigService {
             'us-east-1',
           fromAddress:
             this.configService.get<string>('SES_FROM_ADDRESS') ||
-            'noreply@localhost.dev',
+            'noreply@jeevesapp.dev',
           configurationSetName: this.configService.get<string>(
             'SES_CONFIGURATION_SET_NAME',
           ),

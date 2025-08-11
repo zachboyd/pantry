@@ -84,9 +84,16 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
       const command = new SendEmailCommand(emailParams);
       const result = await this.sesClient.send(command);
 
+      // Collect all recipients (to, cc, bcc) for accurate reporting
+      const allRecipients = [
+        ...this.normalizeAddresses(options.to),
+        ...(options.cc ? this.normalizeAddresses(options.cc) : []),
+        ...(options.bcc ? this.normalizeAddresses(options.bcc) : []),
+      ];
+
       const successResult: EmailSendResult = {
         messageId: result.MessageId!,
-        accepted: this.normalizeAddresses(options.to),
+        accepted: allRecipients,
         rejected: [],
       };
 
