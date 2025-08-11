@@ -172,11 +172,13 @@ public class AuthService: AuthServiceProtocol {
             // relies on HTTP session cookies. We'll store what's available for logging purposes.
             if !response.token.isEmpty {
                 do {
+                    // Note: Better Auth doesn't provide session expiration in the sign-in response
+                    // We'll use a default expiration of 7 days for now
                     let authToken = AuthToken(
                         accessToken: response.token,
                         refreshToken: nil, // Better Auth doesn't provide separate refresh token
                         userId: LowercaseUUID(uuidString: response.user.id),
-                        expiresAt: nil // Better Auth doesn't provide expiration in sign-in response
+                        expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 7) // Default to 7 days
                     )
                     try authTokenManager.saveToken(authToken)
                     Self.logger.info("💾 Successfully saved Better Auth session token to Keychain for persistence")
@@ -244,11 +246,13 @@ public class AuthService: AuthServiceProtocol {
             Self.logger.info("✅ HTTP sign-up response received")
 
             // Store token in token manager
+            // Note: Better Auth doesn't provide session expiration in the sign-up response
+            // We'll use a default expiration of 7 days for now
             let authToken = AuthToken(
                 accessToken: response.token,
                 refreshToken: nil,
                 userId: LowercaseUUID(uuidString: response.user.id),
-                expiresAt: nil
+                expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 7) // Default to 7 days
             )
             try authTokenManager.saveToken(authToken)
 

@@ -102,6 +102,9 @@ public final class ApolloClientService {
 
         let domain = graphQLURL.host ?? "localhost"
 
+        // Use token expiration if available, otherwise default to 7 days
+        let expirationDate = token.expiresAt ?? Date().addingTimeInterval(60 * 60 * 24 * 7)
+
         // Create session cookie that Better Auth expects
         let sessionCookie = HTTPCookie(properties: [
             .name: "better-auth.session_token",
@@ -109,7 +112,7 @@ public final class ApolloClientService {
             .domain: domain,
             .path: "/",
             .secure: "FALSE",
-            .expires: Date().addingTimeInterval(60 * 60 * 24 * 7), // 7 days
+            .expires: expirationDate,
         ])
 
         if let cookie = sessionCookie {
@@ -246,28 +249,15 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
             return
         }
 
-        guard let currentUser = authService.currentAuthUser else {
+        guard let currentAuthUser = authService.currentAuthUser else {
             Self.logger.warning("⚠️ User is authenticated but no currentAuthUser available")
             proceedWithChain(chain: chain, request: request, response: response, completion: completion)
             return
         }
 
         Self.logger.debug("🔐 Adding authentication headers")
-        Self.logger.debug("📧 User Email: \(currentUser.email)")
-        Self.logger.debug("🔑 Auth User ID: \(currentUser.id)")
-
-        // Add auth user ID header
-        request.addHeader(name: "X-User-ID", value: currentUser.id)
-
-        // Add authentication token if available
-        // Note: Better-Auth primarily uses cookies (now properly configured in URLSession),
-        // but we also add the Bearer token for additional security and compatibility
-        if let token = getTokenManager()?.loadToken() {
-            request.addHeader(name: "Authorization", value: "Bearer \(token.accessToken)")
-            Self.logger.debug("🔐 Added Bearer token to request")
-        }
-
-        Self.logger.debug("✅ Authentication headers added successfully")
+        Self.logger.debug("📧 User Email: \(currentAuthUser.email)")
+        Self.logger.debug("🔑 Auth User ID: \(currentAuthUser.id)")
 
         // Continue with the request chain
         proceedWithChain(chain: chain, request: request, response: response, completion: completion)
