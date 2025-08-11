@@ -140,12 +140,14 @@
 "household.create_new" = "Create New Household";
 "household.join_existing" = "Join Existing Household";
 "household.join" = "Join Household";
+"household.join.title" = "Join a household";
 "household.join.subtitle" = "Enter the invite code shared by a household member";
 "household.invite_code" = "Invite Code";
 "household.invite_code.placeholder" = "Enter invite code";
 "household.invite_code.how_to" = "How to get an invite code:";
 "household.invite_code.step1" = "• Ask a household member to share their invite code";
 "household.invite_code.step2" = "• They can find it in Settings > Household > Invite Members";
+"household.invite_code.minimum_length" = "Invite code must be at least 6 characters";
 "household.invite_code.share_message" = "Share this code with people you want to add to your household";
 "household.invite_code.copy" = "Copy Code";
 "household.members.count" = "%d member|%d members";

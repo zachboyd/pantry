@@ -13,69 +13,59 @@ public struct HouseholdJoinView: View {
     @State private var isLoading = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
-    @FocusState private var isInviteCodeFocused: Bool
 
+    let showBackButton: Bool
     let onBack: () -> Void
     let onComplete: (String) -> Void
 
     public init(
+        showBackButton: Bool = false,
         onBack: @escaping () -> Void,
         onComplete: @escaping (String) -> Void
     ) {
+        self.showBackButton = showBackButton
         self.onBack = onBack
         self.onComplete = onComplete
     }
 
     private var isFormValid: Bool {
-        !inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6
     }
 
     public var body: some View {
         ScrollView {
-            VStack(spacing: DesignTokens.Spacing.xl) {
-                // Header
+            VStack(spacing: DesignTokens.Spacing.xxl) {
+                // Header - matching HouseholdCreationView style
                 VStack(spacing: DesignTokens.Spacing.md) {
-                    HStack {
-                        Button(action: onBack) {
-                            Image(systemName: "chevron.left")
-                                .font(.title2)
-                        }
-                        Spacer()
-                    }
+                    Text(L("household.join.title"))
+                        .font(DesignTokens.Typography.Semantic.pageTitle())
+                        .multilineTextAlignment(.center)
 
-                    VStack(spacing: DesignTokens.Spacing.sm) {
-                        Image(systemName: "person.2.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(DesignTokens.Colors.Secondary.base)
-
-                        Text(L("household.join"))
-                            .font(DesignTokens.Typography.Semantic.pageTitle())
-                            .foregroundColor(DesignTokens.Colors.Text.primary)
-
-                        Text(L("household.join.subtitle"))
-                            .font(DesignTokens.Typography.Semantic.body())
-                            .foregroundColor(DesignTokens.Colors.Text.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-
-                // Form
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                    Text(L("household.invite_code"))
-                        .font(DesignTokens.Typography.Semantic.caption())
+                    Text(L("household.join.subtitle"))
+                        .font(DesignTokens.Typography.Semantic.body())
                         .foregroundColor(DesignTokens.Colors.Text.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, DesignTokens.Spacing.xl)
 
-                    TextField(L("household.invite_code.placeholder"), text: $inviteCode)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .font(.monospaced(.body)())
-                        .focused($isInviteCodeFocused)
-                        .onSubmit {
-                            if isFormValid {
-                                joinHousehold()
-                            }
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    // Form
+                    FormTextField(
+                        label: L("household.invite_code"),
+                        placeholder: L("household.invite_code.placeholder"),
+                        text: $inviteCode,
+                        autocapitalization: .never,
+                        autocorrectionDisabled: true,
+                        validation: { $0.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6 },
+                        errorMessage: L("household.invite_code.minimum_length"),
+                        font: .monospaced(.body)(),
+                        autoFocus: true
+                    )
+                    .onSubmit {
+                        if isFormValid {
+                            joinHousehold()
                         }
+                    }
                 }
 
                 // Info section
@@ -100,38 +90,22 @@ public struct HouseholdJoinView: View {
                 .background(DesignTokens.Colors.Surface.secondary)
                 .cornerRadius(DesignTokens.BorderRadius.Component.card)
 
-                Spacer()
-
                 // Join button
-                Button(action: joinHousehold) {
-                    HStack {
-                        if isLoading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        }
-                        Text(L("household.join"))
-                            .font(DesignTokens.Typography.Semantic.button())
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: DesignTokens.ComponentSize.Button.large)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!isFormValid || isLoading)
+                PrimaryButton(
+                    L("household.join"),
+                    isLoading: isLoading,
+                    isDisabled: !isFormValid,
+                    action: joinHousehold
+                )
             }
-            .padding(DesignTokens.Spacing.Layout.screenEdge)
+            .padding(DesignTokens.Spacing.lg)
         }
         .scrollDismissesKeyboard(.interactively)
+        .navigationBarBackButtonHidden(!showBackButton)
         .alert(L("error"), isPresented: $showingAlert) {
             Button(L("ok")) {}
         } message: {
             Text(alertMessage)
-        }
-        .onAppear {
-            // Auto-focus the invite code field after a brief delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                isInviteCodeFocused = true
-            }
         }
     }
 
@@ -160,8 +134,10 @@ public struct HouseholdJoinView: View {
 }
 
 #Preview {
-    HouseholdJoinView(
-        onBack: {},
-        onComplete: { _ in }
-    )
+    NavigationStack {
+        HouseholdJoinView(
+            onBack: {},
+            onComplete: { _ in }
+        )
+    }
 }

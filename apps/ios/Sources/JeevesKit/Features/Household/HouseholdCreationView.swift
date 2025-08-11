@@ -13,17 +13,18 @@ public struct HouseholdCreationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.safeViewModelFactory) private var viewModelFactory
     @State private var viewModel: HouseholdCreationViewModel?
-    @FocusState private var focusedField: Field?
     let onBack: (() -> Void)?
     let onComplete: ((String) -> Void)?
+    let showBackButton: Bool
 
-    enum Field: Hashable {
-        case householdName
-        case description
-    }
-
-    public init(viewModel: HouseholdCreationViewModel? = nil, onBack: (() -> Void)? = nil, onComplete: ((String) -> Void)? = nil) {
+    public init(
+        viewModel: HouseholdCreationViewModel? = nil,
+        showBackButton: Bool = false,
+        onBack: (() -> Void)? = nil,
+        onComplete: ((String) -> Void)? = nil
+    ) {
         _viewModel = State(initialValue: viewModel)
+        self.showBackButton = showBackButton
         self.onBack = onBack
         self.onComplete = onComplete
     }
@@ -52,36 +53,20 @@ public struct HouseholdCreationView: View {
                             get: { viewModel?.state.householdName ?? "" },
                             set: { viewModel?.updateHouseholdName($0) }
                         ),
-                        autocorrectionDisabled: true
+                        autocorrectionDisabled: true,
+                        autoFocus: true
                     )
-                    .focused($focusedField, equals: .householdName)
-                    .onSubmit {
-                        focusedField = .description
-                    }
 
                     // Description Field (Optional)
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                        HStack {
-                            Text(L("household.description.label"))
-                                .font(DesignTokens.Typography.Semantic.caption())
-                                .foregroundColor(DesignTokens.Colors.Text.secondary)
-
-                            Text(L("common.optional"))
-                                .font(DesignTokens.Typography.Semantic.caption())
-                                .foregroundColor(DesignTokens.Colors.Text.tertiary)
-                        }
-
-                        TextField(L("household.description.placeholder"), text: Binding(
+                    FormTextField(
+                        label: L("household.description.label") + " (" + L("common.optional") + ")",
+                        placeholder: L("household.description.placeholder"),
+                        text: Binding(
                             get: { viewModel?.state.householdDescription ?? "" },
                             set: { viewModel?.updateHouseholdDescription($0) }
-                        ), axis: .vertical)
-                            .textFieldStyle(.plain)
-                            .padding(DesignTokens.Spacing.md)
-                            .background(DesignTokens.Colors.Surface.secondary)
-                            .cornerRadius(DesignTokens.BorderRadius.sm)
-                            .lineLimit(3 ... 6)
-                            .focused($focusedField, equals: .description)
-                    }
+                        ),
+                        lineLimit: 3 ... 6
+                    )
                 }
 
                 // Admin role info
@@ -93,21 +78,10 @@ public struct HouseholdCreationView: View {
                     Text(L("household.creation.admin_info"))
                         .font(DesignTokens.Typography.Semantic.caption())
                         .foregroundColor(DesignTokens.Colors.Text.secondary)
-
-                    Spacer()
                 }
                 .padding(DesignTokens.Spacing.md)
                 .background(DesignTokens.Colors.Surface.secondary)
                 .cornerRadius(DesignTokens.BorderRadius.sm)
-
-                if let error = viewModel?.currentError {
-                    Text(error.localizedDescription)
-                        .font(DesignTokens.Typography.Semantic.caption())
-                        .foregroundColor(DesignTokens.Colors.Status.error)
-                        .multilineTextAlignment(.center)
-                }
-
-                Spacer()
 
                 PrimaryButton(
                     "Create Household",
@@ -127,11 +101,19 @@ public struct HouseholdCreationView: View {
                         }
                     }
                 )
+                Spacer()
+
+                if let error = viewModel?.currentError {
+                    Text(error.localizedDescription)
+                        .font(DesignTokens.Typography.Semantic.caption())
+                        .foregroundColor(DesignTokens.Colors.Status.error)
+                        .multilineTextAlignment(.center)
+                }
             }
             .padding(DesignTokens.Spacing.lg)
         }
         .scrollDismissesKeyboard(.interactively)
-        .navigationBarBackButtonHidden(true)
+        .navigationBarBackButtonHidden(!showBackButton)
         .onAppear {
             if viewModel == nil, let factory = viewModelFactory {
                 do {
@@ -139,10 +121,6 @@ public struct HouseholdCreationView: View {
                 } catch {
                     Logger.ui.error("Failed to create HouseholdCreationViewModel: \(error)")
                 }
-            }
-            // Auto-focus the household name field after a brief delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                focusedField = .householdName
             }
         }
     }

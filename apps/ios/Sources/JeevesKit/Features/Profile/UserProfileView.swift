@@ -12,9 +12,6 @@ public struct UserProfileView: View {
     let onSignOut: () async -> Void
     let onSelectHousehold: (Household) -> Void
 
-    @State private var showingCreateHousehold = false
-    @State private var showingJoinHousehold = false
-
     public init(
         currentUser: User? = nil,
         currentHousehold: Household? = nil,
@@ -77,22 +74,6 @@ public struct UserProfileView: View {
         .onDisappear {
             Task {
                 await viewModel?.onDisappear()
-            }
-        }
-        .sheet(isPresented: $showingCreateHousehold) {
-            HouseholdCreationView()
-        }
-        .sheet(isPresented: $showingJoinHousehold) {
-            NavigationStack {
-                HouseholdJoinView(
-                    onBack: { showingJoinHousehold = false },
-                    onComplete: { _ in
-                        showingJoinHousehold = false
-                        Task {
-                            await viewModel?.refresh()
-                        }
-                    }
-                )
             }
         }
         .confirmationDialog(
@@ -202,12 +183,33 @@ public struct UserProfileView: View {
                 }
 
                 // Create/Join buttons
-                Button(action: { showingCreateHousehold = true }) {
+                NavigationLink {
+                    HouseholdCreationView(
+                        showBackButton: true,
+                        onComplete: { _ in
+                            Task {
+                                await viewModel?.refresh()
+                            }
+                            dismiss()
+                        }
+                    )
+                } label: {
                     Label(L("household.create_new"), systemImage: "plus.circle")
                         .foregroundColor(.accentColor)
                 }
 
-                Button(action: { showingJoinHousehold = true }) {
+                NavigationLink {
+                    HouseholdJoinView(
+                        showBackButton: true,
+                        onBack: { dismiss() },
+                        onComplete: { _ in
+                            Task {
+                                await viewModel?.refresh()
+                            }
+                            dismiss()
+                        }
+                    )
+                } label: {
                     Label(L("household.join_existing"), systemImage: "person.badge.plus")
                         .foregroundColor(.accentColor)
                 }
@@ -217,12 +219,33 @@ public struct UserProfileView: View {
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
 
-                Button(action: { showingCreateHousehold = true }) {
+                NavigationLink {
+                    HouseholdCreationView(
+                        showBackButton: true,
+                        onComplete: { _ in
+                            Task {
+                                await viewModel?.refresh()
+                            }
+                            dismiss()
+                        }
+                    )
+                } label: {
                     Label(L("household.create_new"), systemImage: "plus.circle")
                         .foregroundColor(.accentColor)
                 }
 
-                Button(action: { showingJoinHousehold = true }) {
+                NavigationLink {
+                    HouseholdJoinView(
+                        showBackButton: true,
+                        onBack: { dismiss() },
+                        onComplete: { _ in
+                            Task {
+                                await viewModel?.refresh()
+                            }
+                            dismiss()
+                        }
+                    )
+                } label: {
                     Label(L("household.join_existing"), systemImage: "person.badge.plus")
                         .foregroundColor(.accentColor)
                 }

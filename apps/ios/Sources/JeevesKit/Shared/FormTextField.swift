@@ -22,6 +22,9 @@ public struct FormTextField: View {
     let accessibilityHint: String?
     let validation: ((String) -> Bool)?
     let errorMessage: String?
+    let font: Font?
+    let autoFocus: Bool
+    let lineLimit: ClosedRange<Int>?
 
     @State private var isPasswordVisible = false
     @FocusState private var isFocused: Bool
@@ -39,7 +42,10 @@ public struct FormTextField: View {
         accessibilityLabel: String? = nil,
         accessibilityHint: String? = nil,
         validation: ((String) -> Bool)? = nil,
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        font: Font? = nil,
+        autoFocus: Bool = false,
+        lineLimit: ClosedRange<Int>? = nil
     ) {
         self.label = label
         self.placeholder = placeholder
@@ -54,14 +60,25 @@ public struct FormTextField: View {
         self.accessibilityHint = accessibilityHint
         self.validation = validation
         self.errorMessage = errorMessage
+        self.font = font
+        self.autoFocus = autoFocus
+        self.lineLimit = lineLimit
     }
 
     public var body: some View {
+        let horizontalPadding = DesignTokens.Spacing.lg
+        let verticalPadding = DesignTokens.Spacing.md
+        // Calculate corner radius based on font size and vertical padding
+        // Default to body font if no custom font is provided
+        let effectiveFont = font ?? DesignTokens.Typography.Semantic.body()
+        let cornerRadius = calculateCornerRadius(for: effectiveFont, verticalPadding: verticalPadding)
+
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
             // Label
             Text(label)
                 .font(DesignTokens.Typography.Semantic.caption())
                 .foregroundColor(hasError ? DesignTokens.Colors.Status.error : DesignTokens.Colors.Text.secondary)
+                .padding(.horizontal, horizontalPadding)
 
             // Input field with container
             HStack(spacing: DesignTokens.Spacing.sm) {
@@ -78,14 +95,14 @@ public struct FormTextField: View {
                     .accessibilityLabel(isPasswordVisible ? "Hide password" : "Show password")
                 }
             }
-            .padding(.horizontal, DesignTokens.Spacing.md)
-            .padding(.vertical, DesignTokens.Spacing.md)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
             .background(backgroundColor)
             .overlay(
-                RoundedRectangle(cornerRadius: DesignTokens.BorderRadius.sm)
+                RoundedRectangle(cornerRadius: cornerRadius)
                     .stroke(borderColor, lineWidth: isFocused ? 2 : 1)
             )
-            .cornerRadius(DesignTokens.BorderRadius.sm)
+            .cornerRadius(cornerRadius)
             .contentShape(Rectangle())
             .onTapGesture {
                 isFocused = true
@@ -96,8 +113,16 @@ public struct FormTextField: View {
                 Text(errorMessage)
                     .font(DesignTokens.Typography.Semantic.caption())
                     .foregroundColor(DesignTokens.Colors.Status.error)
-                    .padding(.leading, DesignTokens.Spacing.xs)
+                    .padding(.leading, horizontalPadding)
                     .opacity(hasError ? 1.0 : 0.0)
+            }
+        }
+        .onAppear {
+            if autoFocus {
+                // Small delay to ensure the view is fully rendered
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    isFocused = true
+                }
             }
         }
     }
@@ -111,7 +136,20 @@ public struct FormTextField: View {
                     .focused($isFocused)
                     .textContentType(textContentType)
                     .autocorrectionDisabled(autocorrectionDisabled)
+                    .font(font)
+            } else if let lineLimit = lineLimit {
+                // Multi-line TextField with axis parameter
+                TextField(placeholder, text: $text, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .focused($isFocused)
+                    .keyboardType(keyboardType)
+                    .textContentType(textContentType)
+                    .textInputAutocapitalization(autocapitalization)
+                    .autocorrectionDisabled(autocorrectionDisabled)
+                    .font(font)
+                    .lineLimit(lineLimit)
             } else {
+                // Single-line TextField
                 TextField(placeholder, text: $text)
                     .textFieldStyle(.plain)
                     .focused($isFocused)
@@ -119,6 +157,7 @@ public struct FormTextField: View {
                     .textContentType(textContentType)
                     .textInputAutocapitalization(autocapitalization)
                     .autocorrectionDisabled(autocorrectionDisabled)
+                    .font(font)
             }
         }
         .modifier(AccessibilityModifier(
@@ -147,6 +186,69 @@ public struct FormTextField: View {
         } else {
             return Color.clear
         }
+    }
+
+    /// Calculates the corner radius based on the font size and vertical padding
+    /// Returns a value that considers both the text size and the container's vertical padding
+    /// - Parameters:
+    ///   - font: The font used in the text field
+    ///   - verticalPadding: Optional vertical padding to include in the calculation
+    private func calculateCornerRadius(for font: Font, verticalPadding: CGFloat? = nil) -> CGFloat {
+        // Extract font size from the Font if possible
+        // SwiftUI doesn't expose font metrics directly, so we need to estimate
+
+        // Check if it's a system font with a specific size
+        let fontSize: CGFloat
+
+        // Since SwiftUI's Font doesn't expose its size directly,
+        // we'll use UIFont to get the default sizes for text styles
+        switch font {
+        case .largeTitle:
+            fontSize = UIFont.preferredFont(forTextStyle: .largeTitle).pointSize
+        case .title:
+            fontSize = UIFont.preferredFont(forTextStyle: .title1).pointSize
+        case .title2:
+            fontSize = UIFont.preferredFont(forTextStyle: .title2).pointSize
+        case .title3:
+            fontSize = UIFont.preferredFont(forTextStyle: .title3).pointSize
+        case .headline:
+            fontSize = UIFont.preferredFont(forTextStyle: .headline).pointSize
+        case .body:
+            fontSize = UIFont.preferredFont(forTextStyle: .body).pointSize
+        case .callout:
+            fontSize = UIFont.preferredFont(forTextStyle: .callout).pointSize
+        case .subheadline:
+            fontSize = UIFont.preferredFont(forTextStyle: .subheadline).pointSize
+        case .footnote:
+            fontSize = UIFont.preferredFont(forTextStyle: .footnote).pointSize
+        case .caption:
+            fontSize = UIFont.preferredFont(forTextStyle: .caption1).pointSize
+        case .caption2:
+            fontSize = UIFont.preferredFont(forTextStyle: .caption2).pointSize
+        default:
+            // For custom fonts or system fonts with specific sizes,
+            // default to a standard body size
+            fontSize = UIFont.preferredFont(forTextStyle: .body).pointSize
+        }
+
+        // Calculate the total height of the input field
+        // This includes the font size plus vertical padding (top and bottom)
+        let effectivePadding = verticalPadding ?? 0
+        let totalHeight = fontSize + (effectivePadding * 2)
+
+        // The corner radius should be proportional to the total height
+        // Using half the height would create a pill shape
+        // Using a smaller ratio creates a more subtle rounded corner
+        let cornerRadiusRatio: CGFloat = 0.6 // Adjust this for more or less rounding (0.3-0.6 works well)
+
+        // Ensure a minimum corner radius for very small fields
+        let minimumRadius: CGFloat = 8.0
+
+        // Calculate the corner radius based on total height
+        let calculatedRadius = totalHeight * cornerRadiusRatio
+
+        // Return the larger of the calculated radius or minimum
+        return max(calculatedRadius, minimumRadius)
     }
 }
 
