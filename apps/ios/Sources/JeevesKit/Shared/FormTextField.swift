@@ -137,6 +137,18 @@ public struct FormTextField: View {
                     .textContentType(textContentType)
                     .autocorrectionDisabled(autocorrectionDisabled)
                     .font(font)
+                    .frame(minHeight: 22) // Ensure consistent height
+            } else if isSecure && isPasswordVisible {
+                // Password field in visible mode - use regular TextField
+                TextField(placeholder, text: $text)
+                    .textFieldStyle(.plain)
+                    .focused($isFocused)
+                    .keyboardType(keyboardType)
+                    .textContentType(textContentType)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .font(font)
+                    .frame(minHeight: 22) // Ensure consistent height
             } else if let lineLimit = lineLimit {
                 // Multi-line TextField with axis parameter
                 TextField(placeholder, text: $text, axis: .vertical)
