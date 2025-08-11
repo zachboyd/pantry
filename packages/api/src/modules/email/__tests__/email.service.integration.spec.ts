@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../../generated/database.js';
-import { IntegrationTestModuleFactory } from '../../../test/utils/integration-test-module-factory.js';
+import { EmailIntegrationTestModuleFactory } from '../../../test/utils/email-integration-test-module-factory.js';
 import { TestDatabaseService } from '../../../test/utils/test-database.service.js';
 import { TOKENS } from '../../../common/tokens.js';
 import { EMAIL_TEMPLATES } from '../templates/template-constants.js';
@@ -10,16 +10,16 @@ import type { EmailService } from '../email.types.js';
 
 describe('Email Service Integration Tests', () => {
   let app: INestApplication;
-  let testRequest: ReturnType<typeof import('supertest')>;
+  let _testRequest: ReturnType<typeof import('supertest')>;
   let db: Kysely<DB>;
   let testDbService: TestDatabaseService;
   let emailService: EmailService;
 
   beforeAll(async () => {
-    // Create integration test app once for all tests
-    const testApp = await IntegrationTestModuleFactory.createApp();
+    // Create email integration test app once for all tests (includes email service)
+    const testApp = await EmailIntegrationTestModuleFactory.createApp();
     app = testApp.app;
-    testRequest = testApp.request;
+    _testRequest = testApp.request;
     db = testApp.db;
     testDbService = testApp.testDbService;
 
@@ -28,7 +28,7 @@ describe('Email Service Integration Tests', () => {
 
     // Clean database at the start to ensure clean state between test files
     try {
-      await IntegrationTestModuleFactory.cleanDatabase(db);
+      await EmailIntegrationTestModuleFactory.cleanDatabase(db);
     } catch (error) {
       console.warn('Database cleanup skipped in beforeAll:', error);
     }
@@ -36,12 +36,12 @@ describe('Email Service Integration Tests', () => {
 
   beforeEach(async () => {
     // Clean database before each test for consistency
-    await IntegrationTestModuleFactory.cleanDatabase(db);
+    await EmailIntegrationTestModuleFactory.cleanDatabase(db);
   });
 
   afterAll(async () => {
     // Cleanup after all tests
-    await IntegrationTestModuleFactory.closeApp(app, testDbService);
+    await EmailIntegrationTestModuleFactory.closeApp(app, testDbService);
   });
 
   describe('basic email sending', () => {

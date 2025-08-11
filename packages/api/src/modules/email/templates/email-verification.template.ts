@@ -3,7 +3,10 @@ import type { EmailTemplateFile } from '../email.types.js';
 export const emailVerificationTemplate = (): EmailTemplateFile => ({
   name: 'email-verification',
   subject: 'Verify your email address for {{appName}}',
-  description: 'Template for email address verification with confirmation link',
+  description:
+    'Template for email address verification with confirmation link. Compatible with Better Auth integration.',
+  // Better Auth provides: user (with user.name, user.email), url, token
+  // Our template variables: userName, userEmail, verificationUrl, appName, expiryHours, supportEmail
   html: `
     <!DOCTYPE html>
     <html>

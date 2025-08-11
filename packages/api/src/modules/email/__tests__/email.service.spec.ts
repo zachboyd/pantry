@@ -98,6 +98,7 @@ describe('EmailServiceImpl', () => {
       expect(result.accepted).toEqual([
         'test1@example.com',
         'test2@example.com',
+        'cc@example.com',
       ]);
     });
 
