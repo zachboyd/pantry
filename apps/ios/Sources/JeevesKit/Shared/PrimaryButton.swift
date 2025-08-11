@@ -65,7 +65,7 @@ struct BaseButton: View {
 
     private enum Constants {
         static let height: CGFloat = 44
-        static let cornerRadius: CGFloat = 10
+        static let cornerRadius: CGFloat = height / 2
         static let contentSpacing: CGFloat = 8
         static let disabledOpacity: CGFloat = 0.6
         static let loadingScaleFactor: CGFloat = 0.8
