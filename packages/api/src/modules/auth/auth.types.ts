@@ -1,6 +1,6 @@
 export interface BetterAuthUser {
   id: string;
-  email: string;
+  email?: string;
   emailVerified: boolean;
   name: string;
   image?: string;

@@ -48,8 +48,22 @@ export class ConfigServiceImpl implements ConfigService {
           this.configService.get<string>('AWS_S3_REGION') ||
           this.configService.get<string>('AWS_REGION') ||
           '',
-        s3BucketName:
-          this.configService.get<string>('AWS_S3_BUCKET_NAME') || '',
+        s3: {
+          bucketName:
+            this.configService.get<string>('AWS_S3_BUCKET_NAME') || '',
+        },
+        ses: {
+          region:
+            this.configService.get<string>('AWS_SES_REGION') ||
+            this.configService.get<string>('AWS_REGION') ||
+            'us-east-1',
+          fromAddress:
+            this.configService.get<string>('SES_FROM_ADDRESS') ||
+            'noreply@localhost.dev',
+          configurationSetName: this.configService.get<string>(
+            'SES_CONFIGURATION_SET_NAME',
+          ),
+        },
       },
     };
   }

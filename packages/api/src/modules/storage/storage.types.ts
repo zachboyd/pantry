@@ -30,6 +30,15 @@ export enum StorageBackend {
   AZURE = 'azure',
 }
 
+export interface S3Config {
+  region: string;
+  bucketName: string;
+  credentials?: {
+    accessKeyId: string;
+    secretAccessKey: string;
+  };
+}
+
 export interface FileStorageFactory {
   createStorageService(): FileStorageService;
 }

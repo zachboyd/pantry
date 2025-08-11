@@ -50,6 +50,7 @@ export const TOKENS = {
     SERVICE: 'STORAGE_SERVICE',
     FACTORY: 'STORAGE_FACTORY',
     S3_IMPL: 'STORAGE_S3_IMPLEMENTATION',
+    S3_CONFIG: 'STORAGE_S3_CONFIG',
   },
 
   // Worker related tokens
@@ -79,6 +80,19 @@ export const TOKENS = {
   // PubSub related tokens
   PUBSUB: {
     SERVICE: 'PUBSUB_SERVICE',
+    REDIS_CONFIG: 'PUBSUB_REDIS_CONFIG',
+  },
+
+  // Email related tokens
+  EMAIL: {
+    SERVICE: 'EMAIL_SERVICE',
+    CONFIG: 'EMAIL_CONFIG',
+  },
+
+  // Swagger related tokens
+  SWAGGER: {
+    SERVICE: 'SWAGGER_SERVICE',
+    CONFIG: 'SWAGGER_CONFIG',
   },
 } as const;
 
@@ -95,3 +109,4 @@ export type HealthTokens = typeof TOKENS.HEALTH;
 export type PermissionTokens = typeof TOKENS.PERMISSION;
 export type CacheTokens = typeof TOKENS.CACHE;
 export type PubSubTokens = typeof TOKENS.PUBSUB;
+export type EmailTokens = typeof TOKENS.EMAIL;

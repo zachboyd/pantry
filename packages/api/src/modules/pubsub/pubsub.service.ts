@@ -1,9 +1,12 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { TOKENS } from '../../common/tokens.js';
-import type { ConfigService } from '../config/config.types.js';
 import type { UserRecord } from '../user/user.types.js';
-import type { PubSubService, UserUpdatedEvent } from './pubsub.types.js';
+import type {
+  PubSubService,
+  UserUpdatedEvent,
+  RedisConfig,
+} from './pubsub.types.js';
 
 @Injectable()
 export class PubSubServiceImpl implements PubSubService {
@@ -11,16 +14,16 @@ export class PubSubServiceImpl implements PubSubService {
   private readonly pubsub: RedisPubSub;
 
   constructor(
-    @Inject(TOKENS.CONFIG.SERVICE)
-    private readonly configService: ConfigService,
+    @Inject(TOKENS.PUBSUB.REDIS_CONFIG)
+    private readonly redisConfig: RedisConfig,
   ) {
-    const redisUrl = this.configService.config.redis.url;
-
     this.pubsub = new RedisPubSub({
-      connection: redisUrl,
+      connection: this.redisConfig.url,
     });
 
-    this.logger.log(`PubSub service initialized with Redis: ${redisUrl}`);
+    this.logger.log(
+      `PubSub service initialized with Redis: ${this.redisConfig.url}`,
+    );
   }
 
   async publishUserUpdated(

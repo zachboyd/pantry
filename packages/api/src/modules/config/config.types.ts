@@ -21,7 +21,14 @@ export interface Configuration {
     accessKeyId?: string;
     secretAccessKey?: string;
     region: string;
-    s3BucketName: string;
+    s3: {
+      bucketName: string;
+    };
+    ses: {
+      region: string;
+      fromAddress: string;
+      configurationSetName?: string;
+    };
   };
 }
 
