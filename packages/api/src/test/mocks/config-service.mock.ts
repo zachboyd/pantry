@@ -19,6 +19,7 @@ export class ConfigServiceMock {
       app: {
         port: 3000,
         nodeEnv: 'test',
+        url: 'http://localhost:3001',
         corsOrigins: ['http://localhost:3000'],
       },
       logging: {
@@ -33,6 +34,9 @@ export class ConfigServiceMock {
       },
       openai: {
         apiKey: 'test-openai-key',
+      },
+      betterAuth: {
+        secret: 'test-better-auth-secret',
       },
       aws: {
         accessKeyId: 'test-access-key',
@@ -66,6 +70,7 @@ export class ConfigServiceMock {
       app: {
         port: 3001,
         nodeEnv: 'development',
+        url: 'http://localhost:3001',
         corsOrigins: ['http://localhost:3000', 'http://localhost:5173'],
       },
       logging: {
@@ -83,6 +88,7 @@ export class ConfigServiceMock {
       app: {
         port: 80,
         nodeEnv: 'production',
+        url: 'https://api.jeevesapp.dev',
         corsOrigins: ['https://app.jeevesapp.dev'],
       },
       logging: {

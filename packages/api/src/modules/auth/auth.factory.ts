@@ -3,6 +3,7 @@ import { TOKENS } from '../../common/tokens.js';
 import { createAuth } from './auth.config.js';
 import type { AuthSyncService, BetterAuthUser } from './auth.types.js';
 import type { EmailService } from '../email/email.types.js';
+import type { ConfigService } from '../config/config.types.js';
 
 @Injectable()
 export class AuthFactory {
@@ -11,6 +12,8 @@ export class AuthFactory {
     private authSyncService: AuthSyncService,
     @Inject(TOKENS.EMAIL.SERVICE)
     private emailService: EmailService,
+    @Inject(TOKENS.CONFIG.SERVICE)
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -21,6 +24,11 @@ export class AuthFactory {
       await this.authSyncService.createBusinessUser(user);
     };
 
-    return createAuth(onUserCreated, this.emailService);
+    return createAuth({
+      onUserCreated,
+      emailService: this.emailService,
+      apiUrl: this.configService.config.app.url,
+      secret: this.configService.config.betterAuth.secret,
+    });
   }
 }

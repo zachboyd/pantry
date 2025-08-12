@@ -9,10 +9,15 @@ import { EMAIL_TEMPLATES } from '../email/templates/template-constants.js';
 type AuthInstance = ReturnType<typeof betterAuth>;
 type UserCreatedCallback = (user: BetterAuthUser) => Promise<void>;
 
-export function createAuth(
-  onUserCreated?: UserCreatedCallback,
-  emailService?: EmailService,
-): AuthInstance {
+export interface CreateAuthOptions {
+  onUserCreated?: UserCreatedCallback;
+  emailService?: EmailService;
+  apiUrl?: string;
+  secret?: string;
+}
+
+export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
+  const { onUserCreated, emailService, apiUrl, secret } = options;
   return betterAuth({
     database: {
       dialect: new PostgresDialect({
@@ -22,8 +27,8 @@ export function createAuth(
       }),
       provider: 'pg',
     },
-    secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL,
+    secret: secret || '',
+    baseURL: apiUrl,
     basePath: '/api/auth',
     advanced: {
       cookiePrefix: 'jeeves',

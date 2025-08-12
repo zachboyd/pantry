@@ -2,6 +2,7 @@ export interface Configuration {
   app: {
     port: number;
     nodeEnv: string;
+    url: string;
     corsOrigins: string[];
   };
   logging: {
@@ -16,6 +17,9 @@ export interface Configuration {
   };
   openai: {
     apiKey?: string;
+  };
+  betterAuth: {
+    secret: string;
   };
   aws: {
     accessKeyId?: string;

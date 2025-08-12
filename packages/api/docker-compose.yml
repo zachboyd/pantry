@@ -11,6 +11,7 @@ services:
       - ./tsconfig.json:/app/tsconfig.json
       - ./eslint.config.mjs:/app/eslint.config.mjs
       - /app/node_modules  # Anonymous volume to prevent overwriting
+      - ~/.aws:/root/.aws:ro  # Mount AWS credentials for SES email functionality
     env_file:
       - .env
     environment:
