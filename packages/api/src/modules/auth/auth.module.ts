@@ -7,6 +7,8 @@ import { AuthSyncServiceImpl } from './auth-sync.service.js';
 import { AuthFactory } from './auth.factory.js';
 import { AuthGuard } from './auth.guard.js';
 import { AuthServiceImpl } from './auth.service.js';
+import { AuthUserRepositoryImpl } from './auth-user.repository.js';
+import { AuthUserServiceImpl } from './auth-user.service.js';
 
 @Module({
   imports: [UserModule, EmailModule, AppConfigModule],
@@ -27,12 +29,22 @@ import { AuthServiceImpl } from './auth.service.js';
       provide: TOKENS.AUTH.AUTH_SYNC_SERVICE,
       useClass: AuthSyncServiceImpl,
     },
+    {
+      provide: TOKENS.AUTH.USER_REPOSITORY,
+      useClass: AuthUserRepositoryImpl,
+    },
+    {
+      provide: TOKENS.AUTH.USER_SERVICE,
+      useClass: AuthUserServiceImpl,
+    },
   ],
   exports: [
     TOKENS.AUTH.SERVICE,
     TOKENS.AUTH.GUARD,
     TOKENS.AUTH.FACTORY,
     TOKENS.AUTH.AUTH_SYNC_SERVICE,
+    TOKENS.AUTH.USER_SERVICE,
+    TOKENS.AUTH.USER_REPOSITORY,
   ],
 })
 export class AuthModule {}
