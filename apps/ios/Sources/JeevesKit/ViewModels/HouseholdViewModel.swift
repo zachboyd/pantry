@@ -100,7 +100,7 @@ public final class HouseholdViewModel {
     /// Add member to current household
     /// - Parameters:
     ///   - userId: ID of the user to add
-    ///   - role: Role for the new member ("owner", "admin", "member")
+    ///   - role: Role for the new member ("manager", "member", "ai")
     public func addMember(userId: String, role: String) async {
         guard let household = currentHousehold else {
             Self.logger.error("❌ No current household to add member to")

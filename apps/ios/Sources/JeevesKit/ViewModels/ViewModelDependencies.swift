@@ -1,5 +1,4 @@
 @preconcurrency import Apollo
-import CASLSwift
 import Foundation
 import SwiftUI
 
@@ -14,14 +13,7 @@ public struct ViewModelDependencies {
     public let itemService: ItemServiceProtocol
     public let shoppingListService: ShoppingListServiceProtocol
     public let notificationService: NotificationServiceProtocol
-    public let permissionProvider: PermissionProvider?
-
-    /// Current user's ability for permission checking (deprecated - use permissionProvider)
-    /// Note: This must be accessed from MainActor context (which ViewModels are)
-    @MainActor
-    public var ability: JeevesAbility? {
-        authService.currentAbility
-    }
+    public let permissionService: PermissionServiceProtocol
 
     public init(
         authService: AuthServiceProtocol,
@@ -31,7 +23,7 @@ public struct ViewModelDependencies {
         itemService: ItemServiceProtocol,
         shoppingListService: ShoppingListServiceProtocol,
         notificationService: NotificationServiceProtocol,
-        permissionProvider: PermissionProvider? = nil
+        permissionService: PermissionServiceProtocol
     ) {
         self.authService = authService
         self.householdService = householdService
@@ -40,7 +32,7 @@ public struct ViewModelDependencies {
         self.itemService = itemService
         self.shoppingListService = shoppingListService
         self.notificationService = notificationService
-        self.permissionProvider = permissionProvider
+        self.permissionService = permissionService
     }
 }
 
@@ -95,13 +87,16 @@ public struct HouseholdListDependencies: Sendable {
 public struct HouseholdEditDependencies: Sendable {
     public let householdService: HouseholdServiceProtocol
     public let authService: AuthServiceProtocol
+    public let permissionService: PermissionServiceProtocol
 
     public init(
         householdService: HouseholdServiceProtocol,
-        authService: AuthServiceProtocol
+        authService: AuthServiceProtocol,
+        permissionService: PermissionServiceProtocol
     ) {
         self.householdService = householdService
         self.authService = authService
+        self.permissionService = permissionService
     }
 }
 
@@ -110,18 +105,18 @@ public struct HouseholdMembersDependencies: Sendable {
     public let householdService: HouseholdServiceProtocol
     public let userService: UserServiceProtocol
     public let authService: AuthServiceProtocol
-    public let permissionProvider: PermissionProvider?
+    public let permissionService: PermissionServiceProtocol
 
     public init(
         householdService: HouseholdServiceProtocol,
         userService: UserServiceProtocol,
         authService: AuthServiceProtocol,
-        permissionProvider: PermissionProvider? = nil
+        permissionService: PermissionServiceProtocol
     ) {
         self.householdService = householdService
         self.userService = userService
         self.authService = authService
-        self.permissionProvider = permissionProvider
+        self.permissionService = permissionService
     }
 }
 
@@ -131,20 +126,20 @@ public struct UserSettingsDependencies: Sendable {
     public let userService: UserServiceProtocol
     public let userPreferencesService: UserPreferencesServiceProtocol
     public let householdService: HouseholdServiceProtocol
-    public let permissionProvider: PermissionProvider?
+    public let permissionService: PermissionServiceProtocol
 
     public init(
         authService: AuthServiceProtocol,
         userService: UserServiceProtocol,
         userPreferencesService: UserPreferencesServiceProtocol,
         householdService: HouseholdServiceProtocol,
-        permissionProvider: PermissionProvider? = nil
+        permissionService: PermissionServiceProtocol
     ) {
         self.authService = authService
         self.userService = userService
         self.userPreferencesService = userPreferencesService
         self.householdService = householdService
-        self.permissionProvider = permissionProvider
+        self.permissionService = permissionService
     }
 }
 

@@ -150,6 +150,25 @@ public final class ServiceFactory {
         return service
     }
 
+    /// Create PermissionService with all required dependencies
+    public static func createPermissionService(
+        userService: UserServiceProtocol,
+        householdService: HouseholdServiceProtocol,
+        apolloClient: ApolloClient? = nil
+    ) async throws -> PermissionServiceProtocol {
+        logger.info("🏭 Creating PermissionService")
+
+        let service = PermissionService(userService: userService, householdService: householdService)
+
+        // Subscribe to user updates if Apollo client is available
+        if let apolloClient = apolloClient {
+            await service.subscribeToUserUpdates(apolloClient: apolloClient)
+        }
+
+        logger.info("✅ PermissionService created successfully")
+        return service
+    }
+
     /// Create HydrationService with all required dependencies
     public static func createHydrationService(
         graphQLService: GraphQLServiceProtocol,

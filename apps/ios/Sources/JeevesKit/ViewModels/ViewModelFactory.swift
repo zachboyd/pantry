@@ -148,10 +148,12 @@ public struct SafeViewModelFactory {
     ) throws -> HouseholdEditViewModel {
         let householdService = try container.getHouseholdService()
         let authService = try container.getAuthService()
+        let permissionService = try container.getPermissionService()
 
         let dependencies = HouseholdEditDependencies(
             householdService: householdService,
-            authService: authService
+            authService: authService,
+            permissionService: permissionService
         )
 
         return HouseholdEditViewModel(
@@ -167,15 +169,13 @@ public struct SafeViewModelFactory {
         let householdService = try container.getHouseholdService()
         let userService = try container.getUserService()
         let authService = try container.getAuthService()
-
-        // Create permission provider from auth service's permission service
-        let permissionProvider = PermissionProvider(permissionService: authService.permissionService)
+        let permissionService = try container.getPermissionService()
 
         let dependencies = HouseholdMembersDependencies(
             householdService: householdService,
             userService: userService,
             authService: authService,
-            permissionProvider: permissionProvider
+            permissionService: permissionService
         )
 
         return HouseholdMembersViewModel(dependencies: dependencies, householdId: householdId)
@@ -241,16 +241,14 @@ public struct SafeViewModelFactory {
         let userService = try container.getUserService()
         let userPreferencesService = try container.getUserPreferencesService()
         let householdService = try container.getHouseholdService()
-
-        // Create permission provider from auth service's permission service
-        let permissionProvider = PermissionProvider(permissionService: authService.permissionService)
+        let permissionService = try container.getPermissionService()
 
         let dependencies = UserSettingsDependencies(
             authService: authService,
             userService: userService,
             userPreferencesService: userPreferencesService,
             householdService: householdService,
-            permissionProvider: permissionProvider
+            permissionService: permissionService
         )
 
         return UserSettingsViewModel(dependencies: dependencies)

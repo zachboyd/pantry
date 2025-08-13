@@ -9,32 +9,32 @@ import Foundation
 
 /// Role of a member within a household
 public enum MemberRole: String, Codable, CaseIterable, Sendable {
-    case owner
-    case admin
+    case manager
     case member
+    case ai
 
-    /// Sort order for displaying members (owner first, then admin, then member)
+    /// Sort order for displaying members (manager first, then member, then ai)
     public var sortOrder: Int {
         switch self {
-        case .owner: return 0
-        case .admin: return 1
-        case .member: return 2
+        case .manager: return 0
+        case .member: return 1
+        case .ai: return 2
         }
     }
 
     /// Whether this role has permission to manage household settings
     public var canManageHousehold: Bool {
         switch self {
-        case .owner, .admin: return true
-        case .member: return false
+        case .manager: return true
+        case .member, .ai: return false
         }
     }
 
     /// Whether this role has permission to manage members
     public var canManageMembers: Bool {
         switch self {
-        case .owner, .admin: return true
-        case .member: return false
+        case .manager: return true
+        case .member, .ai: return false
         }
     }
 }

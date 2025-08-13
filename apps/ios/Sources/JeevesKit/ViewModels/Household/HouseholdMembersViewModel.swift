@@ -42,11 +42,11 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
         }
 
         public var canBeRemoved: Bool {
-            role != .owner
+            role != .manager
         }
 
         public var canChangeRole: Bool {
-            role != .owner
+            role != .manager
         }
 
         public init(member: HouseholdMember, user: User? = nil) {
@@ -85,12 +85,12 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
         state.searchText.isEmpty ? state.members : state.filteredMembers
     }
 
-    public var ownerMember: HouseholdMemberInfo? {
-        state.members.first { $0.role == .owner }
+    public var managerMember: HouseholdMemberInfo? {
+        state.members.first { $0.role == .manager }
     }
 
-    public var adminMembers: [HouseholdMemberInfo] {
-        state.members.filter { $0.role == .admin }
+    public var aiMembers: [HouseholdMemberInfo] {
+        state.members.filter { $0.role == .ai }
     }
 
     public var regularMembers: [HouseholdMemberInfo] {
@@ -102,17 +102,16 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
         return state.members.first { $0.userId == currentUserId }
     }
 
-    public var isCurrentUserOwner: Bool {
-        currentUserMember?.role == .owner
+    public var isCurrentUserManager: Bool {
+        currentUserMember?.role == .manager
     }
 
-    public var isCurrentUserAdmin: Bool {
-        let role = currentUserMember?.role
-        return role == .owner || role == .admin
+    public var canCurrentUserManage: Bool {
+        currentUserMember?.role == .manager
     }
 
     public var canManageMembers: Bool {
-        isCurrentUserAdmin
+        canCurrentUserManage
     }
 
     public var isLoading: Bool {

@@ -161,12 +161,8 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
             await loadHousehold(id: householdId)
 
             // Check if user has permission to edit this household
-            if let currentUserId = dependencies.authService.currentUser?.id {
-                // For now, determine read-only based on whether they can manage the household
-                // This could be enhanced with proper permission checks
-                let canEdit = await checkEditPermission(for: householdId, userId: currentUserId)
-                updateState { $0.isReadOnly = !canEdit }
-            }
+            let canEdit = dependencies.permissionService.canUpdateHousehold(householdId)
+            updateState { $0.isReadOnly = !canEdit }
         }
     }
 
@@ -396,19 +392,6 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
             }
             handleError(error)
         }
-    }
-
-    // MARK: - Permission Checking
-
-    private func checkEditPermission(for _: String, userId _: String) async -> Bool {
-        // Check if user is owner or admin of the household
-        // For now, we'll use a simple check - in real app, this would use CASL permissions
-        if state.originalHousehold != nil {
-            // If we already have the household, check if user is the owner
-            // In a real app, we'd check member roles here
-            return true // For now, allow editing if they can view it
-        }
-        return true
     }
 
     // MARK: - Error Handling Override

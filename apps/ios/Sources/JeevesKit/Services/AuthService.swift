@@ -1,5 +1,4 @@
 import Apollo
-import CASLSwift
 import Combine
 import Foundation
 
@@ -11,9 +10,8 @@ public protocol AuthServiceProtocol: AnyObject, Sendable {
     var isLoading: Bool { get }
     var lastError: String? { get }
     var currentUser: User? { get }
-    var currentAbility: JeevesAbility? { get }
     var tokenManager: AuthTokenManager { get }
-    var permissionService: PermissionServiceProtocol { get }
+    var permissionService: PermissionServiceProtocol? { get }
 
     func signIn(email: String, password: String) async throws -> String
     func signUp(email: String, password: String) async throws -> String
@@ -36,7 +34,7 @@ public class AuthService: AuthServiceProtocol {
 
     private let authClient: AuthClientProtocol
     private let authTokenManager: AuthTokenManager
-    private let _permissionService: PermissionServiceProtocol
+    private let _permissionService: PermissionServiceProtocol?
     private let apolloClient: ApolloClient?
 
     // Published state for SwiftUI integration
@@ -44,9 +42,6 @@ public class AuthService: AuthServiceProtocol {
     public var isAuthenticated = false
     public var isLoading = false
     public var lastError: String?
-    public var currentAbility: JeevesAbility? {
-        _permissionService.currentAbility
-    }
 
     public var currentAuthUserId: String? {
         return currentAuthUser?.id
@@ -58,7 +53,7 @@ public class AuthService: AuthServiceProtocol {
     }
 
     /// Expose permissionService for creating PermissionProvider
-    public var permissionService: PermissionServiceProtocol {
+    public var permissionService: PermissionServiceProtocol? {
         return _permissionService
     }
 
@@ -75,7 +70,7 @@ public class AuthService: AuthServiceProtocol {
         self.authClient = authClient
         self.authTokenManager = authTokenManager
         self.apolloClient = apolloClient
-        _permissionService = permissionService ?? PermissionService()
+        _permissionService = permissionService
 
         Self.logger.info("🔐 AuthService initializing...")
 
@@ -333,7 +328,7 @@ public class AuthService: AuthServiceProtocol {
             }
 
             // Clear permissions
-            await _permissionService.clearPermissions()
+            await _permissionService?.clearPermissions()
 
             // Stop session validation
             stopSessionValidation()
@@ -363,9 +358,8 @@ public class AuthService: AuthServiceProtocol {
 
         // Connect permission service to Apollo for automatic updates
         if let apolloClient = apolloClient {
-            await _permissionService.subscribeToUserPermissions(apolloClient: apolloClient)
+            await _permissionService?.subscribeToUserUpdates(apolloClient: apolloClient)
             Self.logger.info("✅ Permission service connected to Apollo cache")
-            Self.logger.info("  - Current ability after subscription: \(_permissionService.currentAbility != nil ? "SET" : "NIL")")
         } else {
             Self.logger.warning("⚠️ No Apollo client available for permission updates")
         }
@@ -387,7 +381,7 @@ public class AuthService: AuthServiceProtocol {
         authClient.clearAuthenticationState()
 
         // Clear permissions
-        await permissionService.clearPermissions()
+        await permissionService?.clearPermissions()
 
         // Clear local state
         await MainActor.run {

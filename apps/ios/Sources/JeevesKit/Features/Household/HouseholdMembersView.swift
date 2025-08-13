@@ -87,29 +87,9 @@ struct HouseholdMemberRowView: View {
             )
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Text(displayName)
-                        .font(DesignTokens.Typography.Semantic.cardTitle())
-                        .foregroundColor(DesignTokens.Colors.Text.primary)
-
-                    if member.role == .owner {
-                        Text(L("household.role.owner"))
-                            .font(DesignTokens.Typography.Semantic.caption())
-                            .foregroundColor(DesignTokens.Colors.Primary.base)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(DesignTokens.Colors.Primary.light)
-                            .cornerRadius(4)
-                    } else if member.role == .admin {
-                        Text(L("household.role.admin"))
-                            .font(DesignTokens.Typography.Semantic.caption())
-                            .foregroundColor(DesignTokens.Colors.Secondary.base)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(DesignTokens.Colors.Secondary.light)
-                            .cornerRadius(4)
-                    }
-                }
+                Text(displayName)
+                    .font(DesignTokens.Typography.Semantic.cardTitle())
+                    .foregroundColor(DesignTokens.Colors.Text.primary)
 
                 // Only show email for non-AI users
                 if let userInfo = userInfo, !userInfo.isAi, let email = displayEmail {
@@ -192,17 +172,17 @@ public extension HouseholdMember {
 public extension MemberRole {
     var displayName: String {
         switch self {
-        case .owner: return "Owner"
-        case .admin: return "Admin"
+        case .manager: return "Manager"
         case .member: return "Member"
+        case .ai: return "AI"
         }
     }
 
     var color: Color {
         switch self {
-        case .owner: return DesignTokens.Colors.Primary.base
-        case .admin: return DesignTokens.Colors.Secondary.base
+        case .manager: return DesignTokens.Colors.Primary.base
         case .member: return DesignTokens.Colors.Text.secondary
+        case .ai: return DesignTokens.Colors.Secondary.base
         }
     }
 }

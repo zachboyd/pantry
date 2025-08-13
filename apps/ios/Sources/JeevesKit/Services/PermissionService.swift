@@ -1,69 +1,75 @@
 @preconcurrency import Apollo
-import CASLSwift
 import Foundation
 import Observation
+import SwiftUI
 
-// MARK: - Permission Types
+// MARK: - Permission Context
 
-/// Represents a CASL permission rule from the backend
-public struct PermissionRule: Codable, Sendable {
-    public let action: StringOrArray
-    public let subject: StringOrArray?
-    public let fields: StringOrArray?
-    public let conditions: [String: AnyCodable]?
-    public let inverted: Bool?
-    public let reason: String?
+/// Context needed for permission evaluation
+/// This contains the current user data and related information from GraphQL cache
+public struct PermissionContext: @unchecked Sendable {
+    public let currentUserId: String
+    public let currentUser: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser?
+    public let householdMembers: [HouseholdMemberInfo]
+
+    public struct HouseholdMemberInfo: Sendable {
+        public let householdId: String
+        public let userId: String
+        public let role: String
+
+        public init(householdId: String, userId: String, role: String) {
+            self.householdId = householdId
+            self.userId = userId
+            self.role = role
+        }
+    }
+
+    public init(
+        currentUserId: String,
+        currentUser: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser? = nil,
+        householdMembers: [HouseholdMemberInfo] = []
+    ) {
+        self.currentUserId = currentUserId
+        self.currentUser = currentUser
+        self.householdMembers = householdMembers
+    }
 }
-
-/// User permissions from the backend
-public struct UserPermissions: Codable, Sendable {
-    public let rules: [PermissionRule]
-    public let version: String?
-}
-
-// MARK: - Jeeves-Specific Types
-
-/// Actions available in the Jeeves application
-public enum JeevesAction: String, CaseIterable {
-    case create
-    case read
-    case update
-    case delete
-    case manage // Special action meaning all actions
-}
-
-/// Subjects (resources) in the Jeeves application
-public enum JeevesSubject: String {
-    case user = "User"
-    case household = "Household"
-    case householdMember = "HouseholdMember"
-    case message = "Message"
-    case pantry = "Pantry"
-    case all // Special subject meaning all subjects
-}
-
-/// Jeeves-specific Ability class
-/// Using typealias since we can't inherit from Ability directly
-public typealias JeevesAbility = Ability<JeevesAction, JeevesSubject>
 
 // MARK: - Permission Service Protocol
 
 @MainActor
-public protocol PermissionServiceProtocol: AnyObject {
-    /// The current user's ability instance
-    var currentAbility: JeevesAbility? { get }
+public protocol PermissionServiceProtocol: AnyObject, Sendable {
+    /// The current permission context
+    var permissionContext: PermissionContext? { get }
 
-    /// Extract permissions from Apollo-cached User data
-    func extractPermissionsFromUser(_ user: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser?) async -> UserPermissions?
+    /// Subscribe to user updates from Apollo cache
+    func subscribeToUserUpdates(apolloClient: ApolloClient) async
 
-    /// Build ability from user permissions
-    func buildAbility(from permissions: UserPermissions) async -> JeevesAbility
-
-    /// Subscribe to user permission updates from Apollo cache
-    func subscribeToUserPermissions(apolloClient: ApolloClient) async
+    /// Update permission context with new user data
+    func updateContext(with user: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser?) async
 
     /// Clear cached permissions
     func clearPermissions() async
+
+    // MARK: - Permission Check Methods
+
+    /// Check if user can create a household member
+    func canCreateHouseholdMember(for householdId: String) -> Bool
+
+    /// Check if user can update a household member
+    func canUpdateHouseholdMember(for householdId: String, memberId: String) -> Bool
+
+    /// Check if user can delete a household member
+    func canDeleteHouseholdMember(for householdId: String, memberId: String) -> Bool
+
+    /// Check if user can manage a household
+    func canManageHousehold(_ householdId: String) -> Bool
+
+    /// Check if user can update household details
+    func canUpdateHousehold(_ householdId: String) -> Bool
+
+    /// Check if user can delete a household
+    func canDeleteHousehold(_ householdId: String) -> Bool
 }
 
 // MARK: - Permission Service Implementation
@@ -73,382 +79,33 @@ public protocol PermissionServiceProtocol: AnyObject {
 public final class PermissionService: PermissionServiceProtocol {
     // MARK: - Properties
 
-    public private(set) var currentAbility: JeevesAbility?
-    private var permissionWatcher: GraphQLQueryWatcher<JeevesGraphQL.GetCurrentUserQuery>?
+    public private(set) var permissionContext: PermissionContext?
+    private var userWatcher: GraphQLQueryWatcher<JeevesGraphQL.GetCurrentUserQuery>?
     private let logger = Logger.permissions
+    private let userService: UserServiceProtocol
+    private let householdService: HouseholdServiceProtocol
+
+    // Cache for permission data
+    private var cachedCurrentUser: User?
+    private var cachedHouseholdMembers: [String: [HouseholdMember]] = [:] // householdId -> members
 
     // MARK: - Initialization
 
-    public init() {
+    public init(userService: UserServiceProtocol, householdService: HouseholdServiceProtocol) {
+        self.userService = userService
+        self.householdService = householdService
         logger.info("PermissionService initialized")
     }
 
-    // No deinit needed as permissionWatcher will be cleaned up when cleared
-
     // MARK: - Public Methods
 
-    /// Extract permissions from Apollo-cached User data
-    public func extractPermissionsFromUser(_ user: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser?) async -> UserPermissions? {
-        guard let user = user else {
-            logger.debug("No user data available for permission extraction")
-            return nil
-        }
-
-        // Extract permissions from the JSON field
-        guard let permissionsJSON = user.permissions,
-              !permissionsJSON.value.isEmpty,
-              permissionsJSON.value != "null"
-        else {
-            // Return basic fallback permissions
-            let rules = [
-                PermissionRule(
-                    action: .single("read"),
-                    subject: .single("User"),
-                    fields: nil,
-                    conditions: ["id": AnyCodable(user.id)],
-                    inverted: nil,
-                    reason: nil
-                ),
-                PermissionRule(
-                    action: .single("update"),
-                    subject: .single("User"),
-                    fields: nil,
-                    conditions: ["id": AnyCodable(user.id)],
-                    inverted: nil,
-                    reason: nil
-                ),
-            ]
-            return UserPermissions(rules: rules, version: "1.0.0")
-        }
-
-        // Decode JSON data to array
-        let permissionsArray: [[String: Any]]
-
-        // First, try to parse the JSON string
-        if let jsonData = permissionsJSON.value.data(using: .utf8) {
-            do {
-                let decoded = try JSONSerialization.jsonObject(with: jsonData)
-
-                // Check if it's an array
-                if let array = decoded as? [[String: Any]] {
-                    // Dictionary format array
-                    permissionsArray = array
-                } else if let compactArray = decoded as? [[Any]] {
-                    // Compact format array (array of arrays)
-                    var rules: [[String: Any]] = []
-
-                    for compactRule in compactArray {
-                        // Convert compact format to dictionary format
-                        var ruleDict: [String: Any] = [:]
-
-                        // Index 0: action (required)
-                        if compactRule.count > 0 {
-                            ruleDict["action"] = compactRule[0]
-                        }
-
-                        // Index 1: subject (optional)
-                        if compactRule.count > 1 {
-                            ruleDict["subject"] = compactRule[1]
-                        }
-
-                        // Index 2: conditions (optional)
-                        if compactRule.count > 2 {
-                            ruleDict["conditions"] = compactRule[2]
-                        }
-
-                        // Index 3: fields (optional)
-                        if compactRule.count > 3 {
-                            ruleDict["fields"] = compactRule[3]
-                        }
-
-                        // Index 4: inverted (optional)
-                        if compactRule.count > 4 {
-                            ruleDict["inverted"] = compactRule[4]
-                        }
-
-                        // Index 5: reason (optional)
-                        if compactRule.count > 5 {
-                            ruleDict["reason"] = compactRule[5]
-                        }
-
-                        rules.append(ruleDict)
-                    }
-
-                    permissionsArray = rules
-                } else if let nsArray = decoded as? NSArray {
-                    // Handle NSArray case - could be compact format or dictionary format
-
-                    // Check if it's compact format (array of arrays) or dictionary format
-                    if let firstItem = nsArray.firstObject {
-                        if firstItem is [Any] || firstItem is NSArray {
-                            // Compact format - convert to dictionary format
-                            var rules: [[String: Any]] = []
-
-                            for item in nsArray {
-                                if let compactRule = item as? [Any] {
-                                    // Convert compact format to dictionary format
-                                    var ruleDict: [String: Any] = [:]
-
-                                    // Index 0: action (required)
-                                    if compactRule.count > 0 {
-                                        ruleDict["action"] = compactRule[0]
-                                    }
-
-                                    // Index 1: subject (optional)
-                                    if compactRule.count > 1 {
-                                        ruleDict["subject"] = compactRule[1]
-                                    }
-
-                                    // Index 2: conditions (optional)
-                                    if compactRule.count > 2 {
-                                        ruleDict["conditions"] = compactRule[2]
-                                    }
-
-                                    // Index 3: fields (optional)
-                                    if compactRule.count > 3 {
-                                        ruleDict["fields"] = compactRule[3]
-                                    }
-
-                                    // Index 4: inverted (optional)
-                                    if compactRule.count > 4 {
-                                        ruleDict["inverted"] = compactRule[4]
-                                    }
-
-                                    // Index 5: reason (optional)
-                                    if compactRule.count > 5 {
-                                        ruleDict["reason"] = compactRule[5]
-                                    }
-
-                                    rules.append(ruleDict)
-                                }
-                            }
-
-                            permissionsArray = rules
-                        } else {
-                            // Dictionary format
-                            var rules: [[String: Any]] = []
-                            for item in nsArray {
-                                if let dict = item as? [String: Any] {
-                                    rules.append(dict)
-                                } else if let dict = item as? NSDictionary {
-                                    rules.append(dict as! [String: Any])
-                                }
-                            }
-                            permissionsArray = rules
-                        }
-                    } else {
-                        // Empty array
-                        permissionsArray = []
-                    }
-                } else if let dict = decoded as? [String: Any] {
-                    // Maybe it's wrapped in an object?
-                    if let rules = dict["rules"] as? [[String: Any]] {
-                        permissionsArray = rules
-                    } else {
-                        logger.error("Failed to parse permissions: dictionary doesn't contain 'rules' array")
-                        return nil
-                    }
-                } else {
-                    logger.error("Failed to parse permissions: unexpected format")
-                    return nil
-                }
-            } catch {
-                logger.error("Failed to parse permissions JSON: \(error)")
-                return nil
-            }
-        } else {
-            logger.error("Failed to convert permissions string to UTF-8 data")
-            return nil
-        }
-
-        logger.debug("Processing \(permissionsArray.count) permission rules from GraphQL")
-
-        var rules: [PermissionRule] = []
-
-        for permissionDict in permissionsArray {
-            // Extract action (required)
-            guard let actionValue = permissionDict["action"] else {
-                continue
-            }
-
-            let action: StringOrArray
-            if let actionString = actionValue as? String {
-                action = .single(actionString)
-            } else if let actionArray = actionValue as? [String] {
-                action = .array(actionArray)
-            } else {
-                continue
-            }
-
-            // Extract subject (optional)
-            let subject: StringOrArray?
-            if let subjectValue = permissionDict["subject"] {
-                if let subjectString = subjectValue as? String {
-                    subject = .single(subjectString)
-                } else if let subjectArray = subjectValue as? [String] {
-                    subject = .array(subjectArray)
-                } else {
-                    subject = nil
-                }
-            } else {
-                subject = nil
-            }
-
-            // Extract fields (optional)
-            let fields: StringOrArray?
-            if let fieldsValue = permissionDict["fields"] {
-                if let fieldsString = fieldsValue as? String {
-                    fields = .single(fieldsString)
-                } else if let fieldsArray = fieldsValue as? [String] {
-                    fields = .array(fieldsArray)
-                } else {
-                    fields = nil
-                }
-            } else {
-                fields = nil
-            }
-
-            // Extract conditions (optional)
-            let conditions: [String: AnyCodable]?
-            if let conditionsDict = permissionDict["conditions"] as? [String: Any] {
-                conditions = conditionsDict.mapValues { AnyCodable($0) }
-            } else {
-                conditions = nil
-            }
-
-            // Extract inverted (optional)
-            let inverted = permissionDict["inverted"] as? Bool
-
-            // Extract reason (optional)
-            let reason = permissionDict["reason"] as? String
-
-            let rule = PermissionRule(
-                action: action,
-                subject: subject,
-                fields: fields,
-                conditions: conditions,
-                inverted: inverted,
-                reason: reason
-            )
-
-            rules.append(rule)
-        }
-
-        logger.debug("\(rules.count) rules successfully processed")
-        return UserPermissions(rules: rules, version: "1.0.0")
-    }
-
-    /// Build ability from user permissions
-    public func buildAbility(from permissions: UserPermissions) async -> JeevesAbility {
-        logger.info("🏗️ Building ability from \(permissions.rules.count) permission rules")
-        let builder = AbilityBuilder<JeevesAction, JeevesSubject>()
-
-        // Process each rule individually to validate action/subject types
-        for (index, rule) in permissions.rules.enumerated() {
-            logger.info("📜 Processing rule \(index + 1):")
-
-            // Validate and convert actions from strings to JeevesAction enum
-            let actionStrings = rule.action.values
-            logger.info("  Actions: \(actionStrings)")
-            let validActions = actionStrings.compactMap { JeevesAction(rawValue: $0) }
-
-            if validActions.isEmpty {
-                logger.warning("⚠️ Skipping rule with invalid actions: \(actionStrings)")
-                continue
-            }
-
-            // Validate and convert subjects from strings to JeevesSubject enum (if present)
-            let subjectStrings = rule.subject?.values ?? ["all"]
-            logger.info("  Subjects: \(subjectStrings)")
-            let validSubjects = subjectStrings.compactMap { subjectString -> JeevesSubject? in
-                if subjectString == "all" {
-                    return .all
-                } else {
-                    return JeevesSubject(rawValue: subjectString)
-                }
-            }
-
-            if validSubjects.isEmpty {
-                logger.warning("⚠️ Skipping rule with invalid subjects: \(subjectStrings)")
-                continue
-            }
-
-            // Convert conditions to proper format
-            let conditions: [String: Any]? = rule.conditions?.mapValues { $0.value }
-            if let conditions = conditions {
-                logger.info("  Conditions: \(conditions)")
-            }
-            logger.info("  Inverted: \(rule.inverted ?? false)")
-
-            // Add rules for each valid action/subject combination
-            for action in validActions {
-                for subject in validSubjects {
-                    if rule.inverted == true {
-                        if let conditions = conditions {
-                            builder.cannot(action, subject, conditions)
-                            logger.info("  ➡️ Added CANNOT rule: \(action.rawValue) on \(subject.rawValue) with conditions")
-                        } else {
-                            builder.cannot(action, subject)
-                            logger.info("  ➡️ Added CANNOT rule: \(action.rawValue) on \(subject.rawValue)")
-                        }
-                    } else {
-                        if let conditions = conditions {
-                            builder.can(action, subject, conditions)
-                            logger.info("  ➡️ Added CAN rule: \(action.rawValue) on \(subject.rawValue) with conditions")
-                        } else {
-                            builder.can(action, subject)
-                            logger.info("  ➡️ Added CAN rule: \(action.rawValue) on \(subject.rawValue)")
-                        }
-                    }
-                }
-            }
-        }
-
-        let ability = await builder.build()
-        logger.info("✅ Built ability with typed enum validation")
-
-        // Log a summary of all rules
-        logger.info("📊 Rule Summary:")
-        var rulesBySubject: [String: [(action: String, hasConditions: Bool, inverted: Bool)]] = [:]
-
-        for rule in permissions.rules {
-            let actions = rule.action.values
-            let subjects = rule.subject?.values ?? ["all"]
-            let hasConditions = rule.conditions != nil
-            let inverted = rule.inverted ?? false
-
-            for subject in subjects {
-                for action in actions {
-                    if rulesBySubject[subject] == nil {
-                        rulesBySubject[subject] = []
-                    }
-                    rulesBySubject[subject]?.append((action: action, hasConditions: hasConditions, inverted: inverted))
-                }
-            }
-        }
-
-        for (subject, rules) in rulesBySubject.sorted(by: { $0.key < $1.key }) {
-            logger.info("  Subject '\(subject)':")
-            for rule in rules {
-                let ruleType = rule.inverted ? "CANNOT" : "CAN"
-                let conditionInfo = rule.hasConditions ? " (with conditions)" : ""
-                logger.info("    - \(ruleType) \(rule.action)\(conditionInfo)")
-            }
-        }
-
-        // Store ability for debugging
-        currentAbility = ability
-
-        return ability
-    }
-
-    /// Subscribe to user permission updates from Apollo cache
-    public func subscribeToUserPermissions(apolloClient: ApolloClient) async {
+    /// Subscribe to user updates from Apollo cache
+    public func subscribeToUserUpdates(apolloClient: ApolloClient) async {
         // Cancel any existing watcher
-        permissionWatcher?.cancel()
+        userWatcher?.cancel()
 
         // Create a new watcher for the current user query
-        permissionWatcher = apolloClient.watch(
+        userWatcher = apolloClient.watch(
             query: JeevesGraphQL.GetCurrentUserQuery(),
             cachePolicy: .returnCacheDataAndFetch
         ) { [weak self] result in
@@ -458,149 +115,224 @@ public final class PermissionService: PermissionServiceProtocol {
                 switch result {
                 case let .success(graphQLResult):
                     if let user = graphQLResult.data?.currentUser {
-                        self.logger.info("🔄 Received user permission update for user: \(user.id)")
-                        // Extract and build new ability
-                        if let permissions = await self.extractPermissionsFromUser(user) {
-                            self.currentAbility = await self.buildAbility(from: permissions)
-                            self.logger.info("✅ Current ability updated successfully")
-                        } else {
-                            self.logger.warning("⚠️ Failed to extract permissions from user")
-                        }
+                        self.logger.info("🔄 Received user update for user: \(user.id)")
+                        await self.updateContext(with: user)
                     } else {
                         self.logger.warning("⚠️ No current user data in GraphQL result")
+                        self.permissionContext = nil
                     }
 
                 case let .failure(error):
-                    self.logger.error("Failed to watch user permissions: \(error)")
+                    self.logger.error("Failed to watch user updates: \(error)")
                 }
             }
         }
     }
 
+    /// Update permission context with new user data
+    public func updateContext(with user: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser?) async {
+        guard let user = user else {
+            logger.info("Clearing permission context - no user data")
+            permissionContext = nil
+            return
+        }
+
+        // For now, create a simple context with just the user ID
+        // In the future, we can fetch household member data here if needed
+        let context = PermissionContext(
+            currentUserId: user.id,
+            currentUser: user,
+            householdMembers: []
+        )
+
+        permissionContext = context
+        logger.info("✅ Permission context updated for user: \(user.id)")
+    }
+
     /// Clear cached permissions
     public func clearPermissions() async {
-        currentAbility = nil
-        permissionWatcher?.cancel()
-        permissionWatcher = nil
-    }
-}
-
-// MARK: - Convenience Extensions
-
-public extension JeevesAbility {
-    /// Debug helper to log available rules
-    private func logAvailableRules(for action: JeevesAction, subject: String) {
-        Logger.permissions.info("    🔎 Looking for rules matching: action=\(action.rawValue), subject=\(subject)")
-        Logger.permissions.info("    📚 Note: Rules are evaluated internally by CASL library")
+        permissionContext = nil
+        userWatcher?.cancel()
+        userWatcher = nil
+        logger.info("Permission context cleared")
     }
 
-    /// Check if user can perform an action on a household
-    func canManageHousehold(_ householdId: String) -> Bool {
-        // Create a subject with the specific household ID
-        let household = StringIdentifiableSubject<EmptyProperties>(
-            id: householdId,
-            properties: EmptyProperties(),
-            subjectType: "Household"
-        )
+    // MARK: - Private Helper Methods
 
-        let result = canSync(.manage, household) ?? false
-        Logger.permissions.info("🔍 canManageHousehold(\(householdId)): \(result)")
-        return result
+    /// Check if a specific member is a manager in the specified household
+    private func isMemberManager(householdId: String, memberId: String) -> Bool {
+        let members = cachedHouseholdMembers[householdId] ?? []
+
+        if let member = members.first(where: { $0.id == memberId }) {
+            return member.role == .manager
+        }
+
+        return false
     }
 
-    /// Check if user can read a household
-    func canReadHousehold(_ householdId: String) -> Bool {
-        // Create a subject with the specific household ID
-        let household = StringIdentifiableSubject<EmptyProperties>(
-            id: householdId,
-            properties: EmptyProperties(),
-            subjectType: "Household"
-        )
+    /// Check if the current user is a manager in the specified household
+    private func isCurrentUserManager(in householdId: String) -> Bool {
+        // Use cached data if available
+        guard let currentUser = cachedCurrentUser else {
+            logger.debug("No cached current user for manager check")
+            // Try to load it asynchronously for next time
+            Task {
+                await refreshUserCache()
+            }
+            return false
+        }
 
-        let result = canSync(.read, household) ?? false
-        Logger.permissions.info("🔍 canReadHousehold(\(householdId)): \(result)")
-        return result
+        // Check cached household members
+        let members = cachedHouseholdMembers[householdId] ?? []
+
+        if members.isEmpty {
+            // Try to load members asynchronously for next time
+            Task {
+                await refreshHouseholdMembersCache(householdId: householdId)
+            }
+            logger.debug("No cached members data for household: \(householdId)")
+            return false
+        }
+
+        // Find the current user's membership in this household
+        let currentUserMembership = members.first { member in
+            member.userId == currentUser.id
+        }
+
+        // Check if user has manager role
+        if let membership = currentUserMembership {
+            let isManager = membership.role == .manager
+            logger.debug("User \(currentUser.id) is \(isManager ? "a manager" : "not a manager") in household \(householdId)")
+            return isManager
+        }
+
+        logger.debug("User \(currentUser.id) is not a member of household \(householdId)")
+        return false
     }
 
-    /// Check if user can update a household
-    func canUpdateHousehold(_ householdId: String) -> Bool {
-        // Create a subject with the specific household ID
-        let household = StringIdentifiableSubject<EmptyProperties>(
-            id: householdId,
-            properties: EmptyProperties(),
-            subjectType: "Household"
-        )
+    // MARK: - Permission Check Methods
 
-        let result = canSync(.update, household) ?? false
-        Logger.permissions.info("🔍 canUpdateHousehold(\(householdId)): \(result)")
-        return result
+    /// Check if user can create a household member
+    public func canCreateHouseholdMember(for householdId: String) -> Bool {
+        logger.debug("Checking canCreateHouseholdMember for household: \(householdId)")
+
+        // Only managers can create household members
+        let canCreate = isCurrentUserManager(in: householdId)
+        logger.info("canCreateHouseholdMember(\(householdId)): \(canCreate)")
+        return canCreate
+    }
+
+    /// Check if user can update a household member
+    public func canUpdateHouseholdMember(for householdId: String, memberId: String) -> Bool {
+        logger.debug("Checking canUpdateHouseholdMember for household: \(householdId), member: \(memberId)")
+
+        // Check if current user is a manager
+        guard isCurrentUserManager(in: householdId) else {
+            logger.info("canUpdateHouseholdMember(\(householdId), \(memberId)): false - current user is not a manager")
+            return false
+        }
+
+        // Managers cannot update other managers
+        if isMemberManager(householdId: householdId, memberId: memberId) {
+            logger.info("canUpdateHouseholdMember(\(householdId), \(memberId)): false - cannot update another manager")
+            return false
+        }
+
+        logger.info("canUpdateHouseholdMember(\(householdId), \(memberId)): true - current user is manager and target is not a manager")
+        return true
+    }
+
+    /// Check if user can delete a household member
+    /// Uses the same logic as canUpdateHouseholdMember - managers can delete non-managers
+    public func canDeleteHouseholdMember(for householdId: String, memberId: String) -> Bool {
+        logger.debug("Checking canDeleteHouseholdMember for household: \(householdId), member: \(memberId)")
+
+        // Use the same logic as updating - managers can delete non-managers
+        let canDelete = canUpdateHouseholdMember(for: householdId, memberId: memberId)
+        logger.info("canDeleteHouseholdMember(\(householdId), \(memberId)): \(canDelete)")
+        return canDelete
+    }
+
+    /// Check if user can manage a household
+    public func canManageHousehold(_ householdId: String) -> Bool {
+        logger.debug("Checking canManageHousehold for household: \(householdId)")
+
+        // Only managers can manage households
+        let canManage = isCurrentUserManager(in: householdId)
+        logger.info("canManageHousehold(\(householdId)): \(canManage)")
+        return canManage
+    }
+
+    /// Check if user can update household details
+    public func canUpdateHousehold(_ householdId: String) -> Bool {
+        logger.debug("Checking canUpdateHousehold for household: \(householdId)")
+
+        // Only managers can update household details
+        let canUpdate = isCurrentUserManager(in: householdId)
+        logger.info("canUpdateHousehold(\(householdId)): \(canUpdate)")
+        return canUpdate
     }
 
     /// Check if user can delete a household
-    func canDeleteHousehold(_ householdId: String) -> Bool {
-        // Create a subject with the specific household ID
-        let household = StringIdentifiableSubject<EmptyProperties>(
-            id: householdId,
-            properties: EmptyProperties(),
-            subjectType: "Household"
-        )
+    public func canDeleteHousehold(_ householdId: String) -> Bool {
+        logger.debug("Checking canDeleteHousehold for household: \(householdId)")
 
-        let result = canSync(.delete, household) ?? false
-        Logger.permissions.info("🔍 canDeleteHousehold(\(householdId)): \(result)")
-        return result
+        // Only managers can delete households
+        let canDelete = isCurrentUserManager(in: householdId)
+        logger.info("canDeleteHousehold(\(householdId)): \(canDelete)")
+        return canDelete
     }
 
-    /// Check if user can create a new household member
-    func canCreateHouseholdMember(in householdId: String) -> Bool {
-        Logger.permissions.info("🔍 Evaluating canCreateHouseholdMember(in: \(householdId))")
+    // MARK: - Utility Properties
 
-        // Check if they can create HouseholdMember
-        // Note: If they have "manage" permission on HouseholdMember, that includes "create"
-        let memberSubject = SubjectFactory.simple(
-            type: "HouseholdMember",
-            properties: ["household_id": householdId]
-        )
-
-        Logger.permissions.info("  📋 Checking create permission on HouseholdMember with household_id: \(householdId)")
-        logAvailableRules(for: .create, subject: "HouseholdMember")
-        Logger.permissions.info("    🔍 Evaluating against subject with properties: [household_id: \(householdId)]")
-        Logger.permissions.info("    📝 Note: 'manage' permission includes 'create' in CASL")
-
-        let result = canSync(.create, memberSubject) ?? false
-        Logger.permissions.info("  🔍 Result: canCreate = \(result)")
-        return result
+    /// Check if permissions are loaded
+    public var isLoaded: Bool {
+        permissionContext != nil
     }
 
-    /// Check if user can manage a specific household member
-    func canManageHouseholdMember(in householdId: String, role: String) -> Bool {
-        // Check if they have permission to manage HouseholdMember
-        // Using SimpleSubject to access properties dictionary properly
-        let memberSubject = SubjectFactory.simple(
-            type: "HouseholdMember",
-            properties: [
-                "household_id": householdId,
-                "role": role,
-            ]
-        )
+    // MARK: - Cache Management
 
-        let result = canSync(.manage, memberSubject) ?? false
-        Logger.permissions.info("🔍 canManageHouseholdMember(in: \(householdId), role: \(role)): \(result)")
-        return result
+    /// Refresh the cached user data
+    public func refreshUserCache() async {
+        do {
+            cachedCurrentUser = try await userService.getCurrentUser()
+            logger.info("User cache refreshed")
+        } catch {
+            logger.error("Failed to refresh user cache: \(error)")
+        }
     }
 
-    /// Legacy method for backward compatibility
-    @available(*, deprecated, renamed: "canCreateHouseholdMember(in:)")
-    func canManageMembers(in householdId: String) -> Bool {
-        return canCreateHouseholdMember(in: householdId)
+    /// Refresh the cached household members for a specific household
+    public func refreshHouseholdMembersCache(householdId: String) async {
+        do {
+            let members = try await householdService.getHouseholdMembers(householdId: householdId)
+            cachedHouseholdMembers[householdId] = members
+            logger.info("Household members cache refreshed for household: \(householdId)")
+        } catch {
+            logger.error("Failed to refresh household members cache: \(error)")
+        }
     }
 }
 
-// MARK: - Supporting Types for Permission Checks
+// MARK: - Environment Key
 
-// Empty properties for subjects that only need an ID
-struct EmptyProperties: Sendable {}
+private struct PermissionServiceKey: EnvironmentKey {
+    static let defaultValue: PermissionService? = nil
+}
 
-// Properties for household member subjects
-struct MemberProperties: Sendable {
-    let household_id: String
+public extension EnvironmentValues {
+    /// Access the permission service from the environment
+    var permissionService: PermissionService? {
+        get { self[PermissionServiceKey.self] }
+        set { self[PermissionServiceKey.self] = newValue }
+    }
+}
+
+// MARK: - View Modifier
+
+public extension View {
+    /// Inject the permission service into the environment
+    func withPermissionService(_ service: PermissionService) -> some View {
+        environment(\.permissionService, service)
+    }
 }

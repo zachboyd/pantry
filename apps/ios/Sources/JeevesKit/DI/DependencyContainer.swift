@@ -23,6 +23,7 @@ public final class DependencyContainer {
     private var _itemService: ItemServiceProtocol?
     private var _shoppingListService: ShoppingListServiceProtocol?
     private var _notificationService: NotificationServiceProtocol?
+    private var _permissionService: PermissionServiceProtocol?
 
     // MARK: - Repositories (Removed)
 
@@ -120,6 +121,9 @@ public final class DependencyContainer {
         )
         Self.logger.info("✅ AuthService created")
 
+        // PermissionService will be created later after UserService and HouseholdService are available
+        Self.logger.info("🔐 PermissionService creation deferred until UserService and HouseholdService are available")
+
         // Update Apollo client service with auth service
         apolloClientService.updateAuthService(_authService)
 
@@ -159,6 +163,7 @@ public final class DependencyContainer {
         _itemService = nil
         _shoppingListService = nil
         _notificationService = nil
+        _permissionService = nil
 
         isInitialized = false
         isConnected = false
@@ -248,6 +253,20 @@ public final class DependencyContainer {
         if _notificationService == nil {
             Self.logger.info("🔔 Creating NotificationService...")
             _notificationService = try ServiceFactory.createNotificationService()
+        }
+
+        if _permissionService == nil {
+            Self.logger.info("🔐 Creating PermissionService...")
+            guard let userService = _userService,
+                  let householdService = _householdService
+            else {
+                Self.logger.warning("⚠️ Cannot create PermissionService - UserService or HouseholdService not available")
+                return
+            }
+            _permissionService = PermissionService(userService: userService, householdService: householdService)
+            if let apolloClient = _apolloClientService?.apolloClient {
+                await _permissionService?.subscribeToUserUpdates(apolloClient: apolloClient)
+            }
         }
 
         Self.logger.info("✅ All missing services created successfully")
@@ -340,6 +359,19 @@ public final class DependencyContainer {
 
             _notificationService = try ServiceFactory.createNotificationService()
 
+            // Create PermissionService after UserService and HouseholdService are available
+            guard let userServiceForPermissions = _userService,
+                  let householdServiceForPermissions = _householdService
+            else {
+                throw DependencyContainerError.serviceNotInitialized(serviceName: "UserService or HouseholdService")
+            }
+            _permissionService = try await ServiceFactory.createPermissionService(
+                userService: userServiceForPermissions,
+                householdService: householdServiceForPermissions,
+                apolloClient: _apolloClientService?.apolloClient
+            )
+            Self.logger.info("🔐 PermissionService initialized")
+
             Self.logger.info("✅ All services initialized using ServiceFactory")
         } catch {
             Self.logger.error("❌ Service initialization failed: \(error)")
@@ -415,6 +447,13 @@ public final class DependencyContainer {
         return service
     }
 
+    public func makePermissionService() throws -> PermissionServiceProtocol {
+        guard let service = _permissionService else {
+            throw DependencyContainerError.serviceNotInitialized(serviceName: "PermissionService")
+        }
+        return service
+    }
+
     // MARK: - Service Access
 
     public func getAuthService() throws -> AuthServiceProtocol {
@@ -483,6 +522,13 @@ public final class DependencyContainer {
     public func getUserPreferencesService() throws -> UserPreferencesServiceProtocol {
         guard let service = _userPreferencesService else {
             throw DependencyContainerError.serviceNotInitialized(serviceName: "UserPreferencesService")
+        }
+        return service
+    }
+
+    public func getPermissionService() throws -> PermissionServiceProtocol {
+        guard let service = _permissionService else {
+            throw DependencyContainerError.serviceNotInitialized(serviceName: "PermissionService")
         }
         return service
     }
@@ -631,6 +677,11 @@ public final class DependencyContainer {
     /// Get user preferences service - available after initialization
     public var userPreferencesService: UserPreferencesServiceProtocol? {
         return try? getUserPreferencesService()
+    }
+
+    /// Get permission service - available after initialization
+    public var permissionService: PermissionServiceProtocol? {
+        return try? getPermissionService()
     }
 
     /// Get Apollo client directly - available after initialization
