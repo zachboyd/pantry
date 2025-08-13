@@ -11,7 +11,7 @@ import { requestContextMiddleware } from './common/middleware/request-context.mi
 import { TOKENS } from './common/tokens.js';
 import type { AuthFactory } from './modules/auth/auth.factory.js';
 import type { ConfigService } from './modules/config/config.types.js';
-import { SwaggerService } from './modules/swagger/swagger.service.js';
+import type { SwaggerService } from './modules/swagger/swagger.service.js';
 
 async function bootstrap() {
   // Create Express instance first
@@ -55,7 +55,7 @@ async function bootstrap() {
   app.use(requestContextMiddleware);
 
   // Setup Swagger documentation using the service
-  const swaggerService = app.get(SwaggerService);
+  const swaggerService = app.get<SwaggerService>(TOKENS.SWAGGER.SERVICE);
   swaggerService.setupSwagger(app);
 
   // Start server

@@ -90,6 +90,12 @@ describe('User Subscription Integration Tests', () => {
         sessionToken,
       });
 
+      // Wait for WebSocket connection to be established
+      await GraphQLWebSocketTestUtils.waitForConnection(client, 10000);
+
+      // Small delay to ensure connection stability
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Start subscription
       const subscriptionPromise =
         GraphQLWebSocketTestUtils.executeSubscription<{
@@ -109,6 +115,9 @@ describe('User Subscription Integration Tests', () => {
           expectedMessages: 1,
           timeout: 10000,
         });
+
+      // Small delay to ensure subscription is established
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Act - Update user profile via GraphQL mutation
       await GraphQLTestUtils.executeAuthenticatedQuery(

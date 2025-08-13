@@ -21,7 +21,7 @@ export class AuthSyncServiceImpl implements AuthSyncService {
       const lastName = nameParts.slice(1).join(' ') || '';
 
       this.logger.log(
-        `🔄 Creating business user for auth user: ${authUser.id} (${authUser.email})`,
+        `🔄 Creating business user for auth user: ${authUser.id} (${authUser.email || 'no email'})`,
       );
 
       // Create business user record
@@ -30,7 +30,7 @@ export class AuthSyncServiceImpl implements AuthSyncService {
         .values({
           id: crypto.randomUUID(),
           auth_user_id: authUser.id,
-          email: authUser.email,
+          email: authUser.email || null,
           first_name: firstName,
           last_name: lastName,
           display_name: authUser.name,
@@ -49,7 +49,7 @@ export class AuthSyncServiceImpl implements AuthSyncService {
       this.logger.error(error, '❌ Failed to create business user record');
       this.logger.error('Auth user that failed:', {
         id: authUser.id,
-        email: authUser.email,
+        email: authUser.email || null,
       });
     }
   }

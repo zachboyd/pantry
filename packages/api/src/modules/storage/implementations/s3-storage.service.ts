@@ -9,11 +9,11 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { randomBytes } from 'crypto';
 import { TOKENS } from '../../../common/tokens.js';
-import type { ConfigService } from '../../config/config.types.js';
 import type {
   FileStorageService,
   UploadOptions,
   DownloadOptions,
+  S3Config,
 } from '../storage.types.js';
 
 @Injectable()
@@ -23,17 +23,16 @@ export class S3StorageServiceImpl implements FileStorageService {
   private readonly bucketName: string;
 
   constructor(
-    @Inject(TOKENS.CONFIG.SERVICE)
-    private readonly configService: ConfigService,
+    @Inject(TOKENS.STORAGE.S3_CONFIG)
+    private readonly s3Config: S3Config,
   ) {
-    const { aws } = this.configService.config;
-
     // Use AWS SDK default credential chain (supports SSO, profiles, env vars, IAM roles, etc.)
     this.s3Client = new S3Client({
-      region: aws.region,
+      region: this.s3Config.region,
+      credentials: this.s3Config.credentials,
     });
 
-    this.bucketName = aws.s3BucketName;
+    this.bucketName = this.s3Config.bucketName;
   }
 
   async generateUploadUrl(

@@ -1,9 +1,9 @@
 resource "aws_s3_bucket" "jeeves_app_bucket" {
-  bucket = "${var.app_name}-${var.environment}-${var.bucket_suffix}"
+  bucket = "${var.app_name}-${local.environment}-${var.bucket_suffix}"
 
   tags = {
-    Name        = "${var.app_name}-${var.environment}-${var.bucket_suffix}"
-    Environment = var.environment
+    Name        = "${var.app_name}-${local.environment}-${var.bucket_suffix}"
+    Environment = local.environment
     Application = var.app_name
   }
 }

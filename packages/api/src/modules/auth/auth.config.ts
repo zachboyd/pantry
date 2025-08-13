@@ -3,11 +3,21 @@ import { PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 
 import type { BetterAuthUser } from './auth.types.js';
+import type { EmailService } from '../email/email.types.js';
+import { EMAIL_TEMPLATES } from '../email/templates/template-constants.js';
 
 type AuthInstance = ReturnType<typeof betterAuth>;
 type UserCreatedCallback = (user: BetterAuthUser) => Promise<void>;
 
-export function createAuth(onUserCreated?: UserCreatedCallback): AuthInstance {
+export interface CreateAuthOptions {
+  onUserCreated?: UserCreatedCallback;
+  emailService?: EmailService;
+  apiUrl?: string;
+  secret?: string;
+}
+
+export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
+  const { onUserCreated, emailService, apiUrl, secret } = options;
   return betterAuth({
     database: {
       dialect: new PostgresDialect({
@@ -17,17 +27,38 @@ export function createAuth(onUserCreated?: UserCreatedCallback): AuthInstance {
       }),
       provider: 'pg',
     },
-    secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL,
+    secret: secret || '',
+    baseURL: apiUrl,
     basePath: '/api/auth',
     advanced: {
       cookiePrefix: 'jeeves',
     },
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification:
-        process.env.BETTER_AUTH_REQUIRE_EMAIL_VERIFICATION === 'true',
+      requireEmailVerification: false, // Allow login without verification
     },
+    emailVerification: emailService
+      ? {
+          sendVerificationEmail: async ({ user, url, token: _token }) => {
+            await emailService.sendTemplateEmail({
+              template: EMAIL_TEMPLATES.EMAIL_VERIFICATION,
+              to: user.email,
+              variables: {
+                userName: user.name || 'User',
+                appName: 'Jeeves',
+                userEmail: user.email,
+                verificationUrl: url, // Use Better Auth's generated URL
+                expiryHours: '1', // Default 1 hour from Better Auth
+                supportEmail: 'support@jeevesapp.dev',
+              },
+            });
+          },
+          sendOnSignUp: true, // Send verification email after sign up
+          sendOnSignIn: false, // Don't send on sign in (user can verify later)
+          autoSignInAfterVerification: true, // Auto sign in after verification
+          expiresIn: 60 * 60, // 1 hour
+        }
+      : undefined,
     user: {
       modelName: 'auth_user',
       additionalFields: {

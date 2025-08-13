@@ -53,12 +53,15 @@ describe('Household Resolver Integration Tests', () => {
   describe('household query', () => {
     it('should return household with memberCount field', async () => {
       // Arrange - Create household with multiple members
-      const { manager, members, householdId } =
-        await IntegrationTestModuleFactory.createHouseholdWithMembers(
-          testRequest,
-          db,
-          3, // Create 3 members + 1 manager = 4 total
-        );
+      const {
+        manager,
+        members: _members,
+        householdId,
+      } = await IntegrationTestModuleFactory.createHouseholdWithMembers(
+        testRequest,
+        db,
+        3, // Create 3 members + 1 manager = 4 total
+      );
 
       // Act - Query the household
       const response = await GraphQLTestUtils.executeAuthenticatedQuery(

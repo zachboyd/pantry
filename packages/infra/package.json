@@ -1,0 +1,15 @@
+{
+  "name": "@pantry/infra",
+  "version": "1.0.0",
+  "description": "Infrastructure deployment scripts for Jeeves app",
+  "scripts": {
+    "deploy:dev": "terraform workspace select -or-create dev && terraform apply -var-file=environments/dev.tfvars",
+    "deploy:prod": "terraform workspace select -or-create prod && terraform apply -var-file=environments/prod.tfvars",
+    "plan:dev": "terraform workspace select -or-create dev && terraform plan -var-file=environments/dev.tfvars",
+    "plan:prod": "terraform workspace select -or-create prod && terraform plan -var-file=environments/prod.tfvars",
+    "init": "terraform init",
+    "validate": "terraform validate",
+    "destroy:dev": "terraform workspace select dev && terraform destroy -var-file=environments/dev.tfvars",
+    "destroy:prod": "terraform workspace select prod && terraform destroy -var-file=environments/prod.tfvars"
+  }
+}

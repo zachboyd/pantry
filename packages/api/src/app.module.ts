@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { HouseholdModule } from './modules/household/household.module.js';
 import { AppLoggerModule } from './modules/logger/logger.module.js';
 import { MessageModule } from './modules/message/message.module.js';
+import { EmailModule } from './modules/email/email.module.js';
 import { PermissionModule } from './modules/permission/permission.module.js';
 import { PubSubModule } from './modules/pubsub/pubsub.module.js';
 import { SwaggerModule } from './modules/swagger/swagger.module.js';
@@ -32,6 +33,7 @@ import { UserModule } from './modules/user/user.module.js';
     HouseholdModule,
     MessageModule,
     UserModule,
+    EmailModule,
   ],
   providers: [
     {

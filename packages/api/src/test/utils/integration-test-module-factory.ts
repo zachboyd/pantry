@@ -13,6 +13,11 @@ import { TestDatabaseService } from './test-database.service.js';
 import type { Kysely } from 'kysely';
 import type { DB } from '../../generated/database.js';
 import type { AuthFactory } from '../../modules/auth/auth.factory.js';
+import { createAuth } from '../../modules/auth/auth.config.js';
+import type {
+  AuthSyncService,
+  BetterAuthUser,
+} from '../../modules/auth/auth.types.js';
 
 /**
  * Factory for creating full NestJS application instances for integration testing
@@ -35,7 +40,7 @@ export class IntegrationTestModuleFactory {
     // Create Express instance (same as main.ts)
     const server = express();
 
-    // Use the full AppModule and just override the database service
+    // Use the full AppModule and override services for testing
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -45,6 +50,22 @@ export class IntegrationTestModuleFactory {
       .overrideProvider(TOKENS.DATABASE.CONNECTION)
       .useFactory({
         factory: () => testDbService.getConnection(),
+      })
+      // Override AuthFactory to disable email verification in standard integration tests
+      .overrideProvider(TOKENS.AUTH.FACTORY)
+      .useFactory({
+        factory: (authSyncService: AuthSyncService) => {
+          return {
+            createAuthInstance: () => {
+              // Create Better Auth without email service to disable email verification
+              const onUserCreated = async (user: BetterAuthUser) => {
+                await authSyncService.createBusinessUser(user);
+              };
+              return createAuth({ onUserCreated }); // No email service = no email verification
+            },
+          };
+        },
+        inject: [TOKENS.AUTH.AUTH_SYNC_SERVICE],
       })
       .compile();
 

@@ -13,6 +13,7 @@ export class ConfigServiceImpl implements ConfigService {
       app: {
         port: this.configService.get<number>('PORT', 3001),
         nodeEnv,
+        url: this.configService.get<string>('API_URL', 'http://localhost:3001'),
         corsOrigins: this.configService
           .get<string>(
             'CORS_ORIGINS',
@@ -39,6 +40,9 @@ export class ConfigServiceImpl implements ConfigService {
       openai: {
         apiKey: this.configService.get<string>('OPENAI_API_KEY'),
       },
+      betterAuth: {
+        secret: this.configService.get<string>('BETTER_AUTH_SECRET') || '',
+      },
       aws: {
         accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
         secretAccessKey: this.configService.get<string>(
@@ -48,8 +52,22 @@ export class ConfigServiceImpl implements ConfigService {
           this.configService.get<string>('AWS_S3_REGION') ||
           this.configService.get<string>('AWS_REGION') ||
           '',
-        s3BucketName:
-          this.configService.get<string>('AWS_S3_BUCKET_NAME') || '',
+        s3: {
+          bucketName:
+            this.configService.get<string>('AWS_S3_BUCKET_NAME') || '',
+        },
+        ses: {
+          region:
+            this.configService.get<string>('AWS_SES_REGION') ||
+            this.configService.get<string>('AWS_REGION') ||
+            'us-east-1',
+          fromAddress:
+            this.configService.get<string>('SES_FROM_ADDRESS') ||
+            'noreply@jeevesapp.dev',
+          configurationSetName: this.configService.get<string>(
+            'SES_CONFIGURATION_SET_NAME',
+          ),
+        },
       },
     };
   }

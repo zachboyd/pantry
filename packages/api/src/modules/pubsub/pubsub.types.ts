@@ -1,5 +1,9 @@
 import type { UserRecord } from '../user/user.types.js';
 
+export interface RedisConfig {
+  url: string;
+}
+
 export interface UserUpdatedEvent {
   userUpdated: UserRecord;
 }
