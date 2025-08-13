@@ -32,17 +32,36 @@ public final class PermissionProvider {
 
     // MARK: - Permission Checks with Logging
 
-    /// Check if user can manage household members
+    /// Check if user can create a new household member
     /// This is reactive and will cause views to update when permissions change
-    public func canManageMembers(in householdId: String) -> Bool {
+    public func canCreateHouseholdMember(in householdId: String) -> Bool {
         guard let ability = currentAbility else {
-            logger.info("No ability available for canManageMembers check")
+            logger.info("No ability available for canCreateHouseholdMember check")
             return false
         }
 
-        let result = ability.canManageMembers(in: householdId)
-        logger.info("Permission check - canManageMembers(\(householdId)): \(result)")
+        let result = ability.canCreateHouseholdMember(in: householdId)
+        logger.info("Permission check - canCreateHouseholdMember(\(householdId)): \(result)")
         return result
+    }
+
+    /// Check if user can manage a specific household member
+    /// This is reactive and will cause views to update when permissions change
+    public func canManageHouseholdMember(in householdId: String, role: String) -> Bool {
+        guard let ability = currentAbility else {
+            logger.info("No ability available for canManageHouseholdMember check")
+            return false
+        }
+
+        let result = ability.canManageHouseholdMember(in: householdId, role: role)
+        logger.info("Permission check - canManageHouseholdMember(\(householdId), role: \(role)): \(result)")
+        return result
+    }
+
+    /// Legacy method for backward compatibility - checks if user can create members
+    @available(*, deprecated, renamed: "canCreateHouseholdMember(in:)")
+    public func canManageMembers(in householdId: String) -> Bool {
+        return canCreateHouseholdMember(in: householdId)
     }
 
     /// Check if user can manage a specific household

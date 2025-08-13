@@ -210,12 +210,26 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         dependencies.authService.isAuthenticated
     }
 
-    /// Check if current user can manage members for a specific household
+    /// Check if current user can create new members for a specific household (e.g., invite members)
     /// This is reactive and will automatically update when permissions change
-    public func canManageMembers(for householdId: String) -> Bool {
+    public func canCreateHouseholdMember(for householdId: String) -> Bool {
         // Use the permission provider which is Observable
         // This will automatically trigger view updates when permissions change
-        return dependencies.permissionProvider?.canManageMembers(in: householdId) ?? false
+        return dependencies.permissionProvider?.canCreateHouseholdMember(in: householdId) ?? false
+    }
+
+    /// Check if current user can manage a specific household member
+    /// This is reactive and will automatically update when permissions change
+    public func canManageHouseholdMember(in householdId: String, role: String) -> Bool {
+        // Use the permission provider which is Observable
+        // This will automatically trigger view updates when permissions change
+        return dependencies.permissionProvider?.canManageHouseholdMember(in: householdId, role: role) ?? false
+    }
+
+    /// Legacy method for backward compatibility - checks if user can create members
+    @available(*, deprecated, renamed: "canCreateHouseholdMember(for:)")
+    public func canManageMembers(for householdId: String) -> Bool {
+        return canCreateHouseholdMember(for: householdId)
     }
 
     // MARK: - Initialization

@@ -94,7 +94,7 @@ public struct HouseholdSettingsView: View {
             }
 
             // Only show invite member option if user has permission to manage members
-            if settingsViewModel?.canManageMembers(for: household.id) == true {
+            if settingsViewModel?.canCreateHouseholdMember(for: household.id) == true {
                 NavigationLink(destination: HouseholdInviteView(householdId: household.id, householdName: household.name)) {
                     HStack {
                         Label(L("household.invite_member"), systemImage: "person.badge.plus")

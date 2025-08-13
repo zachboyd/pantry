@@ -340,25 +340,105 @@ public final class PermissionService: PermissionServiceProtocol {
 
     /// Build ability from user permissions
     public func buildAbility(from permissions: UserPermissions) async -> JeevesAbility {
+        logger.info("🏗️ Building ability from \(permissions.rules.count) permission rules")
         let builder = AbilityBuilder<JeevesAction, JeevesSubject>()
 
-        // Convert backend permission rules to CASLSwift Permission format
-        let caslPermissions = permissions.rules.map { rule in
-            Permission(
-                action: rule.action,
-                subject: rule.subject,
-                conditions: rule.conditions,
-                inverted: rule.inverted,
-                fields: rule.fields,
-                reason: rule.reason
-            )
+        // Process each rule individually to validate action/subject types
+        for (index, rule) in permissions.rules.enumerated() {
+            logger.info("📜 Processing rule \(index + 1):")
+
+            // Validate and convert actions from strings to JeevesAction enum
+            let actionStrings = rule.action.values
+            logger.info("  Actions: \(actionStrings)")
+            let validActions = actionStrings.compactMap { JeevesAction(rawValue: $0) }
+
+            if validActions.isEmpty {
+                logger.warning("⚠️ Skipping rule with invalid actions: \(actionStrings)")
+                continue
+            }
+
+            // Validate and convert subjects from strings to JeevesSubject enum (if present)
+            let subjectStrings = rule.subject?.values ?? ["all"]
+            logger.info("  Subjects: \(subjectStrings)")
+            let validSubjects = subjectStrings.compactMap { subjectString -> JeevesSubject? in
+                if subjectString == "all" {
+                    return .all
+                } else {
+                    return JeevesSubject(rawValue: subjectString)
+                }
+            }
+
+            if validSubjects.isEmpty {
+                logger.warning("⚠️ Skipping rule with invalid subjects: \(subjectStrings)")
+                continue
+            }
+
+            // Convert conditions to proper format
+            let conditions: [String: Any]? = rule.conditions?.mapValues { $0.value }
+            if let conditions = conditions {
+                logger.info("  Conditions: \(conditions)")
+            }
+            logger.info("  Inverted: \(rule.inverted ?? false)")
+
+            // Add rules for each valid action/subject combination
+            for action in validActions {
+                for subject in validSubjects {
+                    if rule.inverted == true {
+                        if let conditions = conditions {
+                            builder.cannot(action, subject, conditions)
+                            logger.info("  ➡️ Added CANNOT rule: \(action.rawValue) on \(subject.rawValue) with conditions")
+                        } else {
+                            builder.cannot(action, subject)
+                            logger.info("  ➡️ Added CANNOT rule: \(action.rawValue) on \(subject.rawValue)")
+                        }
+                    } else {
+                        if let conditions = conditions {
+                            builder.can(action, subject, conditions)
+                            logger.info("  ➡️ Added CAN rule: \(action.rawValue) on \(subject.rawValue) with conditions")
+                        } else {
+                            builder.can(action, subject)
+                            logger.info("  ➡️ Added CAN rule: \(action.rawValue) on \(subject.rawValue)")
+                        }
+                    }
+                }
+            }
         }
 
-        // Use the from(permissions:) method to add all permissions
-        builder.from(permissions: caslPermissions)
-
         let ability = await builder.build()
-        logger.info("✅ Built ability with \(caslPermissions.count) permissions")
+        logger.info("✅ Built ability with typed enum validation")
+
+        // Log a summary of all rules
+        logger.info("📊 Rule Summary:")
+        var rulesBySubject: [String: [(action: String, hasConditions: Bool, inverted: Bool)]] = [:]
+
+        for rule in permissions.rules {
+            let actions = rule.action.values
+            let subjects = rule.subject?.values ?? ["all"]
+            let hasConditions = rule.conditions != nil
+            let inverted = rule.inverted ?? false
+
+            for subject in subjects {
+                for action in actions {
+                    if rulesBySubject[subject] == nil {
+                        rulesBySubject[subject] = []
+                    }
+                    rulesBySubject[subject]?.append((action: action, hasConditions: hasConditions, inverted: inverted))
+                }
+            }
+        }
+
+        for (subject, rules) in rulesBySubject.sorted(by: { $0.key < $1.key }) {
+            logger.info("  Subject '\(subject)':")
+            for rule in rules {
+                let ruleType = rule.inverted ? "CANNOT" : "CAN"
+                let conditionInfo = rule.hasConditions ? " (with conditions)" : ""
+                logger.info("    - \(ruleType) \(rule.action)\(conditionInfo)")
+            }
+        }
+
+        // Store ability for debugging
+        currentAbility = ability
+
         return ability
     }
 
@@ -408,6 +488,12 @@ public final class PermissionService: PermissionServiceProtocol {
 // MARK: - Convenience Extensions
 
 public extension JeevesAbility {
+    /// Debug helper to log available rules
+    private func logAvailableRules(for action: JeevesAction, subject: String) {
+        Logger.permissions.info("    🔎 Looking for rules matching: action=\(action.rawValue), subject=\(subject)")
+        Logger.permissions.info("    📚 Note: Rules are evaluated internally by CASL library")
+    }
+
     /// Check if user can perform an action on a household
     func canManageHousehold(_ householdId: String) -> Bool {
         // Create a subject with the specific household ID
@@ -417,7 +503,9 @@ public extension JeevesAbility {
             subjectType: "Household"
         )
 
-        return canSync(.manage, household) ?? false
+        let result = canSync(.manage, household) ?? false
+        Logger.permissions.info("🔍 canManageHousehold(\(householdId)): \(result)")
+        return result
     }
 
     /// Check if user can read a household
@@ -429,7 +517,9 @@ public extension JeevesAbility {
             subjectType: "Household"
         )
 
-        return canSync(.read, household) ?? false
+        let result = canSync(.read, household) ?? false
+        Logger.permissions.info("🔍 canReadHousehold(\(householdId)): \(result)")
+        return result
     }
 
     /// Check if user can update a household
@@ -441,7 +531,9 @@ public extension JeevesAbility {
             subjectType: "Household"
         )
 
-        return canSync(.update, household) ?? false
+        let result = canSync(.update, household) ?? false
+        Logger.permissions.info("🔍 canUpdateHousehold(\(householdId)): \(result)")
+        return result
     }
 
     /// Check if user can delete a household
@@ -453,33 +545,53 @@ public extension JeevesAbility {
             subjectType: "Household"
         )
 
-        return canSync(.delete, household) ?? false
+        let result = canSync(.delete, household) ?? false
+        Logger.permissions.info("🔍 canDeleteHousehold(\(householdId)): \(result)")
+        return result
     }
 
-    /// Check if user can manage household members
+    /// Check if user can create a new household member
+    func canCreateHouseholdMember(in householdId: String) -> Bool {
+        Logger.permissions.info("🔍 Evaluating canCreateHouseholdMember(in: \(householdId))")
+
+        // Check if they can create HouseholdMember
+        // Note: If they have "manage" permission on HouseholdMember, that includes "create"
+        let memberSubject = SubjectFactory.simple(
+            type: "HouseholdMember",
+            properties: ["household_id": householdId]
+        )
+
+        Logger.permissions.info("  📋 Checking create permission on HouseholdMember with household_id: \(householdId)")
+        logAvailableRules(for: .create, subject: "HouseholdMember")
+        Logger.permissions.info("    🔍 Evaluating against subject with properties: [household_id: \(householdId)]")
+        Logger.permissions.info("    📝 Note: 'manage' permission includes 'create' in CASL")
+
+        let result = canSync(.create, memberSubject) ?? false
+        Logger.permissions.info("  🔍 Result: canCreate = \(result)")
+        return result
+    }
+
+    /// Check if user can manage a specific household member
+    func canManageHouseholdMember(in householdId: String, role: String) -> Bool {
+        // Check if they have permission to manage HouseholdMember
+        // Using SimpleSubject to access properties dictionary properly
+        let memberSubject = SubjectFactory.simple(
+            type: "HouseholdMember",
+            properties: [
+                "household_id": householdId,
+                "role": role,
+            ]
+        )
+
+        let result = canSync(.manage, memberSubject) ?? false
+        Logger.permissions.info("🔍 canManageHouseholdMember(in: \(householdId), role: \(role)): \(result)")
+        return result
+    }
+
+    /// Legacy method for backward compatibility
+    @available(*, deprecated, renamed: "canCreateHouseholdMember(in:)")
     func canManageMembers(in householdId: String) -> Bool {
-        // First check if they can manage the household itself
-        let household = StringIdentifiableSubject<EmptyProperties>(
-            id: householdId,
-            properties: EmptyProperties(),
-            subjectType: "Household"
-        )
-        let canManageHousehold = canSync(.manage, household) ?? false
-
-        // If they can manage the household, they can manage members
-        if canManageHousehold {
-            return true
-        }
-
-        // Check if they have specific member management permissions
-        // Create a HouseholdMember subject with the household_id condition
-        let memberSubject = StringIdentifiableSubject<MemberProperties>(
-            id: "", // Empty ID as we're checking general permission for members in this household
-            properties: MemberProperties(household_id: householdId),
-            subjectType: "HouseholdMember"
-        )
-
-        return canSync(.manage, memberSubject) ?? false
+        return canCreateHouseholdMember(in: householdId)
     }
 }
 

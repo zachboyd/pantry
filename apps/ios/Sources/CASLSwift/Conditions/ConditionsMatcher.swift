@@ -158,6 +158,34 @@ public struct MongoDBConditionsMatcher: ConditionsMatcher {
             return currentValue
         }
 
+        // Check if subject is a SimpleSubject with properties dictionary
+        if let simpleSubject = subject as? SimpleSubject {
+            // First check direct properties (id, etc)
+            if field == "id" {
+                return simpleSubject.id
+            }
+
+            // Then check the properties dictionary
+            if let properties = simpleSubject.properties {
+                // Handle nested fields (e.g., "address.city")
+                let fieldParts = field.split(separator: ".").map(String.init)
+                var currentValue: Any? = properties[fieldParts[0]]
+
+                for part in fieldParts.dropFirst() {
+                    guard let value = currentValue else { return nil }
+
+                    if let dict = value as? [String: Any] {
+                        currentValue = dict[part]
+                    } else {
+                        let mirror = Mirror(reflecting: value)
+                        currentValue = mirror.children.first { $0.label == part }?.value
+                    }
+                }
+
+                return currentValue
+            }
+        }
+
         // Handle nested fields (e.g., "address.city")
         let fieldParts = field.split(separator: ".").map(String.init)
         var currentValue: Any? = subject

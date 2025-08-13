@@ -112,11 +112,6 @@ public struct UserProfileView: View {
             // App Settings Section
             appSettingsSection
 
-            // Debug Section (only shown in debug builds)
-            #if DEBUG
-                debugSection
-            #endif
-
             // Sign Out Section
             signOutSection
         }
@@ -286,19 +281,6 @@ public struct UserProfileView: View {
                 .badge(L("coming.soon"))
         }
     }
-
-    // MARK: - Debug Section
-
-    #if DEBUG
-        @ViewBuilder
-        private var debugSection: some View {
-            Section("Debug Tools") {
-                NavigationLink(destination: PermissionDebugView()) {
-                    Label("Permission Debug", systemImage: "lock.shield")
-                }
-            }
-        }
-    #endif
 
     // MARK: - Sign Out Section
 
