@@ -44,7 +44,7 @@ public final class ApolloClientService {
         // Create Apollo Client with authentication interceptors
         let (client, store) = Self.createApolloClient(
             endpoint: endpoint,
-            authService: authService
+            authService: authService,
         )
         apollo = client
         self.store = store
@@ -59,17 +59,31 @@ public final class ApolloClientService {
     public func updateAuthService(_ authService: AuthServiceProtocol?) {
         self.authService = authService
 
+        Self.logger.info("🔄 Updating AuthService in ApolloClientService")
+        if let authService {
+            Self.logger.info("   - Auth service is authenticated: \(authService.isAuthenticated)")
+            Self.logger.info("   - Current auth user: \(authService.currentAuthUser?.email ?? "nil")")
+            if let token = authService.tokenManager.loadToken() {
+                Self.logger.info("   - Token available: YES")
+                Self.logger.info("   - Token value: \(token.accessToken.prefix(20))...")
+            } else {
+                Self.logger.warning("   - Token available: NO")
+            }
+        } else {
+            Self.logger.warning("   - Auth service is nil")
+        }
+
         // CRITICAL: We must recreate the Apollo Client to ensure the authentication
         // interceptors get the updated authService reference. Otherwise, requests
         // will fail with "Authentication required" even when the user is signed in.
         let (client, store) = Self.createApolloClient(
             endpoint: graphqlEndpoint,
-            authService: authService
+            authService: authService,
         )
         apollo = client
         self.store = store
 
-        Self.logger.info("🔄 Updated AuthService in ApolloClientService and recreated Apollo Client")
+        Self.logger.info("✅ Apollo Client recreated with updated AuthService")
     }
 
     /// Clear any cached data and reset Apollo Client
@@ -87,37 +101,17 @@ public final class ApolloClientService {
         Self.logger.info("📊 GraphQL verbose logging: \(enabled ? "enabled" : "disabled")")
     }
 
-    /// Ensure session cookies are set for GraphQL requests
-    /// This is a workaround for Better Auth cookie issues
+    /// Ensure session cookies are available for GraphQL requests
+    /// Note: We cannot create signed cookies - they must come from the server
     public func ensureSessionCookies() {
-        guard let authService = authService,
-              let token = authService.tokenManager.loadToken()
-        else {
-            Self.logger.warning("⚠️ No auth token available to create cookies")
-            return
+        // Check if we have a properly signed cookie from the server
+        let existingCookies = HTTPCookieStorage.shared.cookies ?? []
+        let signedSessionCookie = existingCookies.first {
+            $0.name == "jeeves.session_token" && $0.value.contains(".")
         }
 
-        // Create cookies for the GraphQL endpoint
-        guard let graphQLURL = URL(string: graphqlEndpoint) else { return }
-
-        let domain = graphQLURL.host ?? "localhost"
-
-        // Use token expiration if available, otherwise default to 7 days
-        let expirationDate = token.expiresAt ?? Date().addingTimeInterval(60 * 60 * 24 * 7)
-
-        // Create session cookie that Better Auth expects
-        let sessionCookie = HTTPCookie(properties: [
-            .name: "better-auth.session_token",
-            .value: token.accessToken,
-            .domain: domain,
-            .path: "/",
-            .secure: "FALSE",
-            .expires: expirationDate,
-        ])
-
-        if let cookie = sessionCookie {
-            HTTPCookieStorage.shared.setCookie(cookie)
-            Self.logger.debug("🍪 Session cookie configured for domain: \(domain)")
+        if signedSessionCookie == nil {
+            Self.logger.error("❌ No signed session cookie found! Authentication may fail.")
         }
     }
 
@@ -130,7 +124,7 @@ public final class ApolloClientService {
     /// - Returns: Tuple of configured Apollo Client and ApolloStore
     private static func createApolloClient(
         endpoint: String,
-        authService: AuthServiceProtocol?
+        authService: AuthServiceProtocol?,
     ) -> (ApolloClient, ApolloStore) {
         guard let url = URL(string: endpoint) else {
             logger.error("❌ Invalid GraphQL endpoint URL: \(endpoint)")
@@ -158,7 +152,7 @@ public final class ApolloClientService {
         // Create URLSessionClient with our cookie-enabled configuration
         let urlSessionClient = URLSessionClient(
             sessionConfiguration: sessionConfiguration,
-            callbackQueue: nil
+            callbackQueue: nil,
         )
 
         // Create network transport with interceptors and custom URLSessionClient
@@ -167,9 +161,9 @@ public final class ApolloClientService {
                 store: store,
                 authInterceptor: authInterceptor,
                 authErrorInterceptor: authErrorInterceptor,
-                urlSessionClient: urlSessionClient
+                urlSessionClient: urlSessionClient,
             ),
-            endpointURL: url
+            endpointURL: url,
         )
 
         // Create Apollo Client with cache normalization
@@ -177,7 +171,7 @@ public final class ApolloClientService {
         // The default behavior uses the 'id' field as the cache key when available
         let client = ApolloClient(
             networkTransport: networkTransport,
-            store: store
+            store: store,
         )
 
         logger.info("✅ Apollo Client created successfully with cache normalization")
@@ -210,7 +204,7 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
     ) where Operation: GraphQLOperation & Sendable {
         // Perform authentication check on serial queue to avoid data races
         serialQueue.async { [weak self] in
-            guard let self = self else {
+            guard let self else {
                 // If self is nil, we still need to continue the chain
                 // but we can't add authentication headers
                 return
@@ -222,7 +216,7 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
                     chain: chain,
                     request: request,
                     response: response,
-                    completion: completion
+                    completion: completion,
                 )
             }
         }
@@ -237,7 +231,7 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
         completion: @escaping @Sendable (Result<Apollo.GraphQLResult<Operation.Data>, Error>) -> Void
     ) async where Operation: GraphQLOperation & Sendable {
         // Safely access auth service properties on main actor
-        guard let authService = authService else {
+        guard let authService else {
             Self.logger.warning("⚠️ No authService available in interceptor")
             proceedWithChain(chain: chain, request: request, response: response, completion: completion)
             return
@@ -259,6 +253,19 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
         Self.logger.debug("📧 User Email: \(currentAuthUser.email)")
         Self.logger.debug("🔑 Auth User ID: \(currentAuthUser.id)")
 
+        // WORKAROUND: Manually add Cookie header since automatic cookie handling seems broken
+        // Find the actual signed session cookie from HTTPCookieStorage
+        if let cookies = HTTPCookieStorage.shared.cookies {
+            let sessionCookie = cookies.first {
+                $0.name == "jeeves.session_token" && $0.value.contains(".")
+            }
+
+            if let cookie = sessionCookie {
+                let cookieHeader = "\(cookie.name)=\(cookie.value)"
+                request.addHeader(name: "Cookie", value: cookieHeader)
+            }
+        }
+
         // Continue with the request chain
         proceedWithChain(chain: chain, request: request, response: response, completion: completion)
     }
@@ -275,7 +282,7 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
             request: request,
             response: response,
             interceptor: self,
-            completion: completion
+            completion: completion,
         )
     }
 
@@ -283,7 +290,7 @@ private final class AuthenticationInterceptor: ApolloInterceptor, @unchecked Sen
     @MainActor
     private func getTokenManager() -> AuthTokenManager? {
         // Use the singleton instance from AuthService instead of creating a new one
-        return authService?.tokenManager
+        authService?.tokenManager
     }
 }
 
@@ -314,12 +321,12 @@ private final class AuthErrorInterceptor: ApolloInterceptor, @unchecked Sendable
             completion: { [weak self] result in
                 self?.checkForAuthenticationError(result: result)
                 completion(result)
-            }
+            },
         )
     }
 
-    private func checkForAuthenticationError<T>(
-        result: Result<Apollo.GraphQLResult<T>, Error>
+    private func checkForAuthenticationError(
+        result: Result<Apollo.GraphQLResult<some Any>, Error>,
     ) {
         switch result {
         case let .success(graphQLResult):
@@ -401,7 +408,7 @@ private final class RequestLoggingInterceptor: ApolloInterceptor, @unchecked Sen
                     self.logResponse(result, for: request)
                 }
                 completion(result)
-            }
+            },
         )
     }
 
@@ -518,8 +525,8 @@ private class InterceptorProvider: DefaultInterceptorProvider {
         super.init(client: urlSessionClient, store: store)
     }
 
-    override func interceptors<Operation: GraphQLOperation>(
-        for operation: Operation
+    override func interceptors(
+        for operation: some GraphQLOperation,
     ) -> [ApolloInterceptor] {
         var interceptors = super.interceptors(for: operation)
 
@@ -569,11 +576,11 @@ public extension ApolloClientService {
     ///   - variables: Variables passed to the operation
     func logOperation(
         _ operationName: String,
-        variables: Any?
+        variables: Any?,
     ) {
         Self.logger.info("📡 GraphQL Operation: \(operationName)")
 
-        if let variables = variables {
+        if let variables {
             Self.logger.debug("📊 Variables: \(String(describing: variables))")
         }
     }

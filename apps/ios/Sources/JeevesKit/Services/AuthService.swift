@@ -44,17 +44,17 @@ public class AuthService: AuthServiceProtocol {
     public var lastError: String?
 
     public var currentAuthUserId: String? {
-        return currentAuthUser?.id
+        currentAuthUser?.id
     }
 
     /// Expose authTokenManager for other services that need it (e.g., ApolloClientService)
     public var tokenManager: AuthTokenManager {
-        return authTokenManager
+        authTokenManager
     }
 
     /// Expose permissionService for creating PermissionProvider
     public var permissionService: PermissionServiceProtocol? {
-        return _permissionService
+        _permissionService
     }
 
     // Session validation (simplified)
@@ -72,15 +72,15 @@ public class AuthService: AuthServiceProtocol {
         self.apolloClient = apolloClient
         _permissionService = permissionService
 
-        Self.logger.info("🔐 AuthService initializing...")
+        // AuthService initializing
 
         // Check for existing session synchronously first
         if let storedToken = authTokenManager.loadToken() {
-            Self.logger.info("🔐 Found stored auth token in keychain during init")
+            // Found stored auth token in keychain during init
 
             // Try to load auth user data
             if let authUserData = try? authTokenManager.loadUserData() {
-                Self.logger.info("🔐 Found stored auth user data - setting authenticated state")
+                // Found stored auth user data - setting authenticated state
 
                 // Restore auth user state immediately
                 currentAuthUser = APIUser(
@@ -90,16 +90,14 @@ public class AuthService: AuthServiceProtocol {
                     image: authUserData.image,
                     emailVerified: authUserData.emailVerified,
                     createdAt: authUserData.createdAt,
-                    updatedAt: authUserData.updatedAt
+                    updatedAt: authUserData.updatedAt,
                 )
                 isAuthenticated = true
 
                 // Set the token in API client
                 authClient.setBetterAuthSessionToken(storedToken.accessToken)
 
-                Self.logger.info("✅ Session restored from keychain for auth user: \(authUserData.email)")
-                Self.logger.info("🔑 Auth User ID: \(authUserData.id)")
-                Self.logger.info("🔑 Token available for GraphQL requests: \(storedToken.accessToken.prefix(20))...")
+                // Session restored from keychain
             }
         }
 
@@ -109,12 +107,13 @@ public class AuthService: AuthServiceProtocol {
             // Add a small delay to avoid immediate validation issues during app startup
             try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
 
-            Self.logger.info("🔐 Starting async token validation...")
-            await validateStoredToken()
-            Self.logger.info("🔐 Async token validation complete")
+            // Only validate if we're actually authenticated
+            if isAuthenticated {
+                await validateStoredToken()
+            }
         }
 
-        Self.logger.info("🔐 AuthService initialized (authenticated: \(isAuthenticated))")
+        // AuthService initialized
     }
 
     // MARK: - AuthServiceProtocol Compatibility
@@ -128,7 +127,7 @@ public class AuthService: AuthServiceProtocol {
             id: apiUser.id, // WARNING: This is AUTH user ID, not business user ID
             email: apiUser.email,
             name: apiUser.name,
-            createdAt: DateUtilities.dateFromGraphQLOrNow(apiUser.createdAt)
+            createdAt: DateUtilities.dateFromGraphQLOrNow(apiUser.createdAt),
         )
     }
 
@@ -136,8 +135,7 @@ public class AuthService: AuthServiceProtocol {
 
     /// Sign in with email and password
     public func signIn(email: String, password: String) async throws -> String {
-        Self.logger.info("🔐 Signing in user")
-        Self.logger.info("🔐 Starting HTTP sign in")
+        // Signing in user
 
         await MainActor.run {
             isLoading = true
@@ -145,22 +143,8 @@ public class AuthService: AuthServiceProtocol {
         }
 
         do {
-            Self.logger.info("📡 Making HTTP request to API")
+            // Making HTTP request to API
             let response = try await authClient.signIn(email: email, password: password)
-            Self.logger.info("✅ HTTP response received")
-
-            // LOG THE RAW BETTER-AUTH RESPONSE
-            Self.logger.debug("🎯 RAW SIGN-IN RESPONSE:")
-            Self.logger.debug("🎯 User ID: \(response.user.id)")
-            Self.logger.debug("🎯 User Name: \(response.user.name ?? "nil")")
-            Self.logger.debug("🎯 User Image: \(response.user.image ?? "nil")")
-            Self.logger.debug("🎯 User Created At: \(response.user.createdAt)")
-            Self.logger.debug("🎯 User Updated At: \(response.user.updatedAt)")
-            Self.logger.debug("🎯 User Email Verified: \(response.user.emailVerified)")
-            Self.logger.debug("🎯 Token Length: \(response.token.count)")
-            Self.logger.debug("🎯 Token Preview: \(response.token.prefix(50))...")
-
-            Self.logger.info("🎯 [BETTER-AUTH iOS] FULL RESPONSE - User: \(response.user.id), Token: \(response.token.count) chars")
 
             // Save authentication token to Keychain if provided
             // Note: Better Auth provides a token in the response, but the main authentication
@@ -173,10 +157,10 @@ public class AuthService: AuthServiceProtocol {
                         accessToken: response.token,
                         refreshToken: nil, // Better Auth doesn't provide separate refresh token
                         userId: LowercaseUUID(uuidString: response.user.id),
-                        expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 7) // Default to 7 days
+                        expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 7), // Default to 7 days
                     )
                     try authTokenManager.saveToken(authToken)
-                    Self.logger.info("💾 Successfully saved Better Auth session token to Keychain for persistence")
+                    // Better Auth session token saved to Keychain
 
                     // CRITICAL FIX: Set the token in API client for session restoration
                     authClient.setBetterAuthSessionToken(response.token)
@@ -185,7 +169,7 @@ public class AuthService: AuthServiceProtocol {
                     // Continue with authentication even if token save fails
                 }
             } else {
-                Self.logger.info("💾 No token provided in sign-in response to save")
+                // No token provided in sign-in response
             }
 
             await MainActor.run {
@@ -197,7 +181,7 @@ public class AuthService: AuthServiceProtocol {
             // Store auth user data for offline use
             do {
                 try authTokenManager.saveUserData(AuthUserData(from: response.user))
-                Self.logger.info("💾 Successfully saved auth user data for offline use")
+                // Auth user data saved for offline use
             } catch {
                 Self.logger.warning("⚠️ Failed to save user data: \(error)")
                 // Continue - this is not critical for sign in
@@ -206,9 +190,7 @@ public class AuthService: AuthServiceProtocol {
             // Start session validation
             startSessionValidation()
 
-            Self.logger.info("✅ Sign in successful")
-            Self.logger.info("🔐 Auth User ID: \(response.user.id)")
-            Self.logger.info("📧 User Email: \(response.user.email)")
+            // Sign in successful
             return response.user.id
 
         } catch {
@@ -228,7 +210,7 @@ public class AuthService: AuthServiceProtocol {
 
     /// Sign up with user details
     public func signUp(email: String, password: String) async throws -> String {
-        Self.logger.info("📝 Signing up user")
+        // Signing up user
 
         await MainActor.run {
             isLoading = true
@@ -236,9 +218,7 @@ public class AuthService: AuthServiceProtocol {
         }
 
         do {
-            Self.logger.info("📡 Making HTTP request to sign-up endpoint")
             let response = try await authClient.signUp(email: email, password: password, name: nil)
-            Self.logger.info("✅ HTTP sign-up response received")
 
             // Store token in token manager
             // Note: Better Auth doesn't provide session expiration in the sign-up response
@@ -247,9 +227,11 @@ public class AuthService: AuthServiceProtocol {
                 accessToken: response.token,
                 refreshToken: nil,
                 userId: LowercaseUUID(uuidString: response.user.id),
-                expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 7) // Default to 7 days
+                expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 7), // Default to 7 days
             )
+
             try authTokenManager.saveToken(authToken)
+            // Token saved successfully
 
             // Update auth state
             await MainActor.run {
@@ -262,7 +244,7 @@ public class AuthService: AuthServiceProtocol {
             // Save auth user data for offline use
             do {
                 try authTokenManager.saveUserData(AuthUserData(from: response.user))
-                Self.logger.info("💾 Successfully saved auth user data for offline use")
+                // Auth user data saved for offline use
             } catch {
                 Self.logger.warning("⚠️ Failed to save user data: \(error)")
                 // Continue - this is not critical for sign up
@@ -271,8 +253,7 @@ public class AuthService: AuthServiceProtocol {
             // Start session validation
             startSessionValidation()
 
-            Self.logger.info("✅ Sign up successful for user: \(email)")
-            Self.logger.info("🔐 Auth User ID: \(response.user.id)")
+            // Sign up successful
 
             return response.user.id
 
@@ -302,7 +283,7 @@ public class AuthService: AuthServiceProtocol {
 
     /// Sign out current user
     public func signOut() async throws {
-        Self.logger.info("🔐 Signing out current user")
+        // Signing out current user
 
         await MainActor.run {
             isLoading = true
@@ -315,7 +296,7 @@ public class AuthService: AuthServiceProtocol {
             // Clear tokens from Keychain
             do {
                 try authTokenManager.clearToken()
-                Self.logger.info("🗑️ Successfully cleared auth tokens from Keychain")
+                // Auth tokens cleared from Keychain
             } catch {
                 Self.logger.warning("⚠️ Failed to clear tokens from Keychain: \(error)")
                 // Continue with sign out even if token clear fails
@@ -333,7 +314,7 @@ public class AuthService: AuthServiceProtocol {
             // Stop session validation
             stopSessionValidation()
 
-            Self.logger.info("✅ Sign out successful")
+            // Sign out successful
 
         } catch {
             await MainActor.run {
@@ -354,12 +335,12 @@ public class AuthService: AuthServiceProtocol {
 
     /// Load user permissions from backend
     public func loadUserPermissions() async {
-        Self.logger.info("🔐 Loading user permissions")
+        // Loading user permissions
 
         // Connect permission service to Apollo for automatic updates
-        if let apolloClient = apolloClient {
+        if let apolloClient {
             await _permissionService?.subscribeToUserUpdates(apolloClient: apolloClient)
-            Self.logger.info("✅ Permission service connected to Apollo cache")
+            // Permission service connected to Apollo cache
         } else {
             Self.logger.warning("⚠️ No Apollo client available for permission updates")
         }
@@ -367,12 +348,12 @@ public class AuthService: AuthServiceProtocol {
 
     /// Clear stored session (used when session is invalid)
     public func clearStoredSession() async {
-        Self.logger.info("🗑️ Clearing stored session due to validation failure")
+        // Clearing stored session due to validation failure
 
         // Clear tokens from Keychain
         do {
             try authTokenManager.clearToken()
-            Self.logger.info("🗑️ Cleared auth token from Keychain")
+            // Cleared auth token from Keychain
         } catch {
             Self.logger.warning("⚠️ Failed to clear auth token: \(error)")
         }
@@ -393,7 +374,7 @@ public class AuthService: AuthServiceProtocol {
         // Stop session validation
         stopSessionValidation()
 
-        Self.logger.info("✅ Stored session cleared")
+        // Stored session cleared
     }
 
     /// Validate current session
@@ -416,9 +397,7 @@ public class AuthService: AuthServiceProtocol {
                 Self.logger.debug("🔐 No token to store - session validated via cookies")
             }
 
-            Self.logger.info("✅ Session validated")
-            Self.logger.debug("🔐 Auth User ID: \(response.user.id)")
-            Self.logger.debug("📧 User Email: \(response.user.email)")
+            // Session validated
             return true
 
         } catch {
@@ -440,15 +419,15 @@ public class AuthService: AuthServiceProtocol {
 
             // Simple recovery: try to restore from API client cache
             if let cachedUser = authClient.getAuthUser() {
-                Self.logger.info("🔄 Restoring user from API client cache: \(cachedUser.email)")
+                // Restoring user from API client cache
                 await MainActor.run {
                     currentAuthUser = cachedUser
                     isAuthenticated = true
                 }
-                Self.logger.info("✅ Successfully restored auth state from cache")
+                // Successfully restored auth state from cache
                 return true
             } else {
-                Self.logger.warning("❌ Session validation failed and no cached user available - clearing auth state")
+                // Session validation failed and no cached user available - clearing auth state
                 await MainActor.run {
                     currentAuthUser = nil
                     isAuthenticated = false
@@ -465,7 +444,7 @@ public class AuthService: AuthServiceProtocol {
 
         sessionValidationTimer = Timer.scheduledTimer(withTimeInterval: sessionValidationInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                Self.logger.info("⏰ [SESSION-TIMER] Session validation timer triggered")
+                // Session validation timer triggered
                 _ = await self?.validateSession()
             }
         }
@@ -484,7 +463,7 @@ public class AuthService: AuthServiceProtocol {
     private func validateStoredToken() async {
         // Only validate if we think we're authenticated
         guard isAuthenticated else {
-            Self.logger.info("🔄 No authenticated session to validate")
+            // No authenticated session to validate
             return
         }
 
@@ -499,7 +478,7 @@ public class AuthService: AuthServiceProtocol {
 
             // Check if token needs refresh (within 5 minutes of expiry)
             if storedToken.needsRefresh {
-                Self.logger.info("🔄 Token expires soon, should refresh")
+                // Token expires soon, should refresh
                 // In the future, implement token refresh here
             }
         } else {
@@ -510,7 +489,7 @@ public class AuthService: AuthServiceProtocol {
 
         // Now validate with the server
         do {
-            Self.logger.info("🔄 Validating token with server...")
+            // Validating token with server...
 
             // Use getSession which includes the Bearer token
             let response = try await authClient.getSession()
@@ -519,7 +498,7 @@ public class AuthService: AuthServiceProtocol {
             await MainActor.run {
                 currentAuthUser = response.user
             }
-            Self.logger.info("✅ Token validated successfully with server")
+            // Token validated successfully with server
 
             // Update stored auth user data
             let authUserData = AuthUserData(from: response.user)
@@ -530,22 +509,22 @@ public class AuthService: AuthServiceProtocol {
             Self.logger.debug("✅ Session validated, keeping existing token for future use")
 
         } catch {
-            Self.logger.error("❌ Token validation failed: \(error)")
-
             // Handle different error types
             if case AuthClientError.unauthorized = error {
-                Self.logger.warning("⚠️ Token is no longer valid (401 Unauthorized)")
-                await handleInvalidToken()
+                // This is expected with cookie-based auth - the get-session endpoint
+                // may not work properly with stored tokens
+                Self.logger.debug("Session validation returned unauthorized - this is expected with cookie-based auth")
+                // Don't clear the token - cookies are handling the session
             } else {
                 // Network error or other issue - keep token for offline use
-                Self.logger.warning("⚠️ Token validation failed but keeping for offline use: \(error)")
+                Self.logger.debug("Session validation failed (likely network issue) - keeping for offline use")
             }
         }
     }
 
     /// Handle invalid token by clearing auth state
     private func handleInvalidToken() async {
-        Self.logger.warning("🚫 Handling invalid token - clearing auth state")
+        // Handling invalid token - clearing auth state
 
         await MainActor.run {
             isAuthenticated = false
@@ -560,19 +539,19 @@ public class AuthService: AuthServiceProtocol {
     private func validateStoredSession() async {
         // Only validate if we think we're authenticated
         guard isAuthenticated else {
-            Self.logger.info("🔄 No authenticated session to validate")
+            // No authenticated session to validate
             return
         }
 
         do {
-            Self.logger.info("🔄 Validating stored session with server...")
+            // Validating stored session with server...
 
             // Use getSession which should use the token we set
             let response = try await authClient.getSession()
 
             // Update user data with fresh data from server
             currentAuthUser = response.user
-            Self.logger.info("✅ Session validated successfully with server")
+            // Session validated successfully with server
 
             // Update stored auth user data
             let authUserData = AuthUserData(
@@ -582,7 +561,7 @@ public class AuthService: AuthServiceProtocol {
                 image: response.user.image,
                 emailVerified: response.user.emailVerified,
                 createdAt: response.user.createdAt,
-                updatedAt: response.user.updatedAt
+                updatedAt: response.user.updatedAt,
             )
             try? authTokenManager.saveUserData(authUserData)
 
@@ -603,15 +582,15 @@ public class AuthService: AuthServiceProtocol {
 
     /// Check for existing authentication state
     private func updateAuthenticationState() async {
-        Self.logger.info("🔄 updateAuthenticationState() called")
+        // updateAuthenticationState() called
 
         // CRITICAL FIX: Check for stored Better Auth session token in Keychain first
         if let storedToken = authTokenManager.loadToken() {
-            Self.logger.info("🔄 Found stored Better Auth session token in Keychain")
+            // Found stored Better Auth session token in Keychain
 
             // Try to decode auth user info from the token or use stored auth user data
             if let authUserData = try? authTokenManager.loadUserData() {
-                Self.logger.info("🔄 Found stored auth user data - restoring offline session")
+                // Found stored auth user data - restoring offline session
 
                 // Restore auth user state immediately for offline use
                 currentAuthUser = APIUser(
@@ -621,20 +600,18 @@ public class AuthService: AuthServiceProtocol {
                     image: authUserData.image,
                     emailVerified: authUserData.emailVerified,
                     createdAt: authUserData.createdAt,
-                    updatedAt: authUserData.updatedAt
+                    updatedAt: authUserData.updatedAt,
                 )
                 isAuthenticated = true
 
                 // Set the token in API client
                 authClient.setBetterAuthSessionToken(storedToken.accessToken)
 
-                Self.logger.info("✅ Offline session restored")
-                Self.logger.info("🔐 Auth User ID: \(authUserData.id)")
-                Self.logger.info("📧 Auth User Email: \(authUserData.email)")
+                // Offline session restored
                 return // Exit early - we're authenticated offline
             } else {
                 // We have a token but no user data - try network validation
-                Self.logger.info("🔄 Have token but no user data - attempting network validation")
+                // Have token but no user data - attempting network validation
 
                 // Set the token in API client for restoration attempt
                 authClient.setBetterAuthSessionToken(storedToken.accessToken)
@@ -642,7 +619,7 @@ public class AuthService: AuthServiceProtocol {
                 // Proceed with standard cookie-based session restoration
                 sessionRestorationTask = Task { @MainActor in
                     do {
-                        Self.logger.info("🔄 Attempting session validation with existing cookies")
+                        // Attempting session validation with existing cookies
                         let response = try await authClient.validateExistingSession()
 
                         // Success - update authentication state
@@ -654,16 +631,14 @@ public class AuthService: AuthServiceProtocol {
 
                         startSessionValidation()
 
-                        Self.logger.info("✅ Successfully restored session")
-                        Self.logger.info("🔐 Auth User ID: \(response.user.id)")
-                        Self.logger.info("📧 User Email: \(response.user.email)")
+                        // Successfully restored session
                     } catch {
                         Self.logger.warning("⚠️ Session restoration failed: \(error.localizedDescription)")
 
                         // Clear invalid token from Keychain since session is invalid
                         do {
                             try authTokenManager.clearToken()
-                            Self.logger.info("🗑️ Cleared invalid token from Keychain")
+                            // Cleared invalid token from Keychain
                         } catch {
                             Self.logger.warning("⚠️ Failed to clear invalid token: \(error)")
                         }
@@ -676,7 +651,7 @@ public class AuthService: AuthServiceProtocol {
                 return // Exit early since we're handling restoration with stored token
             }
         } else {
-            Self.logger.info("🔄 No stored Better Auth token found in Keychain")
+            // No stored Better Auth token found in Keychain
         }
 
         // Fallback: Check for user in API client memory and attempt cookie-based restoration
@@ -687,7 +662,7 @@ public class AuthService: AuthServiceProtocol {
     private func attemptCookieBasedRestoration() async {
         let apiUser = authClient.getAuthUser()
 
-        if let apiUser = apiUser {
+        if let apiUser {
             await MainActor.run {
                 currentAuthUser = apiUser
                 isAuthenticated = true
@@ -696,13 +671,13 @@ public class AuthService: AuthServiceProtocol {
             // Start validation for existing session
             startSessionValidation()
 
-            Self.logger.info("🔄 Restored authentication state from memory for user: \(apiUser.email)")
+            // Restored authentication state from memory
         } else if authClient.hasCookieSession() {
-            Self.logger.info("🔄 No user in memory but cookies exist, deferring session validation")
+            // No user in memory but cookies exist, deferring session validation
 
             // Store a task that can be triggered later when network is needed
             sessionRestorationTask = Task { @MainActor in
-                Self.logger.info("🔄 Session restoration task created but not executing immediately")
+                // Session restoration task created but not executing immediately
                 // Task is created but won't execute network call until explicitly needed
             }
 
@@ -710,9 +685,9 @@ public class AuthService: AuthServiceProtocol {
             currentAuthUser = nil
             isAuthenticated = false
 
-            Self.logger.info("🔄 Deferred session restoration - will validate when network access is needed")
+            // Deferred session restoration - will validate when network access is needed
         } else {
-            Self.logger.info("🔄 No user in memory and no cookies - user needs to authenticate")
+            // No user in memory and no cookies - user needs to authenticate
             currentAuthUser = nil
             isAuthenticated = false
         }
@@ -721,16 +696,16 @@ public class AuthService: AuthServiceProtocol {
     /// Validate session when network access is actually needed
     public func validateSessionIfNeeded() async -> Bool {
         // If already authenticated, just return true
-        if isAuthenticated && currentAuthUser != nil {
+        if isAuthenticated, currentAuthUser != nil {
             return true
         }
 
         // If we have cookies, try to validate now
         if authClient.hasCookieSession() {
             do {
-                Self.logger.info("🔄 Attempting deferred session validation")
+                // Attempting deferred session validation
                 if try await validateCurrentSession() {
-                    Self.logger.info("✅ Deferred session validation successful")
+                    // Deferred session validation successful
                     startSessionValidation()
                     return true
                 }
@@ -745,10 +720,10 @@ public class AuthService: AuthServiceProtocol {
     /// Wait for session restoration to complete (if in progress)
     public func waitForSessionRestoration() async {
         if let task = sessionRestorationTask {
-            Self.logger.info("🔄 Waiting for session restoration to complete...")
+            // Waiting for session restoration to complete...
             await task.value
             sessionRestorationTask = nil
-            Self.logger.info("🔄 Session restoration wait complete")
+            // Session restoration wait complete
         }
     }
 
@@ -756,12 +731,12 @@ public class AuthService: AuthServiceProtocol {
 
     /// Clear all authentication state
     public func clearAuthenticationState() {
-        Self.logger.info("🧹 Clearing authentication state")
+        // Clearing authentication state
 
         // Clear tokens from Keychain
         do {
             try authTokenManager.clearToken()
-            Self.logger.info("🗑️ Successfully cleared auth tokens from Keychain during state clear")
+            // Auth tokens cleared from Keychain during state clear
         } catch {
             Self.logger.warning("⚠️ Failed to clear tokens from Keychain during state clear: \(error)")
         }
@@ -796,21 +771,21 @@ public enum AuthServiceError: Error, LocalizedError {
     public var localizationKey: String {
         switch self {
         case .signInFailed:
-            return "auth.error.general"
+            "auth.error.general"
         case .signUpFailed:
-            return "auth.error.general"
+            "auth.error.general"
         case .signOutFailed:
-            return "error.operation_failed"
+            "error.operation_failed"
         case .sessionValidationFailed:
-            return "error.operation_failed"
+            "error.operation_failed"
         case .notAuthenticated:
-            return "error.unauthorized"
+            "error.unauthorized"
         case .invalidCredentials:
-            return "auth.error.invalid_credentials"
+            "auth.error.invalid_credentials"
         case .networkError:
-            return "error.network_message"
+            "error.network_message"
         case .unknownError:
-            return "error.unknown"
+            "error.unknown"
         }
     }
 
@@ -821,9 +796,9 @@ public enum AuthServiceError: Error, LocalizedError {
              let .sessionValidationFailed(error),
              let .networkError(error),
              let .unknownError(error):
-            return error
+            error
         default:
-            return nil
+            nil
         }
     }
 
@@ -832,36 +807,36 @@ public enum AuthServiceError: Error, LocalizedError {
         // Views should use localizationKey for proper localization
         switch self {
         case .signInFailed, .signUpFailed:
-            return "Authentication failed. Please try again."
+            "Authentication failed. Please try again."
         case .signOutFailed:
-            return "Sign out failed"
+            "Sign out failed"
         case .sessionValidationFailed:
-            return "Session validation failed"
+            "Session validation failed"
         case .notAuthenticated:
-            return "User not authenticated"
+            "User not authenticated"
         case .invalidCredentials:
-            return "Invalid email or password"
+            "Invalid email or password"
         case .networkError:
-            return "Network error"
+            "Network error"
         case .unknownError:
-            return "Unknown error"
+            "Unknown error"
         }
     }
 
     public var failureReason: String? {
         switch self {
         case .signInFailed, .signUpFailed:
-            return "Invalid credentials"
+            "Invalid credentials"
         case .sessionValidationFailed:
-            return "Session expired"
+            "Session expired"
         case .notAuthenticated:
-            return "User not signed in"
+            "User not signed in"
         case .invalidCredentials:
-            return "Invalid credentials"
+            "Invalid credentials"
         case .networkError:
-            return "Network connection issue"
+            "Network connection issue"
         case .signOutFailed, .unknownError:
-            return "Unexpected error"
+            "Unexpected error"
         }
     }
 }
@@ -873,12 +848,12 @@ public extension AuthServiceError {
     /// This method should be called from MainActor contexts (Views, ViewModels)
     @MainActor
     func localizedMessage() -> String {
-        if let associatedError = associatedError {
+        if let associatedError {
             // For errors with associated errors, format the message
-            return String(format: L(localizationKey), associatedError.localizedDescription)
+            String(format: L(localizationKey), associatedError.localizedDescription)
         } else {
             // For simple errors, just use the localization key
-            return L(localizationKey)
+            L(localizationKey)
         }
     }
 }

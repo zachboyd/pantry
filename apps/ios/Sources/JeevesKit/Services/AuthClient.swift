@@ -25,7 +25,7 @@ public struct SessionResponse: Codable {
     public var token: String {
         // If we have a stored session token, use that
         // Otherwise return empty string (session cookie auth)
-        return "" // Token is managed via cookies, not in response
+        "" // Token is managed via cookies, not in response
     }
 
     public init(user: APIUser, session: SessionInfo? = nil) {
@@ -96,17 +96,17 @@ public enum AuthClientError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unauthorized:
-            return "Unauthorized access"
+            "Unauthorized access"
         case let .networkError(error):
-            return "Network error: \(error.localizedDescription)"
+            "Network error: \(error.localizedDescription)"
         case .invalidResponse:
-            return "Invalid response from server"
+            "Invalid response from server"
         case let .decodingError(error):
-            return "Failed to decode response: \(error.localizedDescription)"
+            "Failed to decode response: \(error.localizedDescription)"
         case .invalidURL:
-            return "Invalid URL"
+            "Invalid URL"
         case let .unknownError(message):
-            return "Unknown error: \(message)"
+            "Unknown error: \(message)"
         }
     }
 }
@@ -150,9 +150,9 @@ public final class AuthClient: AuthClientProtocol {
            let cookies = HTTPCookieStorage.shared.cookies(for: url)
         {
             let hasAuthCookie = cookies.contains { cookie in
-                cookie.name.contains("better-auth.session") ||
+                cookie.name.contains("jeeves.session") ||
                     cookie.name.contains("auth-token") ||
-                    cookie.name == "better-auth.session_token"
+                    cookie.name == "jeeves.session_token"
             }
             return hasAuthCookie
         }
@@ -160,7 +160,7 @@ public final class AuthClient: AuthClientProtocol {
     }
 
     public func getAuthUser() -> APIUser? {
-        return currentAuthUser
+        currentAuthUser
     }
 
     public func setBetterAuthSessionToken(_ token: String) {
@@ -185,6 +185,9 @@ public final class AuthClient: AuthClientProtocol {
 
     public func signUp(email: String, password: String, name: String?) async throws -> AuthResponse {
         Self.logger.info("Signing up: \(email)")
+
+        // Clear any old cookies before sign-up to prevent conflicts
+        clearOldCookies()
 
         let signUpPath = "/sign-up/email"
         let fullURLString = "\(authEndpoint)\(signUpPath)"
@@ -222,15 +225,40 @@ public final class AuthClient: AuthClientProtocol {
                 currentAuthUser = authResponse.user
                 sessionToken = authResponse.token
 
-                // Store cookies
-                if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
-                    sessionCookies = cookies
+                // Manually handle Set-Cookie header since iOS has issues with localhost cookies
+                var setCookieValue: String?
+                if let allHeaders = httpResponse.allHeaderFields as? [String: String] {
+                    for (key, value) in allHeaders {
+                        if key.lowercased() == "set-cookie" {
+                            setCookieValue = value
+                        }
+                    }
                 }
 
-                // If no session cookie but we have a token, create a cookie manually
-                // This is a workaround for Better Auth when cookies aren't being set properly
-                if sessionToken != nil && !hasCookieSession() {
-                    createSessionCookie(from: authResponse.token, for: url)
+                // Manually create cookie from Set-Cookie header if iOS didn't store it
+                if let setCookieValue {
+                    createCookieFromSetCookieHeader(setCookieValue, for: url)
+                }
+
+                // Check if we have the proper signed session cookie
+                if let allCookies = HTTPCookieStorage.shared.cookies {
+                    let authCookies = allCookies.filter { cookie in
+                        cookie.name == "jeeves.session_token" ||
+                            cookie.name.contains("better-auth") ||
+                            cookie.name.contains("jeeves")
+                    }
+
+                    if !authCookies.isEmpty {
+                        sessionCookies = authCookies
+                    }
+
+                    let hasProperCookie = sessionCookies.contains {
+                        $0.name == "jeeves.session_token" && $0.value.contains(".")
+                    }
+
+                    if !hasProperCookie {
+                        Self.logger.error("❌ Better Auth signed session cookie not properly received!")
+                    }
                 }
 
                 Self.logger.info("Sign up successful")
@@ -260,6 +288,9 @@ public final class AuthClient: AuthClientProtocol {
 
     public func signIn(email: String, password: String) async throws -> AuthResponse {
         Self.logger.info("Signing in: \(email)")
+
+        // Clear any old cookies before sign-in to prevent conflicts
+        clearOldCookies()
 
         let signInPath = "/sign-in/email"
         let fullURLString = "\(authEndpoint)\(signInPath)"
@@ -296,15 +327,43 @@ public final class AuthClient: AuthClientProtocol {
                 currentAuthUser = authResponse.user
                 sessionToken = authResponse.token
 
-                // Store cookies
-                if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
-                    sessionCookies = cookies
+                // Log and manually handle Set-Cookie header since iOS has issues with localhost cookies
+                Self.logger.info("📥 Response headers from sign-in:")
+                var setCookieValue: String?
+                if let allHeaders = httpResponse.allHeaderFields as? [String: String] {
+                    for (key, value) in allHeaders {
+                        if key.lowercased() == "set-cookie" {
+                            Self.logger.info("   \(key): \(value)")
+                            setCookieValue = value
+                        }
+                    }
                 }
 
-                // If no session cookie but we have a token, create a cookie manually
-                // This is a workaround for Better Auth when cookies aren't being set properly
-                if sessionToken != nil && !hasCookieSession() {
-                    createSessionCookie(from: authResponse.token, for: url)
+                // Manually create cookie from Set-Cookie header if iOS didn't store it
+                if let setCookieValue {
+                    Self.logger.info("🍪 Manually parsing Set-Cookie header")
+                    createCookieFromSetCookieHeader(setCookieValue, for: url)
+                }
+
+                // Check if we have the proper signed session cookie
+                if let allCookies = HTTPCookieStorage.shared.cookies {
+                    let authCookies = allCookies.filter { cookie in
+                        cookie.name == "jeeves.session_token" ||
+                            cookie.name.contains("better-auth") ||
+                            cookie.name.contains("jeeves")
+                    }
+
+                    if !authCookies.isEmpty {
+                        sessionCookies = authCookies
+                    }
+
+                    let hasProperCookie = sessionCookies.contains {
+                        $0.name == "jeeves.session_token" && $0.value.contains(".")
+                    }
+
+                    if !hasProperCookie {
+                        Self.logger.error("❌ Better Auth signed session cookie not properly received!")
+                    }
                 }
 
                 Self.logger.info("Sign in successful")
@@ -337,10 +396,8 @@ public final class AuthClient: AuthClientProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
 
-        // Add session token if available
-        if let token = sessionToken {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        // Better Auth uses cookies for authentication, not Bearer tokens
+        // The cookies are automatically included by URLSession
 
         do {
             let (_, response) = try await urlSession.data(for: request)
@@ -349,7 +406,7 @@ public final class AuthClient: AuthClientProtocol {
                 throw AuthClientError.invalidResponse
             }
 
-            if httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
+            if httpResponse.statusCode >= 200, httpResponse.statusCode < 300 {
                 clearAuthenticationState()
                 // Sign out successful
             } else {
@@ -376,13 +433,8 @@ public final class AuthClient: AuthClientProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
 
-        // Add session token if available
-        if let token = sessionToken {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            // Adding Bearer token to request
-        } else {
-            // No session token available
-        }
+        // Better Auth uses cookies for session validation, not Bearer tokens
+        // The cookies are automatically included by URLSession
 
         do {
             let (data, response) = try await urlSession.data(for: request)
@@ -395,7 +447,7 @@ public final class AuthClient: AuthClientProtocol {
             case 200 ... 299:
                 // Better Auth returns null for no session
                 if data.isEmpty || String(data: data, encoding: .utf8) == "null" {
-                    Self.logger.warning("⚠️ Get session returned null - no active session")
+                    // Session validation returning null is expected with cookie-based auth
                     throw AuthClientError.unauthorized
                 }
 
@@ -407,7 +459,7 @@ public final class AuthClient: AuthClientProtocol {
                 // Keep existing token if we have one
                 if sessionToken == nil || sessionToken?.isEmpty == true {
                     // Token is managed via cookies
-                    Self.logger.debug("📝 Session validated via cookies, no token in response")
+                    // Token is managed via cookies
                 }
 
                 // Session validated
@@ -417,15 +469,16 @@ public final class AuthClient: AuthClientProtocol {
                 throw AuthClientError.unauthorized
 
             default:
-                Self.logger.error("❌ Get session failed with status: \(httpResponse.statusCode)")
+                Self.logger.debug("Get session failed with status: \(httpResponse.statusCode)")
                 throw AuthClientError.unknownError("Server returned status \(httpResponse.statusCode)")
             }
 
         } catch let error as DecodingError {
-            Self.logger.error("❌ Failed to decode session response: \(error)")
+            Self.logger.debug("Failed to decode session response: \(error)")
             throw AuthClientError.decodingError(error)
         } catch {
-            Self.logger.error("❌ Session request failed: \(error)")
+            // Session request failures are expected with cookie-based auth
+            Self.logger.debug("Session request failed (expected with cookie auth): \(error)")
             throw AuthClientError.networkError(error)
         }
     }
@@ -445,45 +498,73 @@ public final class AuthClient: AuthClientProtocol {
 
     // MARK: - Private Methods
 
-    /// Create a session cookie from the access token
-    /// This is a workaround for when Better Auth doesn't set cookies properly
-    private func createSessionCookie(from token: String, for url: URL) {
-        guard let host = url.host else {
-            Self.logger.error("❌ Failed to extract host from URL: \(url)")
+    /// Clear old cookies that might interfere with new authentication
+    private func clearOldCookies() {
+        if let allCookies = HTTPCookieStorage.shared.cookies {
+            let authCookies = allCookies.filter { cookie in
+                cookie.name == "jeeves.session_token" ||
+                    cookie.name.contains("better-auth") ||
+                    cookie.name == "auth-token" ||
+                    cookie.name.contains("jeeves")
+            }
+
+            for cookie in authCookies {
+                HTTPCookieStorage.shared.deleteCookie(cookie)
+            }
+        }
+    }
+
+    /// Parse Set-Cookie header and manually create cookie
+    /// This is a workaround for iOS not properly storing localhost cookies
+    private func createCookieFromSetCookieHeader(_ setCookieHeader: String, for url: URL) {
+        // Parse the Set-Cookie header
+        // Format: jeeves.session_token=<value>; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax
+        let components = setCookieHeader.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }
+
+        guard !components.isEmpty else {
             return
         }
 
-        // For localhost, we need to be more specific about the domain
-        // Don't include the port in the domain
-        let domain = host == "localhost" ? "localhost" : host.replacingOccurrences(of: ":3001", with: "")
-
-        // Create auth token cookie
-        let authTokenCookie = HTTPCookie(properties: [
-            .name: "auth-token",
-            .value: token,
-            .domain: domain,
-            .path: "/",
-            .secure: "FALSE", // Always false for localhost
-            .expires: Date().addingTimeInterval(60 * 60 * 24 * 7), // 7 days
-        ])
-
-        // Create better-auth session cookie
-        let sessionCookie = HTTPCookie(properties: [
-            .name: "better-auth.session_token",
-            .value: token,
-            .domain: domain,
-            .path: "/",
-            .secure: "FALSE", // Always false for localhost
-            .expires: Date().addingTimeInterval(60 * 60 * 24 * 7), // 7 days
-        ])
-
-        if let authTokenCookie = authTokenCookie {
-            HTTPCookieStorage.shared.setCookie(authTokenCookie)
+        // Parse name and value from first component
+        let nameValue = components[0].split(separator: "=", maxSplits: 1)
+        guard nameValue.count == 2 else {
+            return
         }
 
-        if let sessionCookie = sessionCookie {
-            HTTPCookieStorage.shared.setCookie(sessionCookie)
+        let cookieName = String(nameValue[0])
+        let cookieValue = String(nameValue[1])
+
+        // Only process Better Auth session cookies
+        guard cookieName == "jeeves.session_token" else {
+            return
         }
+
+        // Create cookie properties
+        var cookieProperties: [HTTPCookiePropertyKey: Any] = [
+            .name: cookieName,
+            .value: cookieValue,
+            .domain: url.host ?? "localhost",
+            .path: "/",
+            .secure: "FALSE", // For localhost development
+        ]
+
+        // Parse additional attributes
+        for component in components.dropFirst() {
+            if component.hasPrefix("Max-Age=") {
+                if let maxAge = Int(component.dropFirst(8)) {
+                    cookieProperties[.expires] = Date().addingTimeInterval(TimeInterval(maxAge))
+                }
+            } else if component.hasPrefix("Path=") {
+                cookieProperties[.path] = String(component.dropFirst(5))
+            } else if component.hasPrefix("Domain=") {
+                cookieProperties[.domain] = String(component.dropFirst(7))
+            }
+        }
+
+        // Create and store the cookie
+        if let cookie = HTTPCookie(properties: cookieProperties) {
+            HTTPCookieStorage.shared.setCookie(cookie)
+        } else {}
     }
 }
 
