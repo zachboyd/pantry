@@ -53,4 +53,78 @@ export class AuthSyncServiceImpl implements AuthSyncService {
       });
     }
   }
+
+  /**
+   * Syncs auth user updates to business user record
+   * Handles any field changes including email, name, image, etc.
+   */
+  async syncUserUpdate(authUser: BetterAuthUser): Promise<void> {
+    try {
+      this.logger.log(
+        `🔄 Syncing user update for auth user: ${authUser.id} (${authUser.email || 'no email'})`,
+      );
+
+      // Extract first and last name from auth user's name field
+      const nameParts = authUser.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Update business user record with all relevant fields
+      const result = await this.db
+        .updateTable('user')
+        .set({
+          email: authUser.email || null,
+          first_name: firstName,
+          last_name: lastName,
+          display_name: authUser.name,
+          avatar_url: authUser.image || null,
+          updated_at: new Date(),
+        })
+        .where('auth_user_id', '=', authUser.id)
+        .executeTakeFirst();
+
+      if (result.numUpdatedRows === 0n) {
+        this.logger.warn(
+          `⚠️ No business user found for auth user ${authUser.id} during sync`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `✅ Business user updated successfully for auth user ${authUser.id}`,
+      );
+    } catch (error) {
+      // Log error but don't throw - we don't want to break the auth flow
+      this.logger.error(
+        error,
+        '❌ Failed to sync user update to business user',
+      );
+      this.logger.error('User sync details:', {
+        authUserId: authUser.id,
+        email: authUser.email || null,
+        name: authUser.name,
+      });
+    }
+  }
+
+  /**
+   * Finds a business user by auth user ID
+   * Used to detect email changes in the email verification callback
+   */
+  async findUserByAuthId(
+    authUserId: string,
+  ): Promise<{ email: string } | null> {
+    try {
+      const user = await this.db
+        .selectFrom('user')
+        .select(['email'])
+        .where('auth_user_id', '=', authUserId)
+        .executeTakeFirst();
+
+      return user ? { email: user.email || '' } : null;
+    } catch (error) {
+      this.logger.error(error, `Failed to find user by auth ID ${authUserId}`);
+      return null;
+    }
+  }
 }
