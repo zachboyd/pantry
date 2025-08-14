@@ -54,7 +54,7 @@ export class UserServiceImpl implements UserService {
 
       return user;
     } catch (error) {
-      this.logger.error(`Error getting user by auth ID ${authUserId}:`, error);
+      this.logger.error(error, `Error getting user by auth ID ${authUserId}:`);
       throw error;
     }
   }
@@ -85,7 +85,7 @@ export class UserServiceImpl implements UserService {
 
       return user;
     } catch (error) {
-      this.logger.error(`Error getting user by ID ${id}:`, error);
+      this.logger.error(error, `Error getting user by ID ${id}:`);
       throw error;
     }
   }
@@ -105,7 +105,7 @@ export class UserServiceImpl implements UserService {
       this.logger.log(`User updated successfully: ${id}`);
       return user;
     } catch (error) {
-      this.logger.error(`Error updating user ${id}:`, error);
+      this.logger.error(error, `Error updating user ${id}:`);
       throw error;
     }
   }
@@ -120,7 +120,7 @@ export class UserServiceImpl implements UserService {
       this.logger.log(`User created successfully: ${user.id}`);
       return user;
     } catch (error) {
-      this.logger.error(`Error creating user:`, error);
+      this.logger.error(error, `Error creating user:`);
       throw error;
     }
   }
@@ -161,7 +161,7 @@ export class UserServiceImpl implements UserService {
       this.logger.log(`AI user created successfully: ${aiUser.id}`);
       return aiUser;
     } catch (error) {
-      this.logger.error(`Error creating AI user:`, error);
+      this.logger.error(error, `Error creating AI user:`);
       throw error;
     }
   }
@@ -243,7 +243,7 @@ export class UserServiceImpl implements UserService {
 
       this.logger.debug(`Cache invalidated for user ${userId}`);
     } catch (error) {
-      this.logger.warn(`Failed to invalidate cache for user ${userId}:`, error);
+      this.logger.warn(error, `Failed to invalidate cache for user ${userId}:`);
       // Don't throw - cache invalidation failures shouldn't break user updates
     }
   }

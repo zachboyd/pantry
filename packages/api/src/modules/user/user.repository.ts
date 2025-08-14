@@ -35,7 +35,7 @@ export class UserRepositoryImpl implements UserRepository {
 
       return user as UserRecord;
     } catch (error) {
-      this.logger.error(`Failed to get user by auth ID ${authUserId}:`, error);
+      this.logger.error(error, `Failed to get user by auth ID ${authUserId}:`);
       throw error;
     }
   }
@@ -59,7 +59,7 @@ export class UserRepositoryImpl implements UserRepository {
 
       return user as UserRecord;
     } catch (error) {
-      this.logger.error(`Failed to get user by ID ${id}:`, error);
+      this.logger.error(error, `Failed to get user by ID ${id}:`);
       throw error;
     }
   }
@@ -86,7 +86,7 @@ export class UserRepositoryImpl implements UserRepository {
       this.logger.log(`User updated successfully: ${id}`);
       return updatedUser as UserRecord;
     } catch (error) {
-      this.logger.error(`Failed to update user ${id}:`, error);
+      this.logger.error(error, `Failed to update user ${id}:`);
       throw error;
     }
   }
@@ -123,7 +123,7 @@ export class UserRepositoryImpl implements UserRepository {
       this.logger.log(`User created successfully: ${createdUser.id}`);
       return createdUser as UserRecord;
     } catch (error) {
-      this.logger.error(`Failed to create user:`, error);
+      this.logger.error(error, `Failed to create user:`);
       throw error;
     }
   }

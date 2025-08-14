@@ -60,7 +60,7 @@ export class DockerTestManager {
       // Set environment variables for tests
       this.setTestEnvironmentVariables();
     } catch (error) {
-      this.logger.error('❌ Failed to start Docker test services:', error);
+      this.logger.error(error, '❌ Failed to start Docker test services:');
       await this.stopServices(); // Cleanup on failure
       throw new Error(`Failed to start test database: ${error}`);
     }
@@ -209,7 +209,7 @@ export class DockerTestManager {
 
       this.logger.log('✅ Test database reset complete');
     } catch (error) {
-      this.logger.error('❌ Failed to reset test database:', error);
+      this.logger.error(error, '❌ Failed to reset test database:');
       throw error;
     }
   }

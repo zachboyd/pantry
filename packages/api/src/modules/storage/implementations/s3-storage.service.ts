@@ -62,7 +62,7 @@ export class S3StorageServiceImpl implements FileStorageService {
       this.logger.debug(`Generated upload URL for key: ${key}`);
       return signedUrl;
     } catch (error) {
-      this.logger.error(`Failed to generate upload URL for key: ${key}`, error);
+      this.logger.error(error, `Failed to generate upload URL for key: ${key}`);
       throw new Error('Failed to generate upload URL');
     }
   }
@@ -118,7 +118,7 @@ export class S3StorageServiceImpl implements FileStorageService {
       await this.s3Client.send(command);
       this.logger.debug(`Deleted file: ${key}`);
     } catch (error) {
-      this.logger.error(`Failed to delete file: ${key}`, error);
+      this.logger.error(error, `Failed to delete file: ${key}`);
       throw new Error('Failed to delete file');
     }
   }

@@ -64,7 +64,7 @@ export class TypingIndicatorRepositoryImpl
       );
       return savedIndicator as unknown as TypingIndicator;
     } catch (error) {
-      this.logger.error(`Failed to save typing indicator:`, error);
+      this.logger.error(error, `Failed to save typing indicator:`);
       throw error;
     }
   }

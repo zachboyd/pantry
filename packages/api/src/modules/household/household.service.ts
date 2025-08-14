@@ -106,7 +106,7 @@ export class HouseholdServiceImpl implements HouseholdService {
 
       return createdHousehold;
     } catch (error) {
-      this.logger.error(`Failed to create household:`, error);
+      this.logger.error(error, `Failed to create household:`);
       throw error;
     }
   }
@@ -444,7 +444,7 @@ export class HouseholdServiceImpl implements HouseholdService {
       );
       return households;
     } catch (error) {
-      this.logger.error(`Failed to get households for user ${userId}:`, error);
+      this.logger.error(error, `Failed to get households for user ${userId}:`);
       throw error;
     }
   }
@@ -501,7 +501,7 @@ export class HouseholdServiceImpl implements HouseholdService {
       this.logger.log(`Successfully updated household ${id}`);
       return updatedHousehold;
     } catch (error) {
-      this.logger.error(`Failed to update household ${id}:`, error);
+      this.logger.error(error, `Failed to update household ${id}:`);
       throw error;
     }
   }

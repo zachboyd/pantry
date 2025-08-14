@@ -35,7 +35,7 @@ export class MessageServiceImpl implements MessageService {
 
       return savedMessage;
     } catch (error) {
-      this.logger.error(`Failed to save message:`, error);
+      this.logger.error(error, `Failed to save message:`);
       throw error;
     }
   }

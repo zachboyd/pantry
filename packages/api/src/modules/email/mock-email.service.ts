@@ -14,16 +14,19 @@ export class MockEmailService implements EmailService {
   private readonly logger = new Logger(MockEmailService.name);
 
   async sendEmail(options: EmailOptions): Promise<EmailSendResult> {
-    this.logger.log('[MOCK EMAIL] sendEmail called with arguments:', {
-      to: options.to,
-      cc: options.cc,
-      bcc: options.bcc,
-      from: options.from,
-      replyTo: options.replyTo,
-      subject: options.subject,
-      hasHtml: !!options.html,
-      hasText: !!options.text,
-    });
+    this.logger.log(
+      {
+        to: options.to,
+        cc: options.cc,
+        bcc: options.bcc,
+        from: options.from,
+        replyTo: options.replyTo,
+        subject: options.subject,
+        hasHtml: !!options.html,
+        hasText: !!options.text,
+      },
+      '[MOCK EMAIL] sendEmail called with arguments:',
+    );
 
     // Return mock success result
     return {
@@ -36,19 +39,22 @@ export class MockEmailService implements EmailService {
   async sendTemplateEmail(
     options: EmailTemplateOptions,
   ): Promise<EmailSendResult> {
-    this.logger.log('[MOCK EMAIL] sendTemplateEmail called with arguments:', {
-      to: options.to,
-      cc: options.cc,
-      bcc: options.bcc,
-      from: options.from,
-      replyTo: options.replyTo,
-      template: options.template,
-      variables: options.variables,
-    });
+    this.logger.log(
+      {
+        to: options.to,
+        cc: options.cc,
+        bcc: options.bcc,
+        from: options.from,
+        replyTo: options.replyTo,
+        template: options.template,
+        variables: options.variables,
+      },
+      '[MOCK EMAIL] sendTemplateEmail called with arguments:',
+    );
 
     // Log debug information if provided
     if (options.debug) {
-      this.logger.log('[MOCK EMAIL DEBUG]', options.debug);
+      this.logger.log(options.debug, '[MOCK EMAIL DEBUG]');
     }
 
     // Return mock success result
@@ -60,28 +66,34 @@ export class MockEmailService implements EmailService {
   }
 
   registerTemplate(template: EmailTemplate): void {
-    this.logger.log('[MOCK EMAIL] registerTemplate called:', {
-      name: template.name,
-      subject: template.subject,
-    });
+    this.logger.log(
+      {
+        name: template.name,
+        subject: template.subject,
+      },
+      '[MOCK EMAIL] registerTemplate called:',
+    );
   }
 
   getTemplate(name: string): EmailTemplate | undefined {
-    this.logger.log('[MOCK EMAIL] getTemplate called:', { name });
+    this.logger.log({ name }, '[MOCK EMAIL] getTemplate called:');
     return undefined; // Mock doesn't need real templates
   }
 
   validateEmail(email: string): boolean {
     const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    this.logger.log('[MOCK EMAIL] validateEmail called:', { email, isValid });
+    this.logger.log({ email, isValid }, '[MOCK EMAIL] validateEmail called:');
     return isValid;
   }
 
   async loadTemplatesFromRegistry(
     registry: EmailTemplateRegistry,
   ): Promise<void> {
-    this.logger.log('[MOCK EMAIL] loadTemplatesFromRegistry called:', {
-      templateCount: Object.keys(registry).length,
-    });
+    this.logger.log(
+      {
+        templateCount: Object.keys(registry).length,
+      },
+      '[MOCK EMAIL] loadTemplatesFromRegistry called:',
+    );
   }
 }

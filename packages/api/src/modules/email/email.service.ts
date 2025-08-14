@@ -38,10 +38,13 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
 
   async sendEmail(options: EmailOptions): Promise<EmailSendResult> {
     try {
-      this.logger.debug('Preparing to send email', {
-        to: normalizeEmailAddresses(options.to),
-        subject: options.subject,
-      });
+      this.logger.debug(
+        {
+          to: normalizeEmailAddresses(options.to),
+          subject: options.subject,
+        },
+        'Preparing to send email',
+      );
 
       const emailParams = {
         Destination: {
@@ -100,18 +103,24 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
         rejected: [],
       };
 
-      this.logger.log('Email sent successfully', {
-        messageId: result.MessageId,
-        to: successResult.accepted,
-      });
+      this.logger.log(
+        {
+          messageId: result.MessageId,
+          to: successResult.accepted,
+        },
+        'Email sent successfully',
+      );
 
       return successResult;
     } catch (error) {
-      this.logger.error('Failed to send email', {
-        error: error.message,
-        to: normalizeEmailAddresses(options.to),
-        subject: options.subject,
-      });
+      this.logger.error(
+        {
+          error: error.message,
+          to: normalizeEmailAddresses(options.to),
+          subject: options.subject,
+        },
+        'Failed to send email',
+      );
       throw error;
     }
   }
@@ -145,9 +154,12 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
 
   registerTemplate(template: EmailTemplate): void {
     this.templates.set(template.name, template);
-    this.logger.debug('Email template registered', {
-      templateName: template.name,
-    });
+    this.logger.debug(
+      {
+        templateName: template.name,
+      },
+      'Email template registered',
+    );
   }
 
   getTemplate(name: string): EmailTemplate | undefined {
@@ -177,20 +189,26 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
         };
 
         this.templates.set(key, template);
-        this.logger.debug('Template loaded from registry', {
-          templateKey: key,
-          templateName: templateFile.name,
-          description: templateFile.description,
-        });
+        this.logger.debug(
+          {
+            templateKey: key,
+            templateName: templateFile.name,
+            description: templateFile.description,
+          },
+          'Template loaded from registry',
+        );
       }
 
       this.logger.log(
         `Loaded ${templateKeys.length} email templates from registry`,
       );
     } catch (error) {
-      this.logger.error('Failed to load templates from registry', {
-        error: error.message,
-      });
+      this.logger.error(
+        {
+          error: error.message,
+        },
+        'Failed to load templates from registry',
+      );
       throw error;
     }
   }
