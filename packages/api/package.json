@@ -20,6 +20,7 @@
     "db:reset": "tsx src/database/reset.ts",
     "db:seed": "tsx src/database/seed.ts",
     "env:generate": "tsx scripts/generate-env.ts",
+    "auth": "scripts/auth.sh",
     "schema:docs": "echo 'Visit https://dbdocs.io/ and upload docs/schema.dbml for online documentation'",
     "start:worker": "tsx src/worker.ts",
     "start:worker:dev": "tsx watch src/worker.ts",

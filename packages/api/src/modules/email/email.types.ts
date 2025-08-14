@@ -36,6 +36,7 @@ export interface EmailTemplateOptions {
   bcc?: string | string[] | EmailAddress | EmailAddress[];
   replyTo?: string | EmailAddress;
   from?: string | EmailAddress;
+  debug?: Record<string, unknown>;
 }
 
 export interface EmailSendResult {

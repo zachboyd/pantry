@@ -46,6 +46,11 @@ export class MockEmailService implements EmailService {
       variables: options.variables,
     });
 
+    // Log debug information if provided
+    if (options.debug) {
+      this.logger.log('[MOCK EMAIL DEBUG]', options.debug);
+    }
+
     // Return mock success result
     return {
       messageId: `mock-template-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,

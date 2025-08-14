@@ -27,7 +27,7 @@ export class ConfigServiceImpl implements ConfigService {
           'LOG_LEVEL',
           nodeEnv === 'production' ? 'info' : 'debug',
         ),
-        pretty: nodeEnv === 'development',
+        pretty: this.configService.get<string>('LOG_PRETTY', 'true') === 'true',
       },
       database: {
         url: this.configService.get<string>('DATABASE_URL') || '',

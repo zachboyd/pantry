@@ -40,6 +40,9 @@ export class AuthFactory {
       url: string;
       token: string;
     }) => {
+      const baseUrl = this.configService.config.app.url;
+      const useMockService = this.configService.config.aws.ses.useMockService;
+
       await this.emailService.sendTemplateEmail({
         template: 'email-verification',
         to: user.email,
@@ -51,6 +54,12 @@ export class AuthFactory {
           expiryHours: '1', // Default 1 hour from Better Auth
           supportEmail: 'support@jeevesapp.dev',
         },
+        debug: useMockService
+          ? {
+              type: 'email_verification',
+              curlCommand: `curl -X GET "${baseUrl}${new URL(url).pathname}${new URL(url).search}"`,
+            }
+          : undefined,
       });
     };
 
@@ -65,6 +74,9 @@ export class AuthFactory {
       url: string;
       token: string;
     }) => {
+      const baseUrl = this.configService.config.app.url;
+      const useMockService = this.configService.config.aws.ses.useMockService;
+
       await this.emailService.sendTemplateEmail({
         template: 'email-change-verification',
         to: user.email, // Verification sent to current email
@@ -77,6 +89,12 @@ export class AuthFactory {
           expiryHours: '1', // Default 1 hour from Better Auth
           supportEmail: 'support@jeevesapp.dev',
         },
+        debug: useMockService
+          ? {
+              type: 'email_change_verification',
+              curlCommand: `curl -X GET "${baseUrl}${new URL(url).pathname}${new URL(url).search}`,
+            }
+          : undefined,
       });
     };
 
