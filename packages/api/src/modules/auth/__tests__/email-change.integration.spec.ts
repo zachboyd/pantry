@@ -12,7 +12,7 @@ import type { Kysely } from 'kysely';
 import type { DB } from '../../../generated/database.js';
 import { EmailIntegrationTestModuleFactory } from '../../../test/utils/email-integration-test-module-factory.js';
 import { TOKENS } from '../../../common/tokens.js';
-import type { EmailService } from '../../email/email.types.js';
+import type { EmailService, EmailAddress } from '../../email/email.types.js';
 import type { AuthUserService } from '../auth-user.types.js';
 
 describe('Email Change Integration Tests', () => {
@@ -35,7 +35,13 @@ describe('Email Change Integration Tests', () => {
 
     // Track all email calls with detailed logging
     let emailCallCount = 0;
-    const allEmailCalls: any[] = [];
+    const allEmailCalls: Array<{
+      callNumber: number;
+      to: string | string[] | EmailAddress | EmailAddress[];
+      template: string;
+      variables: Record<string, unknown>;
+      timestamp: string;
+    }> = [];
 
     // Mock the sendTemplateEmail method to capture calls without sending
     vi.spyOn(mockEmailService, 'sendTemplateEmail').mockImplementation(
@@ -95,7 +101,6 @@ describe('Email Change Integration Tests', () => {
       expect(signupResponse.body.user.email).toBe(currentEmail);
 
       // Step 2: Verify the current email first
-      const userId = signupResponse.body.user.id;
 
       // Get the verification email that was sent during signup
       expect(mockEmailService.sendTemplateEmail).toHaveBeenCalledTimes(1);
