@@ -143,8 +143,8 @@ describe('UserService', () => {
       // Act & Assert
       await expect(userService.getUserByAuthId(authUserId)).rejects.toThrow();
       expect(errorSpy).toHaveBeenCalledWith(
-        `Error getting user by auth ID ${authUserId}:`,
         repositoryError,
+        `Error getting user by auth ID ${authUserId}:`,
       );
     });
     it('should use cache when available and not call repository', async () => {
@@ -315,8 +315,8 @@ describe('UserService', () => {
         userService.updateUser(userId, updateData),
       ).rejects.toThrow();
       expect(errorSpy).toHaveBeenCalledWith(
-        `Error updating user ${userId}:`,
         repositoryError,
+        `Error updating user ${userId}:`,
       );
     });
 

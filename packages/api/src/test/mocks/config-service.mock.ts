@@ -37,6 +37,10 @@ export class ConfigServiceMock {
       },
       betterAuth: {
         secret: 'test-better-auth-secret',
+        google: {
+          clientId: 'test-google-client-id',
+          clientSecret: 'test-google-client-secret',
+        },
       },
       aws: {
         accessKeyId: 'test-access-key',

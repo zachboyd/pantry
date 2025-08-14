@@ -105,7 +105,7 @@ export class AuthFactory {
       onEmailChangeVerification,
       secondaryStorage: this.secondaryStorage,
       apiUrl: this.configService.config.app.url,
-      secret: this.configService.config.betterAuth.secret,
+      authConfig: this.configService.config.betterAuth,
     });
   }
 }

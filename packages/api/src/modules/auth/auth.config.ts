@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 
 import type { BetterAuthUser } from './auth.types.js';
 import type { SecondaryStorage } from './auth-secondary-storage.service.js';
+import type { Configuration } from '../config/config.types.js';
 
 type AuthInstance = ReturnType<typeof betterAuth>;
 type UserCreatedCallback = (user: BetterAuthUser) => Promise<void>;
@@ -27,10 +28,10 @@ export interface CreateAuthOptions {
   onEmailChangeVerification?: EmailChangeVerificationCallback;
   secondaryStorage?: SecondaryStorage;
   apiUrl?: string;
-  secret?: string;
+  authConfig: Configuration['betterAuth'];
 }
 
-export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
+export function createAuth(options: CreateAuthOptions): AuthInstance {
   const {
     onUserCreated,
     onUserUpdated,
@@ -38,7 +39,7 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
     onEmailChangeVerification,
     secondaryStorage,
     apiUrl,
-    secret,
+    authConfig,
   } = options;
   return betterAuth({
     database: {
@@ -50,7 +51,7 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
       provider: 'pg',
     },
     secondaryStorage,
-    secret: secret || '',
+    secret: authConfig.secret,
     baseURL: apiUrl,
     basePath: '/api/auth',
     advanced: {
@@ -96,6 +97,12 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
       updateAge: 60 * 60 * 24, // 1 day
       cookieCache: {
         enabled: false, // Disabled since we will use redis for session caching
+      },
+    },
+    socialProviders: {
+      google: {
+        clientId: authConfig.google.clientId,
+        clientSecret: authConfig.google.clientSecret,
       },
     },
     account: {

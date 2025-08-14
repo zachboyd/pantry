@@ -61,7 +61,16 @@ export class IntegrationTestModuleFactory {
               const onUserCreated = async (user: BetterAuthUser) => {
                 await authSyncService.createBusinessUser(user);
               };
-              return createAuth({ onUserCreated }); // No email service = no email verification
+              return createAuth({
+                onUserCreated,
+                authConfig: {
+                  secret: 'test-secret',
+                  google: {
+                    clientId: '',
+                    clientSecret: '',
+                  },
+                },
+              }); // No email service = no email verification
             },
           };
         },
