@@ -80,35 +80,35 @@ public enum NavigationDestination: Hashable, Codable, Sendable {
     public static func == (lhs: NavigationDestination, rhs: NavigationDestination) -> Bool {
         switch (lhs, rhs) {
         case (.authentication, .authentication):
-            return true
+            true
         case (.onboarding, .onboarding):
-            return true
+            true
         case (.householdCreation, .householdCreation):
-            return true
+            true
         case (.householdJoin, .householdJoin):
-            return true
+            true
         case let (.householdDetails(lhsId), .householdDetails(rhsId)):
-            return lhsId == rhsId
+            lhsId == rhsId
         case let (.householdEdit(lhsId), .householdEdit(rhsId)):
-            return lhsId == rhsId
+            lhsId == rhsId
         case let (.householdMembers(lhsId), .householdMembers(rhsId)):
-            return lhsId == rhsId
+            lhsId == rhsId
         case (.householdSwitcher, .householdSwitcher):
-            return true
+            true
         case (.pantryTab, .pantryTab):
-            return true
+            true
         case (.chatTab, .chatTab):
-            return true
+            true
         case (.listsTab, .listsTab):
-            return true
+            true
         case (.settingsTab, .settingsTab):
-            return true
+            true
         case (.userProfile, .userProfile):
-            return true
+            true
         case (.appearanceSettings, .appearanceSettings):
-            return true
+            true
         default:
-            return false
+            false
         }
     }
 }
@@ -120,33 +120,33 @@ public extension NavigationDestination {
     var title: String {
         switch self {
         case .authentication:
-            return "Sign In"
+            "Sign In"
         case .onboarding:
-            return "Welcome"
+            "Welcome"
         case .householdCreation:
-            return "Create Household"
+            "Create Household"
         case .householdJoin:
-            return "Join Household"
+            "Join Household"
         case .householdDetails:
-            return "Household Details"
+            "Household Details"
         case .householdEdit:
-            return "Edit Household"
+            "Edit Household"
         case .householdMembers:
-            return "Household Members"
+            "Household Members"
         case .householdSwitcher:
-            return "Switch Household"
+            "Switch Household"
         case .pantryTab:
-            return "Pantry"
+            "Pantry"
         case .chatTab:
-            return "Chat"
+            "Chat"
         case .listsTab:
-            return "Lists"
+            "Lists"
         case .settingsTab:
-            return "Settings"
+            "Settings"
         case .userProfile:
-            return "Profile"
+            "Profile"
         case .appearanceSettings:
-            return "Appearance"
+            "Appearance"
         }
     }
 
@@ -154,9 +154,9 @@ public extension NavigationDestination {
     var requiresAuth: Bool {
         switch self {
         case .authentication, .onboarding:
-            return false
+            false
         default:
-            return true
+            true
         }
     }
 
@@ -164,9 +164,9 @@ public extension NavigationDestination {
     var requiresHousehold: Bool {
         switch self {
         case .authentication, .onboarding, .householdCreation, .householdJoin, .householdSwitcher:
-            return false
+            false
         default:
-            return true
+            true
         }
     }
 
@@ -174,15 +174,15 @@ public extension NavigationDestination {
     var tabIconName: String? {
         switch self {
         case .pantryTab:
-            return AppSections.icon(for: .pantry)
+            AppSections.icon(for: .pantry)
         case .chatTab:
-            return AppSections.icon(for: .chat)
+            AppSections.icon(for: .chat)
         case .listsTab:
-            return AppSections.icon(for: .lists)
+            AppSections.icon(for: .lists)
         case .settingsTab:
-            return AppSections.icon(for: .settings)
+            AppSections.icon(for: .settings)
         default:
-            return nil
+            nil
         }
     }
 }

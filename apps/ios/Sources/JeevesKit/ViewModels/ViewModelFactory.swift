@@ -41,7 +41,7 @@ public struct SafeViewModelFactory {
 
         let dependencies = AuthenticationDependencies(
             authService: authService,
-            apolloClient: apolloClientService?.apollo
+            apolloClient: apolloClientService?.apollo,
         )
 
         return LoginViewModel(dependencies: dependencies)
@@ -54,7 +54,7 @@ public struct SafeViewModelFactory {
 
         let dependencies = AuthenticationDependencies(
             authService: authService,
-            apolloClient: apolloClientService?.apollo
+            apolloClient: apolloClientService?.apollo,
         )
 
         return SignUpViewModel(dependencies: dependencies)
@@ -71,7 +71,7 @@ public struct SafeViewModelFactory {
         let dependencies = OnboardingDependencies(
             authService: authService,
             householdService: householdService,
-            userService: userService
+            userService: userService,
         )
 
         return OnboardingViewModel(dependencies: dependencies)
@@ -79,7 +79,7 @@ public struct SafeViewModelFactory {
 
     /// Create OnboardingCoordinator
     public func makeOnboardingCoordinator() -> OnboardingCoordinator {
-        return OnboardingCoordinator()
+        OnboardingCoordinator()
     }
 
     /// Create OnboardingContainerViewModel
@@ -91,7 +91,7 @@ public struct SafeViewModelFactory {
         let dependencies = OnboardingDependencies(
             authService: authService,
             householdService: householdService,
-            userService: userService
+            userService: userService,
         )
 
         return OnboardingContainerViewModel(dependencies: dependencies)
@@ -104,7 +104,7 @@ public struct SafeViewModelFactory {
 
         let dependencies = UserInfoDependencies(
             userService: userService,
-            authService: authService
+            authService: authService,
         )
 
         return UserInfoViewModel(dependencies: dependencies, currentUser: currentUser)
@@ -117,7 +117,7 @@ public struct SafeViewModelFactory {
 
         let dependencies = HouseholdCreationDependencies(
             householdService: householdService,
-            authService: authService
+            authService: authService,
         )
 
         return HouseholdCreationViewModel(dependencies: dependencies)
@@ -134,7 +134,7 @@ public struct SafeViewModelFactory {
         let dependencies = HouseholdListDependencies(
             householdService: householdService,
             authService: authService,
-            userService: userService
+            userService: userService,
         )
 
         return HouseholdListViewModel(dependencies: dependencies)
@@ -144,7 +144,7 @@ public struct SafeViewModelFactory {
     public func makeHouseholdEditViewModel(
         householdId: String? = nil,
         mode: HouseholdEditMode = .create,
-        isReadOnly: Bool = false
+        isReadOnly: Bool = false,
     ) throws -> HouseholdEditViewModel {
         let householdService = try container.getHouseholdService()
         let authService = try container.getAuthService()
@@ -153,14 +153,14 @@ public struct SafeViewModelFactory {
         let dependencies = HouseholdEditDependencies(
             householdService: householdService,
             authService: authService,
-            permissionService: permissionService
+            permissionService: permissionService,
         )
 
         return HouseholdEditViewModel(
             dependencies: dependencies,
             householdId: householdId,
             mode: mode,
-            isReadOnly: isReadOnly
+            isReadOnly: isReadOnly,
         )
     }
 
@@ -175,7 +175,7 @@ public struct SafeViewModelFactory {
             householdService: householdService,
             userService: userService,
             authService: authService,
-            permissionService: permissionService
+            permissionService: permissionService,
         )
 
         return HouseholdMembersViewModel(dependencies: dependencies, householdId: householdId)
@@ -188,7 +188,7 @@ public struct SafeViewModelFactory {
 
         return HouseholdViewModel(
             householdService: householdService,
-            authService: authService
+            authService: authService,
         )
     }
 
@@ -201,7 +201,7 @@ public struct SafeViewModelFactory {
 
         let dependencies = JeevesTabDependencies(
             itemService: itemService,
-            householdService: householdService
+            householdService: householdService,
         )
 
         return JeevesTabViewModel(dependencies: dependencies)
@@ -214,7 +214,7 @@ public struct SafeViewModelFactory {
 
         let dependencies = ChatTabDependencies(
             householdService: householdService,
-            userService: userService
+            userService: userService,
         )
 
         return ChatTabViewModel(dependencies: dependencies)
@@ -227,7 +227,7 @@ public struct SafeViewModelFactory {
 
         let dependencies = ListsTabDependencies(
             shoppingListService: shoppingListService,
-            householdService: householdService
+            householdService: householdService,
         )
 
         return ListsTabViewModel(dependencies: dependencies)
@@ -248,7 +248,7 @@ public struct SafeViewModelFactory {
             userService: userService,
             userPreferencesService: userPreferencesService,
             householdService: householdService,
-            permissionService: permissionService
+            permissionService: permissionService,
         )
 
         return UserSettingsViewModel(dependencies: dependencies)
@@ -279,9 +279,9 @@ public enum HouseholdEditMode: Sendable, CustomStringConvertible {
     public var description: String {
         switch self {
         case .create:
-            return "create"
+            "create"
         case .edit:
-            return "edit"
+            "edit"
         }
     }
 }

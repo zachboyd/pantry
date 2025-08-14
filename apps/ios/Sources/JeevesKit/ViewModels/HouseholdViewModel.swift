@@ -84,7 +84,7 @@ public final class HouseholdViewModel {
         do {
             let createdHousehold = try await householdService.createHousehold(
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                description: description
+                description: description,
             )
 
             isCreatingHousehold = false
@@ -114,7 +114,7 @@ public final class HouseholdViewModel {
             _ = try await householdService.addMember(
                 to: household.id,
                 userId: userId,
-                role: memberRole
+                role: memberRole,
             )
 
             Self.logger.info("✅ Member added successfully")
@@ -140,7 +140,7 @@ public final class HouseholdViewModel {
         do {
             try await householdService.removeMember(
                 from: household.id,
-                userId: userId
+                userId: userId,
             )
 
             Self.logger.info("✅ Member removed successfully")
@@ -170,7 +170,7 @@ public final class HouseholdViewModel {
             _ = try await householdService.updateMemberRole(
                 householdId: household.id,
                 userId: userId,
-                role: memberRole
+                role: memberRole,
             )
 
             Self.logger.info("✅ Member role changed successfully")
@@ -211,12 +211,12 @@ extension HouseholdViewModel {
 
     /// Get display name for the current household
     var currentHouseholdDisplayName: String {
-        return currentHousehold?.name ?? "No Household"
+        currentHousehold?.name ?? "No Household"
     }
 
     /// Check if a household is currently loaded
     var hasCurrentHousehold: Bool {
-        return currentHousehold != nil
+        currentHousehold != nil
     }
 }
 

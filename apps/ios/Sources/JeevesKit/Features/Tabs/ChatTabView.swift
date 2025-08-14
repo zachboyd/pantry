@@ -20,7 +20,7 @@ public struct ChatTabView: View {
         Group {
             if isLoading {
                 StandardLoadingView(showLogo: false)
-            } else if let viewModel = viewModel {
+            } else if let viewModel {
                 chatContent(viewModel: viewModel)
             } else {
                 EmptyStateView(config: EmptyStateConfig(
@@ -30,7 +30,7 @@ public struct ChatTabView: View {
                     actionTitle: L("error.retry"),
                     action: {
                         Task { await loadViewModel() }
-                    }
+                    },
                 ))
             }
         }
@@ -58,7 +58,7 @@ public struct ChatTabView: View {
                     actionTitle: L("chat.send_message"),
                     action: {
                         // TODO: Implement messaging in Phase 2
-                    }
+                    },
                 ))
             }
         }
@@ -75,7 +75,7 @@ public struct ChatTabView: View {
     }
 
     private func loadViewModel() async {
-        guard let factory = factory else {
+        guard let factory else {
             isLoading = false
             return
         }
@@ -85,12 +85,12 @@ public struct ChatTabView: View {
             await newViewModel.onAppear()
 
             await MainActor.run {
-                self.viewModel = newViewModel
-                self.isLoading = false
+                viewModel = newViewModel
+                isLoading = false
             }
         } catch {
             await MainActor.run {
-                self.isLoading = false
+                isLoading = false
             }
         }
     }

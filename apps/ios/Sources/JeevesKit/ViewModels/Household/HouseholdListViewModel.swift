@@ -182,7 +182,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
         let result: Household? = await executeTask(.create) {
             let household = try await self.dependencies.householdService.createHousehold(
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                description: description?.trimmingCharacters(in: .whitespacesAndNewlines)
+                description: description?.trimmingCharacters(in: .whitespacesAndNewlines),
             )
 
             await MainActor.run {
@@ -433,12 +433,12 @@ public extension HouseholdListViewModel {
 
     /// Check if user can delete a household
     func canDelete(_ household: Household) -> Bool {
-        return isOwner(of: household)
+        isOwner(of: household)
     }
 
     /// Check if user can leave a household
     func canLeave(_ household: Household) -> Bool {
         // Can always leave if not the owner, owners need to transfer ownership first
-        return !isOwner(of: household)
+        !isOwner(of: household)
     }
 }

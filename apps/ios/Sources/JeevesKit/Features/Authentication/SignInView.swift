@@ -70,7 +70,7 @@ public struct SignInView: View {
                     VStack(spacing: DesignTokens.Spacing.md) {
                         FormTextField.email(
                             text: $email,
-                            accessibilityIdentifier: AccessibilityUtilities.Identifier.emailField
+                            accessibilityIdentifier: AccessibilityUtilities.Identifier.emailField,
                         )
                         .focused($focusedField, equals: .email)
                         .onSubmit {
@@ -81,7 +81,7 @@ public struct SignInView: View {
                             text: $password,
                             accessibilityIdentifier: AccessibilityUtilities.Identifier.passwordField,
                             validation: { $0.count >= 6 },
-                            errorMessage: L("auth.password.too_short")
+                            errorMessage: L("auth.password.too_short"),
                         )
                         .focused($focusedField, equals: .password)
                         .onSubmit {
@@ -128,7 +128,7 @@ public struct SignInView: View {
         Self.logger.info("🚀 Sign in button tapped")
         Self.logger.info("📧 Email: \(email)")
 
-        guard let authService = authService else {
+        guard let authService else {
             Self.logger.error("❌ Cannot sign in - authService not available")
             alertMessage = "Unable to sign in. Please try again."
             showingAlert = true

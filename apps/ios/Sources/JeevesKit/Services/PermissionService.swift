@@ -107,10 +107,10 @@ public final class PermissionService: PermissionServiceProtocol {
         // Create a new watcher for the current user query
         userWatcher = apolloClient.watch(
             query: JeevesGraphQL.GetCurrentUserQuery(),
-            cachePolicy: .returnCacheDataAndFetch
+            cachePolicy: .returnCacheDataAndFetch,
         ) { [weak self] result in
             Task { @MainActor in
-                guard let self = self else { return }
+                guard let self else { return }
 
                 switch result {
                 case let .success(graphQLResult):
@@ -131,7 +131,7 @@ public final class PermissionService: PermissionServiceProtocol {
 
     /// Update permission context with new user data
     public func updateContext(with user: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser?) async {
-        guard let user = user else {
+        guard let user else {
             logger.info("Clearing permission context - no user data")
             permissionContext = nil
             return
@@ -142,7 +142,7 @@ public final class PermissionService: PermissionServiceProtocol {
         let context = PermissionContext(
             currentUserId: user.id,
             currentUser: user,
-            householdMembers: []
+            householdMembers: [],
         )
 
         permissionContext = context

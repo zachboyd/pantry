@@ -50,7 +50,7 @@ public struct EmptyStateConfig: Sendable {
         self.title = title
         self.subtitle = subtitle
 
-        if let actionTitle = actionTitle, let action = action {
+        if let actionTitle, let action {
             actions = [EmptyStateAction(title: actionTitle, style: .primary, action: action)]
         } else {
             actions = []
@@ -143,7 +143,7 @@ public struct EmptyStateView: View {
                             {
                                 window.rootViewController = UIHostingController(
                                     rootView: AppRootView()
-                                        .withAppState()
+                                        .withAppState(),
                                 )
                             }
                         } label: {
@@ -173,19 +173,19 @@ public extension EmptyStateConfig {
         EmptyStateConfig(
             icon: "clock",
             title: L("app.loading"),
-            subtitle: L("loading.message")
+            subtitle: L("loading.message"),
         )
     }
 
     /// Error state
     @MainActor
     static func error(_ message: String) -> EmptyStateConfig {
-        return EmptyStateConfig(
+        EmptyStateConfig(
             icon: "exclamationmark.triangle",
             title: L("error.generic_title"),
             subtitle: message,
             actionTitle: L("error.try_again"),
-            action: nil
+            action: nil,
         )
     }
 

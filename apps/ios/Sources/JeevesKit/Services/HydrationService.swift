@@ -57,7 +57,7 @@ public final class HydrationService {
             preferences: currentUser.preferences,
             isAi: currentUser.is_ai,
             createdAt: currentUser.created_at,
-            updatedAt: currentUser.updated_at
+            updatedAt: currentUser.updated_at,
         )
 
         // Extract households data
@@ -69,7 +69,7 @@ public final class HydrationService {
                 createdBy: graphQLHousehold.created_by,
                 createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                 updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
+                memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0,
             )
         }
 
@@ -77,7 +77,7 @@ public final class HydrationService {
 
         let result = HydrationResult(
             currentUser: user,
-            households: households
+            households: households,
         )
 
         Self.logger.info("✅ Hydration completed successfully")
@@ -112,9 +112,9 @@ public final class HydrationService {
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
-            cachePolicy: .returnCacheDataAndFetch
+            cachePolicy: .returnCacheDataAndFetch,
         ) { [weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.HydrateQuery.Data>, Error>) in
-            guard let result = result else { return }
+            guard let result else { return }
 
             switch graphQLResult {
             case let .success(data):
@@ -140,7 +140,7 @@ public final class HydrationService {
                         preferences: currentUser.preferences,
                         isAi: currentUser.is_ai,
                         createdAt: currentUser.created_at,
-                        updatedAt: currentUser.updated_at
+                        updatedAt: currentUser.updated_at,
                     )
 
                     // Extract households data
@@ -152,13 +152,13 @@ public final class HydrationService {
                             createdBy: graphQLHousehold.created_by,
                             createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                             updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                            memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
+                            memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0,
                         )
                     }
 
                     let hydrationResult = HydrationResult(
                         currentUser: user,
-                        households: households
+                        households: households,
                     )
 
                     // Update the watched result (this triggers view updates!)

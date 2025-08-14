@@ -10,7 +10,7 @@ let package = Package(
     products: [
         .library(
             name: "JeevesKit",
-            targets: ["JeevesKit"]
+            targets: ["JeevesKit"],
         ),
     ],
     dependencies: [
@@ -31,14 +31,14 @@ let package = Package(
             resources: [
                 .process("JeevesKit/Localization"),
                 .copy("JeevesKit/GraphQL/Operations"),
-            ]
+            ],
         ),
         .testTarget(
             name: "JeevesKitTests",
             dependencies: [
                 "JeevesKit",
             ],
-            path: "Tests"
+            path: "Tests",
         ),
-    ]
+    ],
 )

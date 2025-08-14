@@ -18,15 +18,15 @@ public struct PasswordRequirementsView: View {
     }
 
     private var hasUppercase: Bool {
-        password.contains(where: { $0.isUppercase })
+        password.contains(where: \.isUppercase)
     }
 
     private var hasLowercase: Bool {
-        password.contains(where: { $0.isLowercase })
+        password.contains(where: \.isLowercase)
     }
 
     private var hasNumber: Bool {
-        password.contains(where: { $0.isNumber })
+        password.contains(where: \.isNumber)
     }
 
     // TODO: Add special character requirement when Phase 2 is implemented
@@ -37,26 +37,26 @@ public struct PasswordRequirementsView: View {
     }
 
     public var body: some View {
-        if isExpanded && !password.isEmpty {
+        if isExpanded, !password.isEmpty {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                 PasswordRequirementRow(
                     text: L("password.requirement.length", PasswordConstants.minimumLength),
-                    isMet: hasMinLength
+                    isMet: hasMinLength,
                 )
 
                 PasswordRequirementRow(
                     text: L("password.requirement.uppercase"),
-                    isMet: hasUppercase
+                    isMet: hasUppercase,
                 )
 
                 PasswordRequirementRow(
                     text: L("password.requirement.lowercase"),
-                    isMet: hasLowercase
+                    isMet: hasLowercase,
                 )
 
                 PasswordRequirementRow(
                     text: L("password.requirement.number"),
-                    isMet: hasNumber
+                    isMet: hasNumber,
                 )
             }
             .padding(.vertical, DesignTokens.Spacing.xs)

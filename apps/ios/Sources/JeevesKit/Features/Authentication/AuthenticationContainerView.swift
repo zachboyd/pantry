@@ -32,7 +32,7 @@ public struct AuthenticationContainerView: View {
                         },
                         onSignUpSuccess: {
                             await handleAuthenticationSuccess()
-                        }
+                        },
                     )
                     .transition(.opacity)
                 } else {
@@ -45,7 +45,7 @@ public struct AuthenticationContainerView: View {
                         },
                         onSignInSuccess: {
                             await handleAuthenticationSuccess()
-                        }
+                        },
                     )
                     .transition(.opacity)
                 }
@@ -54,7 +54,7 @@ public struct AuthenticationContainerView: View {
     }
 
     private func handleAuthenticationSuccess() async {
-        if let appState = appState {
+        if let appState {
             Self.logger.info("📲 Notifying AppState of successful authentication")
             await appState.handleAuthenticated()
         } else {

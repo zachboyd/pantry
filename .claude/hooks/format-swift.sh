@@ -8,5 +8,5 @@ file_path=$(echo "$json" | grep -o '"file_path":"[^"]*"' | sed 's/"file_path":"\
 
 # Check if file_path exists and is a Swift file in the iOS app
 if [[ -n "$file_path" && "$file_path" == */apps/ios/*.swift ]]; then
-    swiftformat "$file_path"
+    swiftformat --swiftversion 6.1 "$file_path"
 fi

@@ -21,11 +21,11 @@ final class MockAuthClient: AuthClientProtocol {
     private var hasCookies = false
 
     func hasCookieSession() -> Bool {
-        return hasCookies
+        hasCookies
     }
 
     func getAuthUser() -> APIUser? {
-        return currentAuthUser
+        currentAuthUser
     }
 
     func setBetterAuthSessionToken(_ token: String) {
@@ -53,7 +53,7 @@ final class MockAuthClient: AuthClientProtocol {
             image: nil,
             emailVerified: true,
             createdAt: DateUtilities.graphQLStringFromDate(Date()),
-            updatedAt: DateUtilities.graphQLStringFromDate(Date())
+            updatedAt: DateUtilities.graphQLStringFromDate(Date()),
         )
 
         let token = mockToken ?? "test_session_token"
@@ -78,7 +78,7 @@ final class MockAuthClient: AuthClientProtocol {
             image: nil,
             emailVerified: true,
             createdAt: DateUtilities.graphQLStringFromDate(Date()),
-            updatedAt: DateUtilities.graphQLStringFromDate(Date())
+            updatedAt: DateUtilities.graphQLStringFromDate(Date()),
         )
 
         let token = mockToken ?? "test_session_token"
@@ -115,8 +115,8 @@ final class MockAuthClient: AuthClientProtocol {
             session: SessionInfo(
                 id: "test-session-id",
                 userId: user.id,
-                expiresAt: nil
-            )
+                expiresAt: nil,
+            ),
         )
     }
 

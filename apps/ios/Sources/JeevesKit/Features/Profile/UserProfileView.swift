@@ -29,9 +29,9 @@ public struct UserProfileView: View {
     public var body: some View {
         NavigationStack {
             Group {
-                if let viewModel = viewModel {
+                if let viewModel {
                     // Check watched data loading state
-                    if viewModel.currentUserWatch.isLoading && viewModel.currentUserWatch.value == nil {
+                    if viewModel.currentUserWatch.isLoading, viewModel.currentUserWatch.value == nil {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle())
                             .scaleEffect(1.5)
@@ -43,7 +43,7 @@ public struct UserProfileView: View {
                                 Task {
                                     await viewModel.retryFailedWatches()
                                 }
-                            }
+                            },
                         )
                     } else {
                         profileContent
@@ -80,9 +80,9 @@ public struct UserProfileView: View {
             L("sign.out"),
             isPresented: Binding(
                 get: { viewModel?.showingSignOutConfirmation ?? false },
-                set: { _ in viewModel?.hideSignOutConfirmation() }
+                set: { _ in viewModel?.hideSignOutConfirmation() },
             ),
-            titleVisibility: .hidden
+            titleVisibility: .hidden,
         ) {
             Button(L("sign.out"), role: .destructive) {
                 Task {
@@ -125,7 +125,7 @@ public struct UserProfileView: View {
             HStack(spacing: 16) {
                 AvatarView(
                     user: viewModel?.currentUser ?? currentUser,
-                    size: .large
+                    size: .large,
                 )
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -156,7 +156,7 @@ public struct UserProfileView: View {
     private var householdsSection: some View {
         Section {
             // Show loading state for households
-            if viewModel?.householdsWatch.isLoading == true && viewModel?.householdsWatch.value == nil {
+            if viewModel?.householdsWatch.isLoading == true, viewModel?.householdsWatch.value == nil {
                 HStack {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -173,7 +173,7 @@ public struct UserProfileView: View {
                         onTap: {
                             onSelectHousehold(household)
                             dismiss()
-                        }
+                        },
                     )
                 }
 
@@ -186,7 +186,7 @@ public struct UserProfileView: View {
                                 await viewModel?.refresh()
                             }
                             dismiss()
-                        }
+                        },
                     )
                 } label: {
                     Label(L("household.create_new"), systemImage: "plus.circle")
@@ -202,7 +202,7 @@ public struct UserProfileView: View {
                                 await viewModel?.refresh()
                             }
                             dismiss()
-                        }
+                        },
                     )
                 } label: {
                     Label(L("household.join_existing"), systemImage: "person.badge.plus")
@@ -222,7 +222,7 @@ public struct UserProfileView: View {
                                 await viewModel?.refresh()
                             }
                             dismiss()
-                        }
+                        },
                     )
                 } label: {
                     Label(L("household.create_new"), systemImage: "plus.circle")
@@ -238,7 +238,7 @@ public struct UserProfileView: View {
                                 await viewModel?.refresh()
                             }
                             dismiss()
-                        }
+                        },
                     )
                 } label: {
                     Label(L("household.join_existing"), systemImage: "person.badge.plus")

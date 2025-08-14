@@ -22,7 +22,7 @@ public struct HouseholdDetailsView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
-                if let household = household {
+                if let household {
                     // Header
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
                         HStack {
@@ -151,7 +151,7 @@ public struct HouseholdDetailsView: View {
         .navigationTitle(L("household.details.title"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingEdit) {
-            if let household = household {
+            if let household {
                 NavigationStack {
                     HouseholdEditView(householdId: household.id)
                 }

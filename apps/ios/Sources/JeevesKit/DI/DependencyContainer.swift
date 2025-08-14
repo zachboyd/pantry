@@ -117,7 +117,7 @@ public final class DependencyContainer {
         _authService = AuthService(
             authClient: authClient,
             authTokenManager: authTokenManager,
-            apolloClient: apolloClientService.apolloClient
+            apolloClient: apolloClientService.apolloClient,
         )
         Self.logger.info("✅ AuthService created")
 
@@ -210,7 +210,7 @@ public final class DependencyContainer {
             Self.logger.info("🏠 Creating HouseholdService...")
             _householdService = try ServiceFactory.createHouseholdService(
                 graphQLService: graphQLService,
-                authService: authService
+                authService: authService,
             )
         }
 
@@ -219,14 +219,14 @@ public final class DependencyContainer {
             _userService = try ServiceFactory.createUserService(
                 authService: authService,
                 graphQLService: graphQLService,
-                watchManager: _watchManager
+                watchManager: _watchManager,
             )
         }
 
         if _userPreferencesService == nil {
             Self.logger.info("⚙️ Creating UserPreferencesService...")
             _userPreferencesService = try ServiceFactory.createUserPreferencesService(
-                authService: authService
+                authService: authService,
             )
         }
 
@@ -236,7 +236,7 @@ public final class DependencyContainer {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _itemService = try ServiceFactory.createItemService(
-                householdService: householdService
+                householdService: householdService,
             )
         }
 
@@ -246,7 +246,7 @@ public final class DependencyContainer {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _shoppingListService = try ServiceFactory.createShoppingListService(
-                householdService: householdService
+                householdService: householdService,
             )
         }
 
@@ -285,7 +285,7 @@ public final class DependencyContainer {
             // Initialize services in dependency order using factory
             _authService = try ServiceFactory.createAuthService(
                 authEndpoint: getAuthEndpoint(),
-                apolloClient: _apolloClientService?.apolloClient
+                apolloClient: _apolloClientService?.apolloClient,
             )
 
             // Update Apollo client service with auth service
@@ -301,7 +301,7 @@ public final class DependencyContainer {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "ApolloClientService")
             }
             _graphQLService = try ServiceFactory.createGraphQLService(
-                apolloClientService: apolloClientService
+                apolloClientService: apolloClientService,
             )
 
             // Initialize WatchManager after Apollo Client service
@@ -315,7 +315,7 @@ public final class DependencyContainer {
             // Initialize HydrationService with WatchManager
             _hydrationService = try ServiceFactory.createHydrationService(
                 graphQLService: graphQLService,
-                watchManager: _watchManager
+                watchManager: _watchManager,
             )
             Self.logger.info("💧 HydrationService initialized")
             guard let authService = _authService else {
@@ -324,7 +324,7 @@ public final class DependencyContainer {
             _householdService = try ServiceFactory.createHouseholdService(
                 graphQLService: graphQLService,
                 authService: authService,
-                watchManager: _watchManager
+                watchManager: _watchManager,
             )
 
             guard let authServiceForUser = _authService else {
@@ -333,28 +333,28 @@ public final class DependencyContainer {
             _userService = try ServiceFactory.createUserService(
                 authService: authServiceForUser,
                 graphQLService: graphQLService,
-                watchManager: _watchManager
+                watchManager: _watchManager,
             )
 
             guard let authServiceForPrefs = _authService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "AuthService")
             }
             _userPreferencesService = try ServiceFactory.createUserPreferencesService(
-                authService: authServiceForPrefs
+                authService: authServiceForPrefs,
             )
 
             guard let householdServiceForJeeves = _householdService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _itemService = try ServiceFactory.createItemService(
-                householdService: householdServiceForJeeves
+                householdService: householdServiceForJeeves,
             )
 
             guard let householdServiceForShopping = _householdService else {
                 throw DependencyContainerError.serviceNotInitialized(serviceName: "HouseholdService")
             }
             _shoppingListService = try ServiceFactory.createShoppingListService(
-                householdService: householdServiceForShopping
+                householdService: householdServiceForShopping,
             )
 
             _notificationService = try ServiceFactory.createNotificationService()
@@ -368,7 +368,7 @@ public final class DependencyContainer {
             _permissionService = try await ServiceFactory.createPermissionService(
                 userService: userServiceForPermissions,
                 householdService: householdServiceForPermissions,
-                apolloClient: _apolloClientService?.apolloClient
+                apolloClient: _apolloClientService?.apolloClient,
             )
             Self.logger.info("🔐 PermissionService initialized")
 
@@ -377,7 +377,7 @@ public final class DependencyContainer {
             Self.logger.error("❌ Service initialization failed: \(error)")
             throw DependencyContainerError.serviceInitializationFailed(
                 serviceName: "Multiple Services",
-                underlying: error
+                underlying: error,
             )
         }
     }
@@ -536,19 +536,19 @@ public final class DependencyContainer {
     // MARK: - Utility Services
 
     public func makeUserPreferencesManager() -> UserPreferencesManager {
-        return userPreferencesManager
+        userPreferencesManager
     }
 
     public func makeLocalizationManager() -> LocalizationManager {
-        return localizationManager
+        localizationManager
     }
 
     public func getUserPreferencesManager() -> UserPreferencesManager {
-        return userPreferencesManager
+        userPreferencesManager
     }
 
     public func getLocalizationManager() -> LocalizationManager {
-        return localizationManager
+        localizationManager
     }
 
     // MARK: - Service Lifecycle Management
@@ -613,7 +613,7 @@ public final class DependencyContainer {
     }
 
     public func healthCheck() async -> HealthStatus {
-        return await performHealthCheck()
+        await performHealthCheck()
     }
 
     // MARK: - Debug
@@ -631,62 +631,62 @@ public final class DependencyContainer {
 
     /// Get the auth service - available after initialization
     public var authService: AuthServiceProtocol? {
-        return try? getAuthService()
+        try? getAuthService()
     }
 
     /// Get household service - only available when authenticated
     public var householdService: HouseholdServiceProtocol? {
-        return try? getHouseholdService()
+        try? getHouseholdService()
     }
 
     /// Get item service - only available when authenticated
     public var itemService: ItemServiceProtocol? {
-        return try? getItemService()
+        try? getItemService()
     }
 
     /// Get shopping list service - only available when authenticated
     public var shoppingListService: ShoppingListServiceProtocol? {
-        return try? getShoppingListService()
+        try? getShoppingListService()
     }
 
     /// Get notification service - only available when authenticated
     public var notificationService: NotificationServiceProtocol? {
-        return try? getNotificationService()
+        try? getNotificationService()
     }
 
     /// Get Apollo Client service - available after initialization
     public var apolloClientService: ApolloClientService? {
-        return try? getApolloClientService()
+        try? getApolloClientService()
     }
 
     /// Get GraphQL service - available after initialization
     public var graphQLService: GraphQLService? {
-        return try? getGraphQLService()
+        try? getGraphQLService()
     }
 
     /// Get hydration service - available after initialization
     public var hydrationService: HydrationService? {
-        return try? getHydrationService()
+        try? getHydrationService()
     }
 
     /// Get user service - available after initialization
     public var userService: UserServiceProtocol? {
-        return try? getUserService()
+        try? getUserService()
     }
 
     /// Get user preferences service - available after initialization
     public var userPreferencesService: UserPreferencesServiceProtocol? {
-        return try? getUserPreferencesService()
+        try? getUserPreferencesService()
     }
 
     /// Get permission service - available after initialization
     public var permissionService: PermissionServiceProtocol? {
-        return try? getPermissionService()
+        try? getPermissionService()
     }
 
     /// Get Apollo client directly - available after initialization
     public var apolloClient: ApolloClient? {
-        return apolloClientService?.apollo
+        apolloClientService?.apollo
     }
 }
 
@@ -709,7 +709,7 @@ public struct HealthStatus: Sendable {
     public var connection: Bool = false
 
     public var isHealthy: Bool {
-        return services && connection
+        services && connection
     }
 }
 
@@ -723,11 +723,11 @@ public enum DependencyContainerError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case let .serviceNotInitialized(serviceName):
-            return "Service '\(serviceName)' is not initialized"
+            "Service '\(serviceName)' is not initialized"
         case let .serviceInitializationFailed(serviceName, underlying):
-            return "Failed to initialize '\(serviceName)': \(underlying.localizedDescription)"
+            "Failed to initialize '\(serviceName)': \(underlying.localizedDescription)"
         case let .configurationError(message):
-            return "Configuration error: \(message)"
+            "Configuration error: \(message)"
         }
     }
 }

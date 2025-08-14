@@ -138,7 +138,7 @@ public extension EnvironmentValues {
 public extension View {
     /// Inject AppState and basic managers - the only environment injection needed
     func withAppState() -> some View {
-        return AppStateProviderView { self }
+        AppStateProviderView { self }
     }
 }
 
@@ -160,7 +160,7 @@ private struct AppStateProviderView<Content: View>: View {
         #endif
 
         return Group {
-            if let appState = appState {
+            if let appState {
                 #if DEBUG
                     let _ = logger.debug("AppState available, injecting into environment and rendering content")
                 #endif

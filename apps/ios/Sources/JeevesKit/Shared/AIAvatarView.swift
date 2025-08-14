@@ -24,10 +24,10 @@ public struct AIAvatarView: View {
 
         var value: CGFloat {
             switch self {
-            case .small: return DesignTokens.ComponentSize.Avatar.small
-            case .medium: return DesignTokens.ComponentSize.Avatar.medium
-            case .large: return DesignTokens.ComponentSize.Avatar.large
-            case .extraLarge: return DesignTokens.ComponentSize.Avatar.extraLarge
+            case .small: DesignTokens.ComponentSize.Avatar.small
+            case .medium: DesignTokens.ComponentSize.Avatar.medium
+            case .large: DesignTokens.ComponentSize.Avatar.large
+            case .extraLarge: DesignTokens.ComponentSize.Avatar.extraLarge
             }
         }
     }
@@ -53,7 +53,7 @@ public struct AIAvatarView: View {
     }
 
     public var body: some View {
-        if isInteractive && onTap != nil {
+        if isInteractive, onTap != nil {
             Button(action: { onTap?() }) {
                 avatarContent
             }
@@ -130,7 +130,7 @@ public struct AIAvatarView: View {
         isInteractive: true,
         onTap: {
             print("AI Avatar tapped")
-        }
+        },
     )
     .padding()
 }

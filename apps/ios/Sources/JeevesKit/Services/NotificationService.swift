@@ -22,7 +22,7 @@ public final class NotificationService: NotificationServiceProtocol {
         Self.logger.info("📱 Requesting notification permission")
 
         let granted = try await notificationCenter.requestAuthorization(
-            options: [.alert, .badge, .sound]
+            options: [.alert, .badge, .sound],
         )
 
         if granted {
@@ -53,7 +53,7 @@ public final class NotificationService: NotificationServiceProtocol {
         let notificationDate = Calendar.current.date(
             byAdding: .day,
             value: -1,
-            to: expirationDate
+            to: expirationDate,
         ) ?? expirationDate
 
         // Don't schedule if the notification date is in the past
@@ -75,18 +75,18 @@ public final class NotificationService: NotificationServiceProtocol {
 
         let dateComponents = Calendar.current.dateComponents(
             [.year, .month, .day, .hour, .minute],
-            from: notificationDate
+            from: notificationDate,
         )
 
         let trigger = UNCalendarNotificationTrigger(
             dateMatching: dateComponents,
-            repeats: false
+            repeats: false,
         )
 
         let request = UNNotificationRequest(
             identifier: "expiration_\(item.id)",
             content: content,
-            trigger: trigger
+            trigger: trigger,
         )
 
         try await notificationCenter.add(request)
@@ -132,14 +132,14 @@ public final class NotificationService: NotificationServiceProtocol {
 
         let trigger = UNCalendarNotificationTrigger(
             dateMatching: dateComponents,
-            repeats: false
+            repeats: false,
         )
 
         let identifier = "shopping_\(householdId)_\(UUID().uuidString)"
         let request = UNNotificationRequest(
             identifier: identifier,
             content: content,
-            trigger: trigger
+            trigger: trigger,
         )
 
         try await notificationCenter.add(request)
@@ -167,7 +167,7 @@ public final class NotificationService: NotificationServiceProtocol {
     }
 
     public func getNotificationSettings() async -> UNNotificationSettings {
-        return await notificationCenter.notificationSettings()
+        await notificationCenter.notificationSettings()
     }
 
     // MARK: - Notification Categories
@@ -180,12 +180,12 @@ public final class NotificationService: NotificationServiceProtocol {
             UNNotificationAction(
                 identifier: "VIEW_ITEM",
                 title: "View Item",
-                options: [.foreground]
+                options: [.foreground],
             ),
             UNNotificationAction(
                 identifier: "DISMISS",
                 title: "Dismiss",
-                options: []
+                options: [],
             ),
         ]
 
@@ -193,7 +193,7 @@ public final class NotificationService: NotificationServiceProtocol {
             identifier: "EXPIRATION_REMINDER",
             actions: expirationActions,
             intentIdentifiers: [],
-            options: []
+            options: [],
         )
 
         // Shopping reminder category
@@ -201,12 +201,12 @@ public final class NotificationService: NotificationServiceProtocol {
             UNNotificationAction(
                 identifier: "VIEW_LIST",
                 title: "View List",
-                options: [.foreground]
+                options: [.foreground],
             ),
             UNNotificationAction(
                 identifier: "DISMISS",
                 title: "Dismiss",
-                options: []
+                options: [],
             ),
         ]
 
@@ -214,7 +214,7 @@ public final class NotificationService: NotificationServiceProtocol {
             identifier: "SHOPPING_REMINDER",
             actions: shoppingActions,
             intentIdentifiers: [],
-            options: []
+            options: [],
         )
 
         notificationCenter.setNotificationCategories([
@@ -236,10 +236,10 @@ public final class NotificationService: NotificationServiceProtocol {
 
     /// Mock method to get statistics
     public func getNotificationStats() -> NotificationStats {
-        return NotificationStats(
+        NotificationStats(
             totalScheduled: scheduledNotifications.count,
-            expirationReminders: scheduledNotifications.keys.filter { $0.hasPrefix("expiration_") }.count,
-            shoppingReminders: scheduledNotifications.keys.filter { $0.hasPrefix("shopping_") }.count
+            expirationReminders: scheduledNotifications.keys.count(where: { $0.hasPrefix("expiration_") }),
+            shoppingReminders: scheduledNotifications.keys.count(where: { $0.hasPrefix("shopping_") }),
         )
     }
 }
@@ -269,13 +269,13 @@ public enum NotificationServiceError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "Notification permission denied"
+            "Notification permission denied"
         case let .schedulingFailed(error):
-            return "Failed to schedule notification: \(error.localizedDescription)"
+            "Failed to schedule notification: \(error.localizedDescription)"
         case .invalidDate:
-            return "Invalid notification date"
+            "Invalid notification date"
         case let .notificationNotFound(id):
-            return "Notification with ID '\(id)' not found"
+            "Notification with ID '\(id)' not found"
         }
     }
 }

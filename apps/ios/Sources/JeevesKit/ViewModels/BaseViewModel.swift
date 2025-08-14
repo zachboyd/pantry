@@ -89,24 +89,24 @@ public enum LoadingOperation: String, CaseIterable {
     @MainActor
     public var displayName: String {
         switch self {
-        case .initial: return L("loading.operation.initial")
-        case .refresh: return L("loading.operation.refresh")
-        case .save: return L("loading.operation.save")
-        case .delete: return L("loading.operation.delete")
-        case .update: return L("loading.operation.update")
-        case .load: return L("loading.operation.load")
-        case .sync: return L("loading.operation.sync")
-        case .search: return L("loading.operation.search")
-        case .filter: return L("loading.operation.filter")
-        case .create: return L("loading.operation.create")
-        case .send: return L("loading.operation.send")
-        case .addItem: return L("loading.operation.add_item")
-        case .removeItem: return L("loading.operation.remove_item")
-        case .updateQuantity: return L("loading.operation.update_quantity")
-        case .addMember: return L("loading.operation.add_member")
-        case .removeMember: return L("loading.operation.remove_member")
-        case .generateList: return L("loading.operation.generate_list")
-        case .analyzeReceipt: return L("loading.operation.analyze_receipt")
+        case .initial: L("loading.operation.initial")
+        case .refresh: L("loading.operation.refresh")
+        case .save: L("loading.operation.save")
+        case .delete: L("loading.operation.delete")
+        case .update: L("loading.operation.update")
+        case .load: L("loading.operation.load")
+        case .sync: L("loading.operation.sync")
+        case .search: L("loading.operation.search")
+        case .filter: L("loading.operation.filter")
+        case .create: L("loading.operation.create")
+        case .send: L("loading.operation.send")
+        case .addItem: L("loading.operation.add_item")
+        case .removeItem: L("loading.operation.remove_item")
+        case .updateQuantity: L("loading.operation.update_quantity")
+        case .addMember: L("loading.operation.add_member")
+        case .removeMember: L("loading.operation.remove_member")
+        case .generateList: L("loading.operation.generate_list")
+        case .analyzeReceipt: L("loading.operation.analyze_receipt")
         }
     }
 }
@@ -133,31 +133,31 @@ public enum ViewModelError: Error, @preconcurrency LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .networkUnavailable:
-            return L("error.network_unavailable")
+            L("error.network_unavailable")
         case .unauthorized:
-            return L("error.unauthorized")
+            L("error.unauthorized")
         case .forbidden:
-            return L("error.forbidden")
+            L("error.forbidden")
         case .notFound:
-            return L("error.not_found")
+            L("error.not_found")
         case let .validationFailed(errors):
-            return errors.first?.localizedDescription ?? L("error.validation_failed")
+            errors.first?.localizedDescription ?? L("error.validation_failed")
         case let .operationFailed(message):
-            return L("error.operation_failed", message)
+            L("error.operation_failed", message)
         case let .repositoryError(message):
-            return L("error.repository_error", message)
+            L("error.repository_error", message)
         case .householdNotFound:
-            return L("error.household_not_found")
+            L("error.household_not_found")
         case .itemNotFound:
-            return L("error.item_not_found")
+            L("error.item_not_found")
         case .memberNotFound:
-            return L("error.member_not_found")
+            L("error.member_not_found")
         case .insufficientPermissions:
-            return L("error.insufficient_permissions")
+            L("error.insufficient_permissions")
         case let .storageError(message):
-            return L("error.storage_error", message)
+            L("error.storage_error", message)
         case let .unknown(message):
-            return L("error.unknown", message)
+            L("error.unknown", message)
         }
     }
 
@@ -165,27 +165,27 @@ public enum ViewModelError: Error, @preconcurrency LocalizedError, Equatable {
     public var recoverySuggestion: String? {
         switch self {
         case .networkUnavailable:
-            return L("error.recovery.network_unavailable")
+            L("error.recovery.network_unavailable")
         case .unauthorized:
-            return L("error.recovery.unauthorized")
+            L("error.recovery.unauthorized")
         case .forbidden:
-            return L("error.recovery.forbidden")
+            L("error.recovery.forbidden")
         case .notFound:
-            return L("error.recovery.not_found")
+            L("error.recovery.not_found")
         case .validationFailed:
-            return L("error.recovery.validation_failed")
+            L("error.recovery.validation_failed")
         case .operationFailed, .repositoryError, .storageError:
-            return L("error.recovery.try_later")
+            L("error.recovery.try_later")
         case .householdNotFound:
-            return L("error.recovery.household_not_found")
+            L("error.recovery.household_not_found")
         case .itemNotFound:
-            return L("error.recovery.item_not_found")
+            L("error.recovery.item_not_found")
         case .memberNotFound:
-            return L("error.recovery.member_not_found")
+            L("error.recovery.member_not_found")
         case .insufficientPermissions:
-            return L("error.recovery.insufficient_permissions")
+            L("error.recovery.insufficient_permissions")
         case .unknown:
-            return L("error.recovery.unknown")
+            L("error.recovery.unknown")
         }
     }
 
@@ -199,16 +199,16 @@ public enum ViewModelError: Error, @preconcurrency LocalizedError, Equatable {
              (.itemNotFound, .itemNotFound),
              (.memberNotFound, .memberNotFound),
              (.insufficientPermissions, .insufficientPermissions):
-            return true
+            true
         case let (.validationFailed(lhsErrors), .validationFailed(rhsErrors)):
-            return lhsErrors == rhsErrors
+            lhsErrors == rhsErrors
         case let (.operationFailed(lhsMessage), .operationFailed(rhsMessage)),
              let (.repositoryError(lhsMessage), .repositoryError(rhsMessage)),
              let (.storageError(lhsMessage), .storageError(rhsMessage)),
              let (.unknown(lhsMessage), .unknown(rhsMessage)):
-            return lhsMessage == rhsMessage
+            lhsMessage == rhsMessage
         default:
-            return false
+            false
         }
     }
 }
@@ -318,7 +318,7 @@ open class BaseReactiveViewModel<State, Dependencies>: BaseViewModelProtocol {
     // MARK: - Watch Management
 
     /// Register a WatchedResult to be automatically cleaned up
-    public func registerWatch<T>(_ watch: WatchedResult<T>) {
+    public func registerWatch(_ watch: WatchedResult<some Any>) {
         managedWatches.append(watch)
     }
 
@@ -355,15 +355,13 @@ open class BaseReactiveViewModel<State, Dependencies>: BaseViewModelProtocol {
     public func handleError(_ error: Error) {
         errorLogger.error("ViewModel error: \(error)")
 
-        let viewModelError: ViewModelError
-
-        switch error {
+        let viewModelError: ViewModelError = switch error {
         case let vmError as ViewModelError:
-            viewModelError = vmError
+            vmError
         case let validationError as ValidationError:
-            viewModelError = .validationFailed([validationError])
+            .validationFailed([validationError])
         default:
-            viewModelError = .unknown(error.localizedDescription)
+            .unknown(error.localizedDescription)
         }
 
         currentError = viewModelError
@@ -378,7 +376,7 @@ open class BaseReactiveViewModel<State, Dependencies>: BaseViewModelProtocol {
     /// Execute an async task with loading state management
     public func executeTask(
         _ operation: LoadingOperation,
-        task: @escaping () async throws -> Void
+        task: @escaping () async throws -> Void,
     ) {
         let taskKey = operation.rawValue
 

@@ -247,21 +247,21 @@ public enum ServiceError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .notAuthenticated:
-            return "User not authenticated"
+            "User not authenticated"
         case let .networkError(error):
-            return "Network error: \(error.localizedDescription)"
+            "Network error: \(error.localizedDescription)"
         case let .invalidData(message):
-            return "Invalid data: \(message)"
+            "Invalid data: \(message)"
         case let .operationFailed(message):
-            return "Operation failed: \(message)"
+            "Operation failed: \(message)"
         case let .serviceUnavailable(service):
-            return "Service unavailable: \(service)"
+            "Service unavailable: \(service)"
         case .unauthorized:
-            return "Unauthorized access"
+            "Unauthorized access"
         case let .notFound(resource):
-            return "Resource not found: \(resource)"
+            "Resource not found: \(resource)"
         case let .validationFailed(errors):
-            return "Validation failed: \(errors.joined(separator: ", "))"
+            "Validation failed: \(errors.joined(separator: ", "))"
         }
     }
 }

@@ -27,7 +27,7 @@ public extension View {
     ///
     /// - Parameter transform: A closure that takes the view and returns a modified version
     /// - Returns: The modified view
-    func conditionalModifier<Content: View>(@ViewBuilder transform: (Self) -> Content) -> some View {
+    func conditionalModifier(@ViewBuilder transform: (Self) -> some View) -> some View {
         transform(self)
     }
 
@@ -46,9 +46,9 @@ public extension View {
     ///   - transform: The modifier to apply if the condition is true
     /// - Returns: The view with or without the modification
     @ViewBuilder
-    func modifier<Content: View>(
+    func modifier(
         if condition: Bool,
-        @ViewBuilder transform: (Self) -> Content
+        @ViewBuilder transform: (Self) -> some View,
     ) -> some View {
         if condition {
             transform(self)
@@ -75,10 +75,10 @@ public extension View {
     ///   - elseTransform: The modifier to apply if the condition is false
     /// - Returns: The view with the appropriate modification
     @ViewBuilder
-    func modifier<ThenContent: View, ElseContent: View>(
+    func modifier(
         if condition: Bool,
-        @ViewBuilder then thenTransform: (Self) -> ThenContent,
-        @ViewBuilder else elseTransform: (Self) -> ElseContent
+        @ViewBuilder then thenTransform: (Self) -> some View,
+        @ViewBuilder else elseTransform: (Self) -> some View,
     ) -> some View {
         if condition {
             thenTransform(self)

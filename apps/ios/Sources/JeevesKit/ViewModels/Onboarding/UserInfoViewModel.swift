@@ -23,7 +23,7 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
         let user = currentUser ?? self.currentUser.value
         let initialState = UserInfoState(
             firstName: user?.firstName ?? "",
-            lastName: user?.lastName ?? ""
+            lastName: user?.lastName ?? "",
         )
         super.init(dependencies: dependencies, initialState: initialState)
 
@@ -113,7 +113,7 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
                 preferences: currentUser.preferences,
                 isAi: currentUser.isAi,
                 createdAt: currentUser.createdAt,
-                updatedAt: DateUtilities.graphQLStringFromDate(Date())
+                updatedAt: DateUtilities.graphQLStringFromDate(Date()),
             )
 
             // Perform the update

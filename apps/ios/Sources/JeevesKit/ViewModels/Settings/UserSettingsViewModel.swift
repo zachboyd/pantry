@@ -81,7 +81,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
 
         if let name = user.name, !name.isEmpty {
             let components = name.components(separatedBy: " ")
-            let initials = components.compactMap { $0.first }.map(String.init)
+            let initials = components.compactMap(\.first).map(String.init)
             return initials.prefix(2).joined().uppercased()
         } else if let email = user.email, !email.isEmpty {
             return String(email.prefix(2)).uppercased()
@@ -215,7 +215,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
     public func canCreateHouseholdMember(for householdId: String) -> Bool {
         // Use the permission service which is Observable
         // This will automatically trigger view updates when permissions change
-        return dependencies.permissionService.canCreateHouseholdMember(for: householdId)
+        dependencies.permissionService.canCreateHouseholdMember(for: householdId)
     }
 
     // MARK: - Initialization
@@ -297,16 +297,16 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
     /// Load user profile information
     public func loadUserProfile() async {
         await executeTask(.load) { [weak self] in
-            guard let self = self else { return }
-            await self.performLoadUserProfile()
+            guard let self else { return }
+            await performLoadUserProfile()
         }
     }
 
     /// Load user's households
     public func loadUserHouseholds() async {
         await executeTask(.load) { [weak self] in
-            guard let self = self else { return }
-            await self.performLoadUserHouseholds()
+            guard let self else { return }
+            await performLoadUserHouseholds()
         }
     }
 
@@ -348,7 +348,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         Self.logger.info("💾 Saving profile changes")
 
         let result: User? = await executeTask(.save) { [weak self] in
-            guard let self = self else { throw ViewModelError.unknown("Self reference lost") }
+            guard let self else { throw ViewModelError.unknown("Self reference lost") }
 
             // Create user preferences object with updated info
             let preferences = await MainActor.run {
@@ -357,11 +357,11 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
                     email: self.state.editedEmail.trimmingCharacters(in: .whitespacesAndNewlines),
                     notificationsEnabled: self.state.notificationsEnabled,
                     pushNotificationsEnabled: self.state.pushNotificationsEnabled,
-                    emailNotificationsEnabled: self.state.emailNotificationsEnabled
+                    emailNotificationsEnabled: self.state.emailNotificationsEnabled,
                 )
             }
 
-            let updatedUser = try await self.dependencies.userPreferencesService.updateUserPreferences(preferences)
+            let updatedUser = try await dependencies.userPreferencesService.updateUserPreferences(preferences)
 
             await MainActor.run {
                 self.updateState {
@@ -394,7 +394,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         NotificationCenter.default.post(
             name: NSNotification.Name("HouseholdDidChange"),
             object: nil,
-            userInfo: ["householdId": household.id]
+            userInfo: ["householdId": household.id],
         )
     }
 
@@ -413,8 +413,8 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         Self.logger.info("🚪 Signing out user")
 
         let result: Void? = await executeTask(.update) { [weak self] in
-            guard let self = self else { return }
-            try await self.dependencies.authService.signOut()
+            guard let self else { return }
+            try await dependencies.authService.signOut()
 
             await MainActor.run {
                 // Clear user data

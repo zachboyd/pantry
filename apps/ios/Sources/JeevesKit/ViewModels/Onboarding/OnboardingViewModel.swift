@@ -183,8 +183,8 @@ public final class OnboardingViewModel: BaseReactiveViewModel<OnboardingViewMode
 
         if let step = currentStep {
             executeTask(.update) { [weak self] in
-                guard let self = self else { return }
-                await self.processCurrentStep(step)
+                guard let self else { return }
+                await processCurrentStep(step)
 
                 await MainActor.run {
                     if self.state.currentStepIndex < self.state.steps.count - 1 {
@@ -258,7 +258,7 @@ public final class OnboardingViewModel: BaseReactiveViewModel<OnboardingViewMode
                 subtitle: L("onboarding.welcome.subtitle"),
                 isRequired: true,
                 canSkip: false,
-                action: .setupProfile
+                action: .setupProfile,
             ),
             OnboardingStep(
                 id: "household_choice",
@@ -266,7 +266,7 @@ public final class OnboardingViewModel: BaseReactiveViewModel<OnboardingViewMode
                 subtitle: L("onboarding.household.subtitle"),
                 isRequired: true,
                 canSkip: false,
-                action: .createHousehold
+                action: .createHousehold,
             ),
             OnboardingStep(
                 id: "notifications",
@@ -274,7 +274,7 @@ public final class OnboardingViewModel: BaseReactiveViewModel<OnboardingViewMode
                 subtitle: L("onboarding.notifications.subtitle"),
                 isRequired: false,
                 canSkip: true,
-                action: .enableNotifications
+                action: .enableNotifications,
             ),
             OnboardingStep(
                 id: "finish",
@@ -282,7 +282,7 @@ public final class OnboardingViewModel: BaseReactiveViewModel<OnboardingViewMode
                 subtitle: L("onboarding.complete.subtitle"),
                 isRequired: true,
                 canSkip: false,
-                action: .finish
+                action: .finish,
             ),
         ]
 
@@ -351,7 +351,7 @@ public final class OnboardingViewModel: BaseReactiveViewModel<OnboardingViewMode
         // Create household through household service
         let household = try await dependencies.householdService.createHousehold(
             name: trimmedName,
-            description: description
+            description: description,
         )
 
         Self.logger.info("✅ Household created successfully: \(household.name)")

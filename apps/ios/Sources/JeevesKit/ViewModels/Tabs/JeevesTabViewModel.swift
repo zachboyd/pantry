@@ -39,10 +39,10 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
 
         public var displayName: String {
             switch self {
-            case .name: return "Name"
-            case .category: return "Category"
-            case .expirationDate: return "Expiration Date"
-            case .dateAdded: return "Date Added"
+            case .name: "Name"
+            case .category: "Category"
+            case .expirationDate: "Expiration Date"
+            case .dateAdded: "Date Added"
             }
         }
     }
@@ -441,6 +441,6 @@ public extension JeevesTabViewModel {
 
     /// Get items by category
     func getItems(in category: ItemCategory) -> [Item] {
-        return state.items.filter { $0.category == category }
+        state.items.filter { $0.category == category }
     }
 }

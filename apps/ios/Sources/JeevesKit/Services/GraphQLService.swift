@@ -107,7 +107,7 @@ public final class GraphQLService: GraphQLServiceProtocol {
 
         return try await withCheckedThrowingContinuation { continuation in
             apollo.fetch(query: query) { [weak self] result in
-                guard let self = self else {
+                guard let self else {
                     continuation.resume(throwing: ServiceError.operationFailed("Service deallocated"))
                     return
                 }
@@ -151,7 +151,7 @@ public final class GraphQLService: GraphQLServiceProtocol {
                         self?.connectionStatus = false
                     }
                     Self.logger.error("❌ Query failed: \(error)")
-                    continuation.resume(throwing: self.handleGraphQLError(error, operation: "GraphQL Query"))
+                    continuation.resume(throwing: handleGraphQLError(error, operation: "GraphQL Query"))
                 }
             }
         }
@@ -172,7 +172,7 @@ public final class GraphQLService: GraphQLServiceProtocol {
             return try await withCheckedThrowingContinuation { continuation in
                 // Use performMutation with explicit publishResultToStore to ensure cache updates
                 apollo.perform(mutation: mutation, publishResultToStore: true) { [weak self] result in
-                    guard let self = self else {
+                    guard let self else {
                         continuation.resume(throwing: ServiceError.operationFailed("Service deallocated"))
                         return
                     }
@@ -215,7 +215,7 @@ public final class GraphQLService: GraphQLServiceProtocol {
                         Task { @MainActor [weak self] in
                             self?.connectionStatus = false
                         }
-                        continuation.resume(throwing: self.handleGraphQLError(error, operation: "GraphQL Mutation"))
+                        continuation.resume(throwing: handleGraphQLError(error, operation: "GraphQL Mutation"))
                     }
                 }
             }
@@ -254,7 +254,7 @@ public final class GraphQLService: GraphQLServiceProtocol {
         let wasConnected = connectionStatus
         connectionStatus = true
 
-        if !wasConnected && connectionStatus {
+        if !wasConnected, connectionStatus {
             Self.logger.info("✅ GraphQL connection established")
         }
 
@@ -290,7 +290,7 @@ public final class GraphQLService: GraphQLServiceProtocol {
 extension GraphQLService: ServiceLogging {
     public func logOperation(_ operation: String, parameters: Any?) {
         Self.logger.info("🔧 Operation: \(operation)")
-        if let parameters = parameters {
+        if let parameters {
             Self.logger.debug("📊 Parameters: \(String(describing: parameters))")
         }
     }
@@ -301,7 +301,7 @@ extension GraphQLService: ServiceLogging {
 
     public func logSuccess(_ operation: String, result: Any?) {
         Self.logger.info("✅ Success: \(operation)")
-        if let result = result {
+        if let result {
             Self.logger.debug("📊 Result: \(String(describing: result))")
         }
     }
@@ -321,7 +321,7 @@ extension GraphQLService: ServiceHealth {
             isHealthy: isHealthy,
             lastChecked: Date(),
             errors: isHealthy ? [] : ["Connection failed"],
-            responseTime: responseTime
+            responseTime: responseTime,
         )
 
         Self.logger.info("🏥 GraphQL health check: \(isHealthy ? "✅ Healthy" : "❌ Unhealthy")")

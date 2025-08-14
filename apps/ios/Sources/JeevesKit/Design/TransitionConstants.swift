@@ -70,29 +70,29 @@ public enum TransitionConstants {
 
     /// Creates a fade transition with standard timing
     public static func fadeTransition(duration: Double = totalTransitionDuration) -> AnyTransition {
-        return .opacity.animation(standardEasing(duration: duration))
+        .opacity.animation(standardEasing(duration: duration))
     }
 
     /// Creates a combined fade and scale transition
     public static func fadeAndScaleTransition(duration: Double = totalTransitionDuration) -> AnyTransition {
-        return AnyTransition.opacity.combined(with: .scale(scale: 0.95))
+        AnyTransition.opacity.combined(with: .scale(scale: 0.95))
             .animation(standardEasing(duration: duration))
     }
 
     /// Creates a slide and fade transition
     public static func slideAndFadeTransition(edge: Edge = .trailing, duration: Double = totalTransitionDuration) -> AnyTransition {
-        return AnyTransition.asymmetric(
+        AnyTransition.asymmetric(
             insertion: .move(edge: edge).combined(with: .opacity),
-            removal: .opacity
+            removal: .opacity,
         )
         .animation(standardEasing(duration: duration))
     }
 
     /// Creates a gentle push transition for navigation-like animations
     public static func pushTransition(duration: Double = totalTransitionDuration) -> AnyTransition {
-        return AnyTransition.asymmetric(
+        AnyTransition.asymmetric(
             insertion: .move(edge: .trailing).combined(with: .opacity),
-            removal: .move(edge: .leading).combined(with: .opacity)
+            removal: .move(edge: .leading).combined(with: .opacity),
         )
         .animation(gentleEasing(duration: duration))
     }
@@ -127,7 +127,7 @@ public extension View {
     }
 
     /// Applies a gentle animation to value changes
-    func gentleAnimation<V: Equatable>(value: V) -> some View {
+    func gentleAnimation(value: some Equatable) -> some View {
         animation(TransitionConstants.gentleEasing(duration: TransitionConstants.totalTransitionDuration), value: value)
     }
 }

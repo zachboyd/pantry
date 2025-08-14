@@ -21,7 +21,7 @@ final class StringTrimmingInterceptor: ApolloInterceptor, @unchecked Sendable {
         completion: @escaping (Result<GraphQLResult<Operation.Data>, Error>) -> Void
     ) where Operation: GraphQLOperation {
         // Only process mutations if enabled
-        guard configuration.enabledForMutations && Operation.operationType == .mutation else {
+        guard configuration.enabledForMutations, Operation.operationType == .mutation else {
             chain.proceedAsync(request: request, response: response,
                                interceptor: self, completion: completion)
             return
@@ -78,7 +78,7 @@ final class StringTrimmingInterceptor: ApolloInterceptor, @unchecked Sendable {
 
             let trimmedString = string.trimmingCharacters(in: .whitespacesAndNewlines)
 
-            if configuration.enableLogging && string != trimmedString {
+            if configuration.enableLogging, string != trimmedString {
                 Self.logger.debug("🔤 Trimmed '\(fieldName)': '\(string.prefix(20))...' → '\(trimmedString.prefix(20))...'")
             }
 
@@ -129,6 +129,6 @@ public struct TrimmingConfiguration: Sendable {
 
     /// Default configuration with common excluded fields
     public static let `default` = TrimmingConfiguration(
-        excludedFields: ["code_snippet", "formatted_text", "raw_content", "markdown", "html"]
+        excludedFields: ["code_snippet", "formatted_text", "raw_content", "markdown", "html"],
     )
 }

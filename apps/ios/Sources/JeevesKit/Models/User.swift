@@ -49,14 +49,14 @@ public struct User: Identifiable, Sendable {
             let lastInitial = lastName.first.map(String.init) ?? ""
             let result = firstInitial + lastInitial
             return result.isEmpty ? "U" : result.uppercased()
-        } else if let displayName = displayName, !displayName.isEmpty {
+        } else if let displayName, !displayName.isEmpty {
             let components = displayName.split(separator: " ")
             if components.count >= 2 {
                 return String(components[0].prefix(1) + components[1].prefix(1)).uppercased()
             } else if let first = components.first {
                 return String(first.prefix(2)).uppercased()
             }
-        } else if let email = email, !email.isEmpty {
+        } else if let email, !email.isEmpty {
             return String(email.prefix(2)).uppercased()
         }
         return "U"

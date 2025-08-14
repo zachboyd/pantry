@@ -94,21 +94,21 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
 
     public var placeholderTitle: String {
         if !hasHousehold {
-            return "No Household Selected"
+            "No Household Selected"
         } else if !isFeatureEnabled {
-            return "Chat Coming Soon!"
+            "Chat Coming Soon!"
         } else {
-            return "Household Chat"
+            "Household Chat"
         }
     }
 
     public var placeholderMessage: String {
         if !hasHousehold {
-            return "Select a household to start chatting with members."
+            "Select a household to start chatting with members."
         } else if !isFeatureEnabled {
-            return "Chat features are coming in a future update. Stay tuned!"
+            "Chat features are coming in a future update. Stay tuned!"
         } else {
-            return "Start a conversation with your household members."
+            "Start a conversation with your household members."
         }
     }
 
@@ -163,8 +163,8 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
         }
 
         await executeTask(.load) { [weak self] in
-            guard let self = self else { return }
-            await self.performLoadChatData(for: householdId)
+            guard let self else { return }
+            await performLoadChatData(for: householdId)
         }
     }
 
@@ -203,7 +203,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
         Self.logger.info("💬 Marking messages as read")
 
         await executeTask(.update) { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             // This would be replaced with actual chat service call
             // try await self.dependencies.chatService.markAsRead()
 
@@ -283,7 +283,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
 
         updateState { state in
             state.recentMessages = mockMessages
-            state.unreadCount = mockMessages.filter { !$0.isFromCurrentUser }.count
+            state.unreadCount = mockMessages.count(where: { !$0.isFromCurrentUser })
             state.viewState = mockMessages.isEmpty ? .empty : .loaded
         }
 
@@ -292,14 +292,14 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
 
     private func createMockMessages() -> [ChatMessage] {
         // This is just for UI development - remove when real chat is implemented
-        return [
+        [
             ChatMessage(
                 id: "1",
                 content: "Hey, we're running low on milk!",
                 senderId: "user1",
                 senderName: "Alice",
                 timestamp: Date().addingTimeInterval(-3600),
-                isFromCurrentUser: false
+                isFromCurrentUser: false,
             ),
             ChatMessage(
                 id: "2",
@@ -307,7 +307,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
                 senderId: "current",
                 senderName: "You",
                 timestamp: Date().addingTimeInterval(-1800),
-                isFromCurrentUser: true
+                isFromCurrentUser: true,
             ),
             ChatMessage(
                 id: "3",
@@ -315,7 +315,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
                 senderId: "user1",
                 senderName: "Alice",
                 timestamp: Date().addingTimeInterval(-900),
-                isFromCurrentUser: false
+                isFromCurrentUser: false,
             ),
         ]
     }
@@ -339,18 +339,18 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
 public extension ChatTabViewModel {
     /// Check if chat is available for current state
     var isChatAvailable: Bool {
-        return hasHousehold && isFeatureEnabled
+        hasHousehold && isFeatureEnabled
     }
 
     /// Get formatted member count string
     var memberCountText: String {
         switch memberCount {
         case 0:
-            return "No members"
+            "No members"
         case 1:
-            return "1 member"
+            "1 member"
         default:
-            return "\(memberCount) members"
+            "\(memberCount) members"
         }
     }
 }

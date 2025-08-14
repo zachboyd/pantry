@@ -107,7 +107,7 @@ final class StringTrimmingTests: XCTestCase {
             enabledForQueries: true,
             excludedFields: ["custom_field"],
             maxStringLength: 5000,
-            enableLogging: true
+            enableLogging: true,
         )
 
         XCTAssertFalse(config.enabledForMutations)
@@ -144,7 +144,7 @@ final class StringTrimmingInterceptorTests: XCTestCase {
         // Test with custom configuration
         let customConfig = TrimmingConfiguration(
             enabledForMutations: false,
-            excludedFields: ["test_field"]
+            excludedFields: ["test_field"],
         )
         let customInterceptor = StringTrimmingInterceptor(configuration: customConfig)
         XCTAssertNotNil(customInterceptor.id)

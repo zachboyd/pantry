@@ -48,7 +48,7 @@ public final class LocalizationManager: Sendable {
         var finalFormat = format
 
         // If translation not found in current language and not already using English, try English fallback
-        if format == placeholder && currentLanguage != "en" {
+        if format == placeholder, currentLanguage != "en" {
             if let englishPath = Bundle.module.path(forResource: "en", ofType: "lproj"),
                let englishBundle = Bundle(path: englishPath)
             {
@@ -93,7 +93,7 @@ public final class LocalizationManager: Sendable {
 
         // If translation not found in current language, try English fallback
         var finalFormat = format
-        if format == key && currentLanguage != "en" {
+        if format == key, currentLanguage != "en" {
             if let englishPath = Bundle.module.path(forResource: "en", ofType: "lproj"),
                let englishBundle = Bundle(path: englishPath)
             {

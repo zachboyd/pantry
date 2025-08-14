@@ -59,11 +59,11 @@ public struct JSONValue: JSONDecodable, JSONEncodable, OutputTypeConvertible, An
 
     public var _jsonValue: ApolloAPI.JSONValue {
         // When sending to server, keep as string
-        return value
+        value
     }
 
     public static func == (lhs: JSONValue, rhs: JSONValue) -> Bool {
-        return lhs.value == rhs.value
+        lhs.value == rhs.value
     }
 
     public func hash(into hasher: inout Hasher) {
@@ -72,7 +72,7 @@ public struct JSONValue: JSONDecodable, JSONEncodable, OutputTypeConvertible, An
 
     // OutputTypeConvertible conformance
     public static var _asOutputType: ApolloAPI.Selection.Field.OutputType {
-        return .scalar(JSONValue.self)
+        .scalar(JSONValue.self)
     }
 }
 

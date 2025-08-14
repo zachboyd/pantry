@@ -81,8 +81,8 @@ struct GenericEmptyView: View {
         EmptyStateView(
             config: AppSections.emptyStateConfig(
                 for: section,
-                action: customAction
-            )
+                action: customAction,
+            ),
         )
     }
 }
@@ -98,7 +98,7 @@ struct CustomTabBar: View {
                 SectionButton(
                     section: section,
                     isSelected: selectedSection == section,
-                    action: { selectedSection = section }
+                    action: { selectedSection = section },
                 )
                 .frame(maxWidth: .infinity)
             }
@@ -186,7 +186,7 @@ struct AccessibleSectionView: View {
         // Custom tab bar
         CustomTabBar(
             selectedSection: $selectedSection,
-            sections: [.pantry, .chat, .lists, .settings]
+            sections: [.pantry, .chat, .lists, .settings],
         )
     }
 }

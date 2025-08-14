@@ -40,7 +40,7 @@ public final class WatchedResult<T: Sendable>: WatchedResultProtocol, Sendable {
     init(watchManager: WatchManager? = nil) {
         // Create a cleanup handler that captures what we need
         let capturedId = id
-        if let watchManager = watchManager {
+        if let watchManager {
             cleanupHandler = { [weak watchManager] in
                 Task { @MainActor in
                     watchManager?.stopWatching(id: capturedId)
@@ -83,7 +83,7 @@ public final class WatchedResult<T: Sendable>: WatchedResultProtocol, Sendable {
 
     /// Check if error is recoverable
     public var isRecoverableError: Bool {
-        guard let error = error else { return false }
+        guard let error else { return false }
 
         // Check for common recoverable errors
         let errorString = String(describing: error).lowercased()
@@ -95,7 +95,7 @@ public final class WatchedResult<T: Sendable>: WatchedResultProtocol, Sendable {
 
     /// Check if data is stale (older than specified interval)
     public func isStale(olderThan interval: TimeInterval) -> Bool {
-        guard let lastUpdated = lastUpdated else { return true }
+        guard let lastUpdated else { return true }
         return Date().timeIntervalSince(lastUpdated) > interval
     }
 
@@ -125,7 +125,7 @@ public final class WatchedResult<T: Sendable>: WatchedResultProtocol, Sendable {
         mapped.lastUpdated = lastUpdated
 
         // Transform value if present
-        if let value = value {
+        if let value {
             mapped.value = transform(value)
         }
 
@@ -174,7 +174,7 @@ public extension WatchedResult {
     var debugDescription: String {
         var parts: [String] = []
 
-        if let value = value {
+        if let value {
             parts.append("value: \(value)")
         }
 
@@ -182,7 +182,7 @@ public extension WatchedResult {
             parts.append("loading")
         }
 
-        if let error = error {
+        if let error {
             parts.append("error: \(error)")
         }
 

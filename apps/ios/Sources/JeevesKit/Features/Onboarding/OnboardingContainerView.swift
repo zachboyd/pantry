@@ -32,7 +32,7 @@ public struct OnboardingContainerView: View {
                     .ignoresSafeArea()
 
                 Group {
-                    if let viewModel = viewModel {
+                    if let viewModel {
                         if viewModel.state.isLoading {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle())
@@ -46,21 +46,21 @@ public struct OnboardingContainerView: View {
                                     EmptyView()
 
                                 case .userInfo:
-                                    if let userInfoViewModel = userInfoViewModel {
+                                    if let userInfoViewModel {
                                         UserInfoView(
                                             viewModel: userInfoViewModel,
                                             onComplete: {
                                                 withAnimation(TransitionConstants.smoothSpring) {
                                                     viewModel.handleUserInfoComplete()
                                                 }
-                                            }
+                                            },
                                         )
                                         .slideAndFadeTransition(edge: .trailing)
                                         .zIndex(1)
                                     }
 
                                 case .householdCreation:
-                                    if let householdCreationViewModel = householdCreationViewModel {
+                                    if let householdCreationViewModel {
                                         HouseholdCreationView(
                                             viewModel: householdCreationViewModel,
                                             onBack: nil, // No back button in simplified flow
@@ -71,7 +71,7 @@ public struct OnboardingContainerView: View {
                                                 if let completionId = viewModel.getCompletionHouseholdId() {
                                                     completeOnboarding(with: completionId)
                                                 }
-                                            }
+                                            },
                                         )
                                         .slideAndFadeTransition(edge: .trailing)
                                         .zIndex(2)

@@ -35,8 +35,8 @@ public struct OnboardingWelcomeView: View {
                         LinearGradient(
                             colors: [DesignTokens.Colors.Primary.base, DesignTokens.Colors.Secondary.base],
                             startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                            endPoint: .bottomTrailing,
+                        ),
                     )
 
                 VStack(spacing: DesignTokens.Spacing.md) {
@@ -82,6 +82,6 @@ public struct OnboardingWelcomeView: View {
     OnboardingWelcomeView(
         onCreateHousehold: {},
         onJoinHousehold: {},
-        onSignOut: {}
+        onSignOut: {},
     )
 }

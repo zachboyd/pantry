@@ -59,7 +59,7 @@ public struct HouseholdJoinView: View {
                         validation: { $0.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6 },
                         errorMessage: L("household.invite_code.minimum_length"),
                         font: .monospaced(.body)(),
-                        autoFocus: true
+                        autoFocus: true,
                     )
                     .onSubmit {
                         if isFormValid {
@@ -95,7 +95,7 @@ public struct HouseholdJoinView: View {
                     L("household.join"),
                     isLoading: isLoading,
                     isDisabled: !isFormValid,
-                    action: joinHousehold
+                    action: joinHousehold,
                 )
             }
             .padding(DesignTokens.Spacing.lg)
@@ -137,7 +137,7 @@ public struct HouseholdJoinView: View {
     NavigationStack {
         HouseholdJoinView(
             onBack: {},
-            onComplete: { _ in }
+            onComplete: { _ in },
         )
     }
 }

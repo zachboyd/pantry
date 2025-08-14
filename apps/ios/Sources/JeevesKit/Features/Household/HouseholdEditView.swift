@@ -25,7 +25,7 @@ public struct HouseholdEditView: View {
 
     public var body: some View {
         NavigationStack {
-            if let viewModel = viewModel {
+            if let viewModel {
                 Form {
                     Section {
                         if viewModel.isReadOnly {
@@ -48,13 +48,13 @@ public struct HouseholdEditView: View {
                             // Edit mode - show text fields
                             TextField(L("household.name"), text: Binding(
                                 get: { viewModel.name },
-                                set: { viewModel.name = $0 }
+                                set: { viewModel.name = $0 },
                             ))
                             .textInputAutocapitalization(.words)
 
                             TextField(L("household.description"), text: Binding(
                                 get: { viewModel.description },
-                                set: { viewModel.description = $0 }
+                                set: { viewModel.description = $0 },
                             ), axis: .vertical)
                                 .textInputAutocapitalization(.sentences)
                                 .lineLimit(3, reservesSpace: true)
@@ -85,7 +85,7 @@ public struct HouseholdEditView: View {
                 }
                 .alert(L("error"), isPresented: Binding(
                     get: { viewModel.showingError },
-                    set: { _ in viewModel.dismissError() }
+                    set: { _ in viewModel.dismissError() },
                 )) {
                     Button(L("ok")) {
                         viewModel.dismissError()
@@ -95,7 +95,7 @@ public struct HouseholdEditView: View {
                 }
                 .alert(L("household.edit.coming_soon.title"), isPresented: Binding(
                     get: { viewModel.showingComingSoon },
-                    set: { _ in viewModel.dismissComingSoon() }
+                    set: { _ in viewModel.dismissComingSoon() },
                 )) {
                     Button(L("ok")) {
                         viewModel.dismissComingSoon()
@@ -121,7 +121,7 @@ public struct HouseholdEditView: View {
                 viewModel = try factory?.makeHouseholdEditViewModel(
                     householdId: householdId,
                     mode: .edit,
-                    isReadOnly: isReadOnly
+                    isReadOnly: isReadOnly,
                 )
                 await viewModel?.onAppear()
             } catch {

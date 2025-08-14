@@ -44,9 +44,9 @@ public struct UserInfoView: View {
                     placeholder: L("onboarding.user_info.first_name.placeholder"),
                     text: Binding(
                         get: { viewModel.state.firstName },
-                        set: { viewModel.updateFirstName($0) }
+                        set: { viewModel.updateFirstName($0) },
                     ),
-                    textContentType: .givenName
+                    textContentType: .givenName,
                 )
                 .focused($focusedField, equals: .firstName)
                 .onSubmit {
@@ -58,9 +58,9 @@ public struct UserInfoView: View {
                     placeholder: L("onboarding.user_info.last_name.placeholder"),
                     text: Binding(
                         get: { viewModel.state.lastName },
-                        set: { viewModel.updateLastName($0) }
+                        set: { viewModel.updateLastName($0) },
                     ),
-                    textContentType: .familyName
+                    textContentType: .familyName,
                 )
                 .focused($focusedField, equals: .lastName)
                 .onSubmit {
@@ -87,7 +87,7 @@ public struct UserInfoView: View {
             PrimaryButton(
                 L("continue"),
                 isLoading: viewModel.isLoading,
-                isDisabled: !viewModel.isFormValid
+                isDisabled: !viewModel.isFormValid,
             ) {
                 Task {
                     let success = await viewModel.handleContinue()

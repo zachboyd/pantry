@@ -41,7 +41,7 @@ public enum KeychainHelper {
             kSecAttrService as String: service,
         ]
 
-        if let account = account {
+        if let account {
             query[kSecAttrAccount as String] = account
         }
 

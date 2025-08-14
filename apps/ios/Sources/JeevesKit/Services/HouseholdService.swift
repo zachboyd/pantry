@@ -88,7 +88,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             // For authenticated household query, we use a placeholder ID since the backend
             // will use the session to determine the user's household
             let query = JeevesGraphQL.GetHouseholdQuery(
-                input: JeevesGraphQL.GetHouseholdInput(id: "current")
+                input: JeevesGraphQL.GetHouseholdInput(id: "current"),
             )
 
             let data = try await graphQLService.query(query)
@@ -139,7 +139,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                     createdBy: graphQLHousehold.created_by,
                     createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                     updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                    memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
+                    memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0,
                 )
             }
 
@@ -178,7 +178,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             // For MVP, use the same query as getCurrentHousehold
             // In a full implementation, you would have a specific getHousehold query
             let query = JeevesGraphQL.GetHouseholdQuery(
-                input: JeevesGraphQL.GetHouseholdInput(id: id)
+                input: JeevesGraphQL.GetHouseholdInput(id: id),
             )
 
             let data = try await graphQLService.query(query)
@@ -213,8 +213,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
             let mutation = JeevesGraphQL.CreateHouseholdMutation(
                 input: JeevesGraphQL.CreateHouseholdInput(
                     name: trimmedName,
-                    description: description.trimmed().map { GraphQLNullable<String>.some($0) } ?? .none
-                )
+                    description: description.trimmed().map { GraphQLNullable<String>.some($0) } ?? .none,
+                ),
             )
 
             let data = try await graphQLService.mutate(mutation)
@@ -255,8 +255,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 input: JeevesGraphQL.UpdateHouseholdInput(
                     id: id,
                     name: GraphQLNullable<String>.some(trimmedName),
-                    description: description.trimmed().map { GraphQLNullable<String>.some($0) } ?? .none
-                )
+                    description: description.trimmed().map { GraphQLNullable<String>.some($0) } ?? .none,
+                ),
             )
 
             let data = try await graphQLService.mutate(mutation)
@@ -310,7 +310,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
             createdBy: "other-user-id",
             createdAt: Date(),
             updatedAt: Date(),
-            memberCount: 0
+            memberCount: 0,
         )
 
         // Update cache
@@ -333,7 +333,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
         do {
             let query = JeevesGraphQL.GetHouseholdMembersQuery(
-                input: JeevesGraphQL.GetHouseholdMembersInput(householdId: householdId)
+                input: JeevesGraphQL.GetHouseholdMembersInput(householdId: householdId),
             )
 
             let data = try await graphQLService.query(query)
@@ -345,7 +345,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                     userId: graphQLMember.user_id,
                     householdId: graphQLMember.household_id,
                     role: MemberRole(rawValue: graphQLMember.role) ?? .member,
-                    joinedAt: DateUtilities.dateFromGraphQL(graphQLMember.joined_at) ?? Date()
+                    joinedAt: DateUtilities.dateFromGraphQL(graphQLMember.joined_at) ?? Date(),
                 )
             }
 
@@ -372,8 +372,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 input: JeevesGraphQL.AddHouseholdMemberInput(
                     householdId: householdId,
                     userId: userId,
-                    role: role.rawValue
-                )
+                    role: role.rawValue,
+                ),
             )
 
             let data = try await graphQLService.mutate(mutation)
@@ -402,8 +402,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 input: JeevesGraphQL.ChangeHouseholdMemberRoleInput(
                     householdId: householdId,
                     userId: userId,
-                    newRole: role.rawValue
-                )
+                    newRole: role.rawValue,
+                ),
             )
 
             let data = try await graphQLService.mutate(mutation)
@@ -431,8 +431,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
             let mutation = JeevesGraphQL.RemoveHouseholdMemberMutation(
                 input: JeevesGraphQL.RemoveHouseholdMemberInput(
                     householdId: householdId,
-                    userId: userId
-                )
+                    userId: userId,
+                ),
             )
 
             _ = try await graphQLService.mutate(mutation)
@@ -480,9 +480,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
         // Use the EXACT same cache policy as the working watchUser(id) method
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
-            cachePolicy: .returnCacheDataAndFetch
+            cachePolicy: .returnCacheDataAndFetch,
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetHouseholdQuery.Data>, Error>) in
-            guard let self = self, let result = result else { return }
+            guard let self, let result else { return }
 
             // DEBUG: Log every time the watcher is triggered
             Self.logger.debug("👁️ Watcher triggered for household: \(id)")
@@ -492,7 +492,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 Self.logger.debug("📊 Watcher success - source: \(data.source), has data: \(data.data?.household != nil)")
                 if let householdData = data.data?.household {
                     // Transform GraphQL data to Household model
-                    let household = self.mapGraphQLHouseholdToDomain(householdData)
+                    let household = mapGraphQLHouseholdToDomain(householdData)
 
                     // Update the watched result (this triggers view updates!)
                     Task { @MainActor in
@@ -572,9 +572,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
-            cachePolicy: .returnCacheDataAndFetch
+            cachePolicy: .returnCacheDataAndFetch,
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.ListHouseholdsQuery.Data>, Error>) in
-            guard let self = self, let result = result else { return }
+            guard let self, let result else { return }
 
             switch graphQLResult {
             case let .success(data):
@@ -588,7 +588,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                             createdBy: graphQLHousehold.created_by,
                             createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                             updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
-                            memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0
+                            memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0,
                         )
                     }
 
@@ -661,9 +661,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
-            cachePolicy: .returnCacheDataAndFetch
+            cachePolicy: .returnCacheDataAndFetch,
         ) { [weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetHouseholdMembersQuery.Data>, Error>) in
-            guard let result = result else { return }
+            guard let result else { return }
 
             switch graphQLResult {
             case let .success(data):
@@ -675,7 +675,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
                             userId: graphQLMember.user_id,
                             householdId: graphQLMember.household_id,
                             role: MemberRole(rawValue: graphQLMember.role) ?? .member,
-                            joinedAt: DateUtilities.dateFromGraphQL(graphQLMember.joined_at) ?? Date()
+                            joinedAt: DateUtilities.dateFromGraphQL(graphQLMember.joined_at) ?? Date(),
                         )
                     }
 
@@ -720,68 +720,68 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
     /// Map GraphQL Household to domain model
     private func mapGraphQLHouseholdToDomain(_ graphqlHousehold: JeevesGraphQL.GetHouseholdQuery.Data.Household) -> Household {
-        return Household(
+        Household(
             id: graphqlHousehold.id,
             name: graphqlHousehold.name,
             description: graphqlHousehold.description,
             createdBy: graphqlHousehold.created_by,
             createdAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.created_at.description),
             updatedAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.updated_at.description),
-            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0
+            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0,
         )
     }
 
     /// Map GraphQL CreateHousehold to domain model
     private func mapGraphQLHouseholdToDomain(_ graphqlHousehold: JeevesGraphQL.CreateHouseholdMutation.Data.CreateHousehold) -> Household {
-        return Household(
+        Household(
             id: graphqlHousehold.id,
             name: graphqlHousehold.name,
             description: graphqlHousehold.description,
             createdBy: graphqlHousehold.created_by,
             createdAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.created_at.description),
             updatedAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.updated_at.description),
-            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0
+            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0,
         )
     }
 
     /// Map GraphQL Household to domain model (generic)
     private func mapGraphQLHouseholdToDomain(_ graphqlHousehold: any GraphQLHouseholdSelectionSet) -> Household {
-        return Household(
+        Household(
             id: graphqlHousehold.id,
             name: graphqlHousehold.name,
             description: graphqlHousehold.description,
             createdBy: graphqlHousehold.created_by,
             createdAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.created_at.description),
             updatedAt: DateUtilities.dateFromGraphQLOrNow(graphqlHousehold.updated_at.description),
-            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0
+            memberCount: graphqlHousehold.memberCount.flatMap { Int($0) } ?? 0,
         )
     }
 
     /// Map GraphQL Member to domain model
     private func mapGraphQLMemberToDomain(_ graphqlMember: JeevesGraphQL.AddHouseholdMemberMutation.Data.AddHouseholdMember) -> HouseholdMember {
-        return HouseholdMember(
+        HouseholdMember(
             id: graphqlMember.id,
             userId: graphqlMember.user_id,
             householdId: graphqlMember.household_id,
             role: mapStringRoleToDomain(graphqlMember.role),
-            joinedAt: DateUtilities.dateFromGraphQLOrNow(graphqlMember.joined_at.description)
+            joinedAt: DateUtilities.dateFromGraphQLOrNow(graphqlMember.joined_at.description),
         )
     }
 
     /// Map GraphQL Member to domain model (for role change)
     private func mapGraphQLMemberToDomain(_ graphqlMember: JeevesGraphQL.ChangeHouseholdMemberRoleMutation.Data.ChangeHouseholdMemberRole) -> HouseholdMember {
-        return HouseholdMember(
+        HouseholdMember(
             id: graphqlMember.id,
             userId: graphqlMember.user_id,
             householdId: graphqlMember.household_id,
             role: mapStringRoleToDomain(graphqlMember.role),
-            joinedAt: DateUtilities.dateFromGraphQLOrNow(graphqlMember.joined_at.description)
+            joinedAt: DateUtilities.dateFromGraphQLOrNow(graphqlMember.joined_at.description),
         )
     }
 
     /// Map string role to domain role
     private func mapStringRoleToDomain(_ roleString: String) -> MemberRole {
-        return MemberRole(rawValue: roleString) ?? .member
+        MemberRole(rawValue: roleString) ?? .member
     }
 
     /// Handle service errors consistently
@@ -823,7 +823,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
 extension HouseholdService: ServiceLogging {
     public func logOperation(_ operation: String, parameters: Any?) {
         Self.logger.info("🏠 Operation: \(operation)")
-        if let parameters = parameters {
+        if let parameters {
             Self.logger.debug("📊 Parameters: \(String(describing: parameters))")
         }
     }
@@ -834,7 +834,7 @@ extension HouseholdService: ServiceLogging {
 
     public func logSuccess(_ operation: String, result: Any?) {
         Self.logger.info("✅ Success: \(operation)")
-        if let result = result {
+        if let result {
             Self.logger.debug("📊 Result: \(String(describing: result))")
         }
     }
@@ -867,7 +867,7 @@ extension HouseholdService: ServiceHealth {
             isHealthy: isHealthy,
             lastChecked: Date(),
             errors: errors,
-            responseTime: responseTime
+            responseTime: responseTime,
         )
 
         Self.logger.info("🏥 Household service health check: \(isHealthy ? "✅ Healthy" : "❌ Unhealthy")")

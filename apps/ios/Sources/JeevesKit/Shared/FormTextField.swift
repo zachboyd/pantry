@@ -100,7 +100,7 @@ public struct FormTextField: View {
             .background(backgroundColor)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(borderColor, lineWidth: isFocused ? 2 : 1)
+                    .stroke(borderColor, lineWidth: isFocused ? 2 : 1),
             )
             .cornerRadius(cornerRadius)
             .contentShape(Rectangle())
@@ -109,7 +109,7 @@ public struct FormTextField: View {
             }
 
             // Error message - always present to avoid layout shifts
-            if let errorMessage = errorMessage {
+            if let errorMessage {
                 Text(errorMessage)
                     .font(DesignTokens.Typography.Semantic.caption())
                     .foregroundColor(DesignTokens.Colors.Status.error)
@@ -130,7 +130,7 @@ public struct FormTextField: View {
     @ViewBuilder
     private var inputField: some View {
         Group {
-            if isSecure && !isPasswordVisible {
+            if isSecure, !isPasswordVisible {
                 SecureField(placeholder, text: $text)
                     .textFieldStyle(.plain)
                     .focused($isFocused)
@@ -138,7 +138,7 @@ public struct FormTextField: View {
                     .autocorrectionDisabled(autocorrectionDisabled)
                     .font(font)
                     .frame(minHeight: 22) // Ensure consistent height
-            } else if isSecure && isPasswordVisible {
+            } else if isSecure, isPasswordVisible {
                 // Password field in visible mode - use regular TextField
                 TextField(placeholder, text: $text)
                     .textFieldStyle(.plain)
@@ -149,7 +149,7 @@ public struct FormTextField: View {
                     .autocorrectionDisabled(true)
                     .font(font)
                     .frame(minHeight: 22) // Ensure consistent height
-            } else if let lineLimit = lineLimit {
+            } else if let lineLimit {
                 // Multi-line TextField with axis parameter
                 TextField(placeholder, text: $text, axis: .vertical)
                     .textFieldStyle(.plain)
@@ -175,12 +175,12 @@ public struct FormTextField: View {
         .modifier(AccessibilityModifier(
             identifier: accessibilityIdentifier,
             label: accessibilityLabel,
-            hint: accessibilityHint
+            hint: accessibilityHint,
         ))
     }
 
     private var hasError: Bool {
-        if let validation = validation, !text.isEmpty {
+        if let validation, !text.isEmpty {
             return !validation(text)
         }
         return false
@@ -192,11 +192,11 @@ public struct FormTextField: View {
 
     private var borderColor: Color {
         if hasError {
-            return DesignTokens.Colors.Status.error
+            DesignTokens.Colors.Status.error
         } else if isFocused {
-            return .accentColor
+            .accentColor
         } else {
-            return Color.clear
+            Color.clear
         }
     }
 
@@ -212,35 +212,36 @@ public struct FormTextField: View {
         // Check if it's a system font with a specific size
         let fontSize: CGFloat
 
-        // Since SwiftUI's Font doesn't expose its size directly,
-        // we'll use UIFont to get the default sizes for text styles
-        switch font {
+            // Since SwiftUI's Font doesn't expose its size directly,
+            // we'll use UIFont to get the default sizes for text styles
+            = switch font
+        {
         case .largeTitle:
-            fontSize = UIFont.preferredFont(forTextStyle: .largeTitle).pointSize
+            UIFont.preferredFont(forTextStyle: .largeTitle).pointSize
         case .title:
-            fontSize = UIFont.preferredFont(forTextStyle: .title1).pointSize
+            UIFont.preferredFont(forTextStyle: .title1).pointSize
         case .title2:
-            fontSize = UIFont.preferredFont(forTextStyle: .title2).pointSize
+            UIFont.preferredFont(forTextStyle: .title2).pointSize
         case .title3:
-            fontSize = UIFont.preferredFont(forTextStyle: .title3).pointSize
+            UIFont.preferredFont(forTextStyle: .title3).pointSize
         case .headline:
-            fontSize = UIFont.preferredFont(forTextStyle: .headline).pointSize
+            UIFont.preferredFont(forTextStyle: .headline).pointSize
         case .body:
-            fontSize = UIFont.preferredFont(forTextStyle: .body).pointSize
+            UIFont.preferredFont(forTextStyle: .body).pointSize
         case .callout:
-            fontSize = UIFont.preferredFont(forTextStyle: .callout).pointSize
+            UIFont.preferredFont(forTextStyle: .callout).pointSize
         case .subheadline:
-            fontSize = UIFont.preferredFont(forTextStyle: .subheadline).pointSize
+            UIFont.preferredFont(forTextStyle: .subheadline).pointSize
         case .footnote:
-            fontSize = UIFont.preferredFont(forTextStyle: .footnote).pointSize
+            UIFont.preferredFont(forTextStyle: .footnote).pointSize
         case .caption:
-            fontSize = UIFont.preferredFont(forTextStyle: .caption1).pointSize
+            UIFont.preferredFont(forTextStyle: .caption1).pointSize
         case .caption2:
-            fontSize = UIFont.preferredFont(forTextStyle: .caption2).pointSize
+            UIFont.preferredFont(forTextStyle: .caption2).pointSize
         default:
             // For custom fonts or system fonts with specific sizes,
             // default to a standard body size
-            fontSize = UIFont.preferredFont(forTextStyle: .body).pointSize
+            UIFont.preferredFont(forTextStyle: .body).pointSize
         }
 
         // Calculate the total height of the input field
@@ -272,7 +273,7 @@ public extension FormTextField {
         label: String = "Email",
         placeholder: String = "Enter your email",
         text: Binding<String>,
-        accessibilityIdentifier: String? = nil
+        accessibilityIdentifier: String? = nil,
     ) -> FormTextField {
         FormTextField(
             label: label,
@@ -286,7 +287,7 @@ public extension FormTextField {
             accessibilityLabel: "Email address",
             accessibilityHint: "Enter your email address",
             validation: { $0.contains("@") && $0.contains(".") },
-            errorMessage: "Please enter a valid email address"
+            errorMessage: "Please enter a valid email address",
         )
     }
 
@@ -298,7 +299,7 @@ public extension FormTextField {
         isNewPassword: Bool = false,
         accessibilityIdentifier: String? = nil,
         validation: ((String) -> Bool)? = nil,
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
     ) -> FormTextField {
         FormTextField(
             label: label,
@@ -312,7 +313,7 @@ public extension FormTextField {
             accessibilityLabel: "Password",
             accessibilityHint: "Enter your password",
             validation: validation,
-            errorMessage: errorMessage
+            errorMessage: errorMessage,
         )
     }
 
@@ -322,7 +323,7 @@ public extension FormTextField {
         placeholder: String = "Enter your name",
         text: Binding<String>,
         textContentType: UITextContentType = .name,
-        accessibilityIdentifier: String? = nil
+        accessibilityIdentifier: String? = nil,
     ) -> FormTextField {
         FormTextField(
             label: label,
@@ -332,7 +333,7 @@ public extension FormTextField {
             autocapitalization: .words,
             accessibilityIdentifier: accessibilityIdentifier,
             accessibilityLabel: label,
-            accessibilityHint: "Enter your \(label.lowercased())"
+            accessibilityHint: "Enter your \(label.lowercased())",
         )
     }
 }
@@ -364,7 +365,7 @@ private struct AccessibilityModifier: ViewModifier {
             label: "First Name",
             placeholder: "Enter your first name",
             text: .constant("John"),
-            textContentType: .givenName
+            textContentType: .givenName,
         )
 
         FormTextField(
@@ -372,7 +373,7 @@ private struct AccessibilityModifier: ViewModifier {
             placeholder: "Enter custom text",
             text: .constant(""),
             validation: { !$0.isEmpty },
-            errorMessage: "This field is required"
+            errorMessage: "This field is required",
         )
     }
     .padding()

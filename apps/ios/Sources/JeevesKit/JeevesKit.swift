@@ -23,7 +23,7 @@ public struct AppRootView: View {
     }
 
     public var body: some View {
-        if let appState = appState {
+        if let appState {
             AppRootContentView(appState: appState)
         } else {
             StandardLoadingView(showLogo: true)
@@ -77,7 +77,7 @@ struct AppRootContentView: View {
                         },
                         onComplete: { householdId in
                             await appState.completeOnboarding(householdId: householdId)
-                        }
+                        },
                     )
                     .fadeTransition(duration: TransitionConstants.authToMainDuration)
                     .zIndex(7)
@@ -155,7 +155,7 @@ public struct StandardLoadingView: View {
                     .animation(
                         Animation.easeInOut(duration: 1.5)
                             .repeatForever(autoreverses: true),
-                        value: isPulsing
+                        value: isPulsing,
                     )
             }
 

@@ -58,7 +58,7 @@ final class WatchManagerTests: XCTestCase {
         // Create Apollo client
         apolloClient = ApolloClient(
             networkTransport: mockTransport,
-            store: store
+            store: store,
         )
 
         // Create watch manager
@@ -251,7 +251,7 @@ private final class MockNetworkTransport: NetworkTransport {
                     extensions: nil,
                     errors: nil,
                     source: .server,
-                    dependentKeys: nil
+                    dependentKeys: nil,
                 )
                 callbackQueue.async {
                     completionHandler(.success(result))

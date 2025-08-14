@@ -10,14 +10,14 @@ public enum ContentUnavailableViewConfiguration {
         type: String,
         systemImage: String = "tray",
         actionTitle: String? = nil,
-        action: (() -> Void)? = nil
+        action: (() -> Void)? = nil,
     ) -> some View {
         ContentUnavailableView {
             Label(L("empty.no_items", type), systemImage: systemImage)
         } description: {
             Text(L("empty.items_will_appear", type.lowercased()))
         } actions: {
-            if let actionTitle = actionTitle, let action = action {
+            if let actionTitle, let action {
                 SecondaryButton(actionTitle, action: action)
             }
         }
@@ -26,7 +26,7 @@ public enum ContentUnavailableViewConfiguration {
     /// Configuration for search with no results
     @MainActor
     public static func noSearchResults(
-        searchText: String
+        searchText: String,
     ) -> some View {
         ContentUnavailableView {
             Label(L("search.no_results"), systemImage: "magnifyingglass")
@@ -38,7 +38,7 @@ public enum ContentUnavailableViewConfiguration {
     /// Configuration for network errors
     @MainActor
     public static func networkError(
-        retry: @escaping () -> Void
+        retry: @escaping () -> Void,
     ) -> some View {
         ContentUnavailableView {
             Label(L("error.connection"), systemImage: "wifi.exclamationmark")
@@ -53,14 +53,14 @@ public enum ContentUnavailableViewConfiguration {
     @MainActor
     public static func error(
         message: String,
-        retry: (() -> Void)? = nil
+        retry: (() -> Void)? = nil,
     ) -> some View {
         ContentUnavailableView {
             Label(L("error.generic_title"), systemImage: "exclamationmark.triangle")
         } description: {
             Text(message)
         } actions: {
-            if let retry = retry {
+            if let retry {
                 SecondaryButton(L("error.try_again"), action: retry)
             }
         }
@@ -71,7 +71,7 @@ public enum ContentUnavailableViewConfiguration {
     /// Configuration for empty pantry
     @MainActor
     public static func emptyPantry(
-        addAction: @escaping () -> Void
+        addAction: @escaping () -> Void,
     ) -> some View {
         ContentUnavailableView {
             Label(L("pantry.empty"), systemImage: AppSections.emptyStateIcon(for: .pantry))
@@ -86,7 +86,7 @@ public enum ContentUnavailableViewConfiguration {
     /// Configuration for no shopping lists
     @MainActor
     public static func noShoppingLists(
-        createAction: @escaping () -> Void
+        createAction: @escaping () -> Void,
     ) -> some View {
         ContentUnavailableView {
             Label(L("lists.empty"), systemImage: "list.bullet.clipboard")
@@ -101,7 +101,7 @@ public enum ContentUnavailableViewConfiguration {
     /// Configuration for no recipes
     @MainActor
     public static func noRecipes(
-        browseAction: @escaping () -> Void
+        browseAction: @escaping () -> Void,
     ) -> some View {
         ContentUnavailableView {
             Label(L("recipes.empty"), systemImage: "book.closed")
@@ -116,7 +116,7 @@ public enum ContentUnavailableViewConfiguration {
     /// Configuration for no household members
     @MainActor
     public static func noHouseholdMembers(
-        inviteAction: @escaping () -> Void
+        inviteAction: @escaping () -> Void,
     ) -> some View {
         ContentUnavailableView {
             Label(L("household.no_other_members"), systemImage: "person.2")
@@ -141,7 +141,7 @@ public enum ContentUnavailableViewConfiguration {
     /// Configuration for feature coming soon
     @MainActor
     public static func comingSoon(
-        feature: String
+        feature: String,
     ) -> some View {
         ContentUnavailableView {
             Label(L("coming.soon"), systemImage: "clock.arrow.circlepath")
@@ -156,9 +156,9 @@ public enum ContentUnavailableViewConfiguration {
 public extension View {
     /// Apply a ContentUnavailableView configuration conditionally
     @ViewBuilder
-    func contentUnavailable<Content: View>(
+    func contentUnavailable(
         when condition: Bool,
-        @ViewBuilder content: () -> Content
+        @ViewBuilder content: () -> some View,
     ) -> some View {
         if condition {
             content()

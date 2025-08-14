@@ -7,8 +7,8 @@ public extension String {
     /// - Returns: Trimmed string, or self if no trimming needed
     func trimmed() -> String {
         // Performance optimization: only create new string if needed
-        guard !isEmpty && (hasPrefix(" ") || hasSuffix(" ") ||
-            contains("\n") || contains("\r") || contains("\t"))
+        guard !isEmpty, hasPrefix(" ") || hasSuffix(" ") ||
+            contains("\n") || contains("\r") || contains("\t")
         else {
             return self
         }
@@ -22,7 +22,7 @@ public extension String {
     }
 }
 
-public extension Optional where Wrapped == String {
+public extension String? {
     /// Trim optional strings, returning nil for empty results
     /// - Returns: Trimmed string or nil if empty after trimming
     func trimmed() -> String? {

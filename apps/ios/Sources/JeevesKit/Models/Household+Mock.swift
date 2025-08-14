@@ -16,7 +16,7 @@ public extension Household {
         createdBy: "user_1",
         createdAt: Date().addingTimeInterval(-86400 * 30),
         updatedAt: Date().addingTimeInterval(-86400 * 2),
-        memberCount: 4
+        memberCount: 4,
     )
 
     /// Secondary mock household for testing multiple households
@@ -27,7 +27,7 @@ public extension Household {
         createdBy: "user_1",
         createdAt: Date().addingTimeInterval(-86400 * 15),
         updatedAt: Date().addingTimeInterval(-86400 * 1),
-        memberCount: 2
+        memberCount: 2,
     )
 
     /// Array of mock households for testing lists

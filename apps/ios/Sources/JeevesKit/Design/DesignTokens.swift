@@ -52,7 +52,7 @@ public enum DesignTokens {
             public static let gradient = LinearGradient(
                 colors: [Secondary.base, Primary.base],
                 startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                endPoint: .bottomTrailing,
             )
             public static let icon = Color.white
         }
@@ -92,11 +92,11 @@ public enum DesignTokens {
 
         /// Utility for system background colors
         public static func systemBackground() -> Color {
-            return Color(UIColor.systemBackground)
+            Color(UIColor.systemBackground)
         }
 
         public static func secondarySystemBackground() -> Color {
-            return Color(UIColor.secondarySystemBackground)
+            Color(UIColor.secondarySystemBackground)
         }
     }
 
@@ -144,32 +144,32 @@ public enum DesignTokens {
         public enum Semantic {
             /// For main page titles
             public static func pageTitle() -> Font {
-                return .system(.largeTitle, design: .default, weight: Weight.bold)
+                .system(.largeTitle, design: .default, weight: Weight.bold)
             }
 
             /// For section headers
             public static func sectionHeader() -> Font {
-                return .system(.title2, design: .default, weight: Weight.semibold)
+                .system(.title2, design: .default, weight: Weight.semibold)
             }
 
             /// For card titles
             public static func cardTitle() -> Font {
-                return .system(.headline, design: .default, weight: Weight.medium)
+                .system(.headline, design: .default, weight: Weight.medium)
             }
 
             /// For body text
             public static func body() -> Font {
-                return .system(.body, design: .default, weight: Weight.regular)
+                .system(.body, design: .default, weight: Weight.regular)
             }
 
             /// For secondary text
             public static func caption() -> Font {
-                return .system(.caption, design: .default, weight: Weight.regular)
+                .system(.caption, design: .default, weight: Weight.regular)
             }
 
             /// For button labels
             public static func button() -> Font {
-                return .system(.body, design: .default, weight: Weight.medium)
+                .system(.body, design: .default, weight: Weight.medium)
             }
         }
     }
@@ -183,7 +183,7 @@ public enum DesignTokens {
             color: .black.opacity(0.05),
             radius: 2,
             x: 0,
-            y: 1
+            y: 1,
         )
 
         /// Medium shadow for cards and modals
@@ -191,7 +191,7 @@ public enum DesignTokens {
             color: .black.opacity(0.1),
             radius: 4,
             x: 0,
-            y: 2
+            y: 2,
         )
 
         /// Heavy shadow for floating elements
@@ -199,7 +199,7 @@ public enum DesignTokens {
             color: .black.opacity(0.15),
             radius: 8,
             x: 0,
-            y: 4
+            y: 4,
         )
     }
 
@@ -239,7 +239,7 @@ public enum DesignTokens {
             public static let spring = SwiftUI.Animation.spring(
                 response: 0.6,
                 dampingFraction: 0.8,
-                blendDuration: 0
+                blendDuration: 0,
             )
         }
 

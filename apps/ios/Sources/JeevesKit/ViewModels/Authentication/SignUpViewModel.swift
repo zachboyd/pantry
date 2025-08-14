@@ -183,19 +183,19 @@ public final class SignUpViewModel: BaseReactiveViewModel<SignUpViewModel.State,
         }
 
         // Check for at least one uppercase letter
-        if !state.password.contains(where: { $0.isUppercase }) {
+        if !state.password.contains(where: \.isUppercase) {
             updateState { $0.passwordError = L("validation.password_uppercase_required") }
             return
         }
 
         // Check for at least one lowercase letter
-        if !state.password.contains(where: { $0.isLowercase }) {
+        if !state.password.contains(where: \.isLowercase) {
             updateState { $0.passwordError = L("validation.password_lowercase_required") }
             return
         }
 
         // Check for at least one number
-        if !state.password.contains(where: { $0.isNumber }) {
+        if !state.password.contains(where: \.isNumber) {
             updateState { $0.passwordError = L("validation.password_number_required") }
             return
         }

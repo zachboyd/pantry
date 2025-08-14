@@ -14,7 +14,7 @@ public struct HouseholdSettingsView: View {
     public var body: some View {
         List {
             // Household Info Section
-            if let household = household {
+            if let household {
                 householdInfoSection(household: household)
 
                 // Members Section

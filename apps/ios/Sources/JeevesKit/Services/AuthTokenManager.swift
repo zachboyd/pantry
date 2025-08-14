@@ -67,7 +67,7 @@ public struct AuthToken {
 
     /// Check if the token is still valid (not expired)
     public var isValid: Bool {
-        guard let expiresAt = expiresAt else {
+        guard let expiresAt else {
             // If no expiration date, assume valid
             return true
         }
@@ -76,7 +76,7 @@ public struct AuthToken {
 
     /// Check if token will expire soon (within 5 minutes)
     public var needsRefresh: Bool {
-        guard let expiresAt = expiresAt else {
+        guard let expiresAt else {
             return false
         }
         return Date().addingTimeInterval(300) >= expiresAt // 5 minutes
@@ -184,7 +184,7 @@ public final class AuthTokenManager {
             accessToken: accessToken,
             refreshToken: refreshToken,
             userId: userId,
-            expiresAt: expiresAt
+            expiresAt: expiresAt,
         )
 
         Self.logger.debug("✅ Auth token loaded from Keychain")
@@ -341,9 +341,9 @@ public enum KeychainError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case let .saveFailure(status):
-            return "Failed to save to Keychain: \(status)"
+            "Failed to save to Keychain: \(status)"
         case let .deleteFailure(status):
-            return "Failed to delete from Keychain: \(status)"
+            "Failed to delete from Keychain: \(status)"
         }
     }
 }

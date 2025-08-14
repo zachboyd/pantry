@@ -38,7 +38,7 @@ public struct SharedHeaderToolbar: View {
                 size: .small,
                 onTap: {
                     showingProfile = true
-                }
+                },
             )
         }
         .padding(.horizontal)
@@ -64,7 +64,7 @@ public struct SharedHeaderToolbar: View {
                         Logger.app.info("🏠 UserProfileView selectHousehold called from SharedHeaderToolbar")
                         currentAppState?.selectHousehold(household)
                         showingProfile = false
-                    }
+                    },
                 )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
@@ -87,7 +87,7 @@ public struct SharedHeaderToolbar: View {
                         Logger.app.info("🏠 UserProfileView selectHousehold called from SharedHeaderToolbar")
                         currentAppState?.selectHousehold(household)
                         showingProfile = false
-                    }
+                    },
                 )
             }
         }

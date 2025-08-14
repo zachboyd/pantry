@@ -35,15 +35,15 @@ public enum AppSections {
     public static func label(for section: Section) -> String {
         switch section {
         case .pantry:
-            return L("tabs.pantry")
+            L("tabs.pantry")
         case .chat:
-            return L("tabs.chat")
+            L("tabs.chat")
         case .lists:
-            return L("tabs.lists")
+            L("tabs.lists")
         case .settings:
-            return L("tabs.settings")
+            L("tabs.settings")
         case .profile:
-            return L("settings.profile")
+            L("settings.profile")
         }
     }
 
@@ -51,15 +51,15 @@ public enum AppSections {
     public static func icon(for section: Section) -> String {
         switch section {
         case .pantry:
-            return Icons.pantry
+            Icons.pantry
         case .chat:
-            return Icons.chat
+            Icons.chat
         case .lists:
-            return Icons.lists
+            Icons.lists
         case .settings:
-            return Icons.settings
+            Icons.settings
         case .profile:
-            return Icons.profile
+            Icons.profile
         }
     }
 
@@ -67,9 +67,9 @@ public enum AppSections {
     public static func hasSymbolVariant(for section: Section) -> Bool {
         switch section {
         case .chat, .lists, .settings:
-            return true
+            true
         case .pantry, .profile:
-            return false
+            false
         }
     }
 
@@ -77,15 +77,15 @@ public enum AppSections {
     public static func accessibilityIdentifier(for section: Section) -> String {
         switch section {
         case .pantry:
-            return AccessibilityUtilities.Identifier.pantryTab
+            AccessibilityUtilities.Identifier.pantryTab
         case .chat:
-            return AccessibilityUtilities.Identifier.chatTab
+            AccessibilityUtilities.Identifier.chatTab
         case .lists:
-            return AccessibilityUtilities.Identifier.listsTab
+            AccessibilityUtilities.Identifier.listsTab
         case .settings:
-            return AccessibilityUtilities.Identifier.settingsTab
+            AccessibilityUtilities.Identifier.settingsTab
         case .profile:
-            return "profileTab"
+            "profileTab"
         }
     }
 
@@ -104,7 +104,7 @@ public enum AppSections {
     /// Get the icon to use in empty states (same as section icon for consistency)
     public static func emptyStateIcon(for section: Section) -> String {
         // Returns the same icon as used everywhere for complete consistency
-        return icon(for: section)
+        icon(for: section)
     }
 
     /// Create an empty state configuration for a section
@@ -112,50 +112,50 @@ public enum AppSections {
     public static func emptyStateConfig(
         for section: Section,
         actionTitle: String? = nil,
-        action: (@Sendable () -> Void)? = nil
+        action: (@Sendable () -> Void)? = nil,
     ) -> EmptyStateConfig {
         switch section {
         case .pantry:
-            return EmptyStateConfig(
+            EmptyStateConfig(
                 icon: emptyStateIcon(for: section),
                 title: L("pantry.empty"),
                 subtitle: L("pantry.empty_message"),
                 actionTitle: actionTitle ?? L("pantry.add_first_item"),
-                action: action
+                action: action,
             )
         case .chat:
-            return EmptyStateConfig(
+            EmptyStateConfig(
                 icon: emptyStateIcon(for: section),
                 title: L("chat.empty"),
                 subtitle: L("chat.empty_message"),
                 actionTitle: actionTitle ?? L("chat.send_message"),
-                action: action
+                action: action,
             )
         case .lists:
-            return EmptyStateConfig(
+            EmptyStateConfig(
                 icon: emptyStateIcon(for: section),
                 title: L("lists.empty"),
                 subtitle: L("lists.empty_message"),
                 actionTitle: actionTitle ?? L("lists.create"),
-                action: action
+                action: action,
             )
         case .settings:
             // Settings typically doesn't have an empty state
-            return EmptyStateConfig(
+            EmptyStateConfig(
                 icon: emptyStateIcon(for: section),
                 title: L("settings.title"),
                 subtitle: "",
                 actionTitle: nil,
-                action: nil
+                action: nil,
             )
         case .profile:
             // Profile typically doesn't have an empty state
-            return EmptyStateConfig(
+            EmptyStateConfig(
                 icon: emptyStateIcon(for: section),
                 title: L("settings.profile"),
                 subtitle: "",
                 actionTitle: nil,
-                action: nil
+                action: nil,
             )
         }
     }
@@ -184,15 +184,15 @@ extension AppSections.Section {
     var toMainTab: MainTab? {
         switch self {
         case .pantry:
-            return .pantry
+            .pantry
         case .chat:
-            return .chat
+            .chat
         case .lists:
-            return .lists
+            .lists
         case .settings:
-            return .settings
+            .settings
         case .profile:
-            return .profile
+            .profile
         }
     }
 }
@@ -243,13 +243,13 @@ public extension AppSections {
         icon: String = HouseholdIcons.noHousehold,
         titleKey: String,
         subtitleKey: String,
-        actions: [EmptyStateAction] = []
+        actions: [EmptyStateAction] = [],
     ) -> EmptyStateConfig {
         EmptyStateConfig(
             icon: icon,
             title: L(titleKey),
             subtitle: L(subtitleKey),
-            actions: actions
+            actions: actions,
         )
     }
 }

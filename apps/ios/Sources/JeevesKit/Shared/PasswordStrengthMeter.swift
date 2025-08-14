@@ -17,32 +17,32 @@ public enum PasswordStrength: CaseIterable {
 
     var color: Color {
         switch self {
-        case .veryWeak: return DesignTokens.Colors.Status.error
-        case .weak: return .orange
-        case .fair: return .yellow
-        case .good: return DesignTokens.Colors.Status.success
-        case .strong: return DesignTokens.Colors.Status.success
+        case .veryWeak: DesignTokens.Colors.Status.error
+        case .weak: .orange
+        case .fair: .yellow
+        case .good: DesignTokens.Colors.Status.success
+        case .strong: DesignTokens.Colors.Status.success
         }
     }
 
     @MainActor
     var label: String {
         switch self {
-        case .veryWeak: return L("password.strength.very_weak")
-        case .weak: return L("password.strength.weak")
-        case .fair: return L("password.strength.fair")
-        case .good: return L("password.strength.good")
-        case .strong: return L("password.strength.strong")
+        case .veryWeak: L("password.strength.very_weak")
+        case .weak: L("password.strength.weak")
+        case .fair: L("password.strength.fair")
+        case .good: L("password.strength.good")
+        case .strong: L("password.strength.strong")
         }
     }
 
     var progress: CGFloat {
         switch self {
-        case .veryWeak: return 0.2
-        case .weak: return 0.4
-        case .fair: return 0.6
-        case .good: return 0.8
-        case .strong: return 1.0
+        case .veryWeak: 0.2
+        case .weak: 0.4
+        case .fair: 0.6
+        case .good: 0.8
+        case .strong: 1.0
         }
     }
 }
@@ -112,13 +112,13 @@ public struct PasswordStrengthMeter: View {
         }
 
         // Character variety scoring
-        if password.contains(where: { $0.isUppercase }) {
+        if password.contains(where: \.isUppercase) {
             score += 1
         }
-        if password.contains(where: { $0.isLowercase }) {
+        if password.contains(where: \.isLowercase) {
             score += 1
         }
-        if password.contains(where: { $0.isNumber }) {
+        if password.contains(where: \.isNumber) {
             score += 1
         }
         // Special characters (TODO: Add when Phase 2 is implemented)

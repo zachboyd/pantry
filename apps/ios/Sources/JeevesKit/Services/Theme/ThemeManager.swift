@@ -34,11 +34,11 @@ public final class ThemeManager: Sendable {
     public var colorScheme: ColorScheme? {
         switch currentTheme {
         case .system:
-            return nil // Let system decide
+            nil // Let system decide
         case .light:
-            return .light
+            .light
         case .dark:
-            return .dark
+            .dark
         }
     }
 
@@ -96,42 +96,42 @@ public extension ThemePreference {
     @MainActor
     var displayName: String {
         switch self {
-        case .system: return L("settings.appearance.theme.system")
-        case .light: return L("settings.appearance.theme.light")
-        case .dark: return L("settings.appearance.theme.dark")
+        case .system: L("settings.appearance.theme.system")
+        case .light: L("settings.appearance.theme.light")
+        case .dark: L("settings.appearance.theme.dark")
         }
     }
 
     @MainActor
     var description: String {
         switch self {
-        case .system: return L("settings.appearance.theme.system.description")
-        case .light: return L("settings.appearance.theme.light.description")
-        case .dark: return L("settings.appearance.theme.dark.description")
+        case .system: L("settings.appearance.theme.system.description")
+        case .light: L("settings.appearance.theme.light.description")
+        case .dark: L("settings.appearance.theme.dark.description")
         }
     }
 
     var iconName: String {
         switch self {
-        case .system: return "gear"
-        case .light: return "sun.max"
-        case .dark: return "moon"
+        case .system: "gear"
+        case .light: "sun.max"
+        case .dark: "moon"
         }
     }
 
     var color: Color {
         switch self {
-        case .system: return DesignTokens.Colors.Text.secondary
-        case .light: return .orange
-        case .dark: return .indigo
+        case .system: DesignTokens.Colors.Text.secondary
+        case .light: .orange
+        case .dark: .indigo
         }
     }
 
     var colorScheme: ColorScheme? {
         switch self {
-        case .system: return nil
-        case .light: return .light
-        case .dark: return .dark
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
         }
     }
 }

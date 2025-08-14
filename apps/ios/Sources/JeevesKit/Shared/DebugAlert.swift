@@ -15,7 +15,7 @@ public extension View {
         message: String? = nil,
         primaryButton: String = "OK",
         onPrimaryAction: (() -> Void)? = nil,
-        includeDebugOptions: Bool = true
+        includeDebugOptions: Bool = true,
     ) -> some View {
         alert(title, isPresented: isPresented) {
             Button(primaryButton) {
@@ -30,7 +30,7 @@ public extension View {
                 }
             #endif
         } message: {
-            if let message = message {
+            if let message {
                 Text(message)
             }
         }
@@ -40,7 +40,7 @@ public extension View {
     func errorAlert(
         isPresented: Binding<Bool>,
         error: String?,
-        onDismiss: (() -> Void)? = nil
+        onDismiss: (() -> Void)? = nil,
     ) -> some View {
         alert("Error", isPresented: isPresented) {
             Button("OK") {
@@ -53,7 +53,7 @@ public extension View {
                 }
             #endif
         } message: {
-            if let error = error {
+            if let error {
                 Text(error)
             }
         }
@@ -72,7 +72,7 @@ public extension View {
             {
                 window.rootViewController = UIHostingController(
                     rootView: AppRootView()
-                        .withAppState()
+                        .withAppState(),
                 )
             }
         }

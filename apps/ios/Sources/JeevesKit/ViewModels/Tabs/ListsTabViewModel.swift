@@ -146,8 +146,8 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
     /// Load shopping lists for a specific household
     public func loadShoppingLists(for householdId: String) async {
         await executeTask(.load) { [weak self] in
-            guard let self = self else { return }
-            await self.performLoadShoppingLists(for: householdId)
+            guard let self else { return }
+            await performLoadShoppingLists(for: householdId)
         }
     }
 
@@ -161,10 +161,10 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
         Self.logger.info("📝 Creating shopping list: \(name)")
 
         let result: ShoppingList? = await executeTask(.create) { [weak self] in
-            guard let self = self else { throw ViewModelError.unknown("Self reference lost") }
-            let list = try await self.dependencies.shoppingListService.createList(
+            guard let self else { throw ViewModelError.unknown("Self reference lost") }
+            let list = try await dependencies.shoppingListService.createList(
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                householdId: householdId
+                householdId: householdId,
             )
 
             await MainActor.run {
@@ -189,7 +189,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
         Self.logger.info("🗑️ Deleting shopping list: \(list.name)")
 
         let result: Bool? = await executeTask(.delete) { [weak self] in
-            guard let self = self else { return false }
+            guard let self else { return false }
             // This would be implemented in the shopping list service
             // For now, simulate success
             try await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay
@@ -220,8 +220,8 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
         Self.logger.info("➕ Adding item to list: \(item.name)")
 
         let result: Void? = await executeTask(.addItem) { [weak self] in
-            guard let self = self else { return }
-            try await self.dependencies.shoppingListService.addItem(to: listId, item: item)
+            guard let self else { return }
+            try await dependencies.shoppingListService.addItem(to: listId, item: item)
 
             await MainActor.run {
                 // Update local list
@@ -239,7 +239,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
                             items: updatedItems,
                             createdBy: updatedList.createdBy,
                             createdAt: updatedList.createdAt,
-                            updatedAt: Date()
+                            updatedAt: Date(),
                         )
 
                         state.lists[index] = newList
@@ -259,8 +259,8 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
         Self.logger.info("🗑️ Removing item from list")
 
         let result: Void? = await executeTask(.removeItem) { [weak self] in
-            guard let self = self else { return }
-            try await self.dependencies.shoppingListService.removeItem(from: listId, itemId: itemId)
+            guard let self else { return }
+            try await dependencies.shoppingListService.removeItem(from: listId, itemId: itemId)
 
             await MainActor.run {
                 // Update local list
@@ -277,7 +277,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
                             items: updatedItems,
                             createdBy: updatedList.createdBy,
                             createdAt: updatedList.createdAt,
-                            updatedAt: Date()
+                            updatedAt: Date(),
                         )
 
                         state.lists[index] = newList
@@ -306,11 +306,11 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
             isCompleted: !item.isCompleted,
             addedBy: item.addedBy,
             completedBy: item.isCompleted ? nil : "current_user", // This would be actual user ID
-            completedAt: item.isCompleted ? nil : Date()
+            completedAt: item.isCompleted ? nil : Date(),
         )
 
         let result: Bool? = await executeTask(.updateQuantity) { [weak self] in
-            guard let self = self else { return false }
+            guard let self else { return false }
             // This would update the item through the service
             // For now, just update locally
             await MainActor.run {
@@ -330,7 +330,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
                             items: updatedItems,
                             createdBy: updatedList.createdBy,
                             createdAt: updatedList.createdAt,
-                            updatedAt: Date()
+                            updatedAt: Date(),
                         )
 
                         state.lists[listIndex] = newList
@@ -441,13 +441,13 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
 
         for list in lists {
             let listItemCount = list.items.count
-            let listCompletedCount = list.items.filter { $0.isCompleted }.count
+            let listCompletedCount = list.items.count(where: { $0.isCompleted })
 
             totalItems += listItemCount
             completedItems += listCompletedCount
 
             // Consider a list completed if all items are completed
-            if listItemCount > 0 && listCompletedCount == listItemCount {
+            if listItemCount > 0, listCompletedCount == listItemCount {
                 completedLists += 1
             }
         }
@@ -494,27 +494,27 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
 public extension ListsTabViewModel {
     /// Get active (incomplete) lists
     func getActiveLists() -> [ShoppingList] {
-        return state.lists.filter { list in
+        state.lists.filter { list in
             !list.items.isEmpty && list.items.contains { !$0.isCompleted }
         }
     }
 
     /// Get completed lists
     func getCompletedLists() -> [ShoppingList] {
-        return state.lists.filter { list in
-            !list.items.isEmpty && list.items.allSatisfy { $0.isCompleted }
+        state.lists.filter { list in
+            !list.items.isEmpty && list.items.allSatisfy(\.isCompleted)
         }
     }
 
     /// Get lists by creation date
     func getRecentLists(limit: Int = 5) -> [ShoppingList] {
-        return Array(state.lists.sorted { $0.createdAt > $1.createdAt }.prefix(limit))
+        Array(state.lists.sorted { $0.createdAt > $1.createdAt }.prefix(limit))
     }
 
     /// Get completion percentage for a specific list
     func getCompletionPercentage(for list: ShoppingList) -> Double {
         guard !list.items.isEmpty else { return 0 }
-        let completedCount = list.items.filter { $0.isCompleted }.count
+        let completedCount = list.items.count(where: { $0.isCompleted })
         return Double(completedCount) / Double(list.items.count)
     }
 }

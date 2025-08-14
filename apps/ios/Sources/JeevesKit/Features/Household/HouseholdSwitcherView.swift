@@ -36,7 +36,7 @@ public struct HouseholdSwitcherView: View {
                             isSelected: household.id == currentHouseholdId,
                             onSelect: {
                                 selectHousehold(household)
-                            }
+                            },
                         )
                     }
                 } header: {
@@ -87,7 +87,7 @@ public struct HouseholdSwitcherView: View {
                     onComplete: { _ in
                         showingCreateHousehold = false
                         // TODO: Refresh households list
-                    }
+                    },
                 )
             }
         }
@@ -98,7 +98,7 @@ public struct HouseholdSwitcherView: View {
                     onComplete: { _ in
                         showingJoinHousehold = false
                         // TODO: Refresh households list
-                    }
+                    },
                 )
             }
         }
@@ -161,6 +161,6 @@ struct HouseholdRowView: View {
 #Preview {
     HouseholdSwitcherView(
         currentHouseholdId: "1",
-        onSelectHousehold: { _ in }
+        onSelectHousehold: { _ in },
     )
 }

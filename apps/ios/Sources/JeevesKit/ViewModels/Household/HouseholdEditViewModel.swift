@@ -136,7 +136,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         let initialState = State(
             mode: mode,
             householdId: householdId,
-            isReadOnly: isReadOnly
+            isReadOnly: isReadOnly,
         )
         super.init(dependencies: dependencies, initialState: initialState)
         Self.logger.info("🏠 HouseholdEditViewModel initialized - Mode: \(mode), ReadOnly: \(isReadOnly)")
@@ -195,8 +195,8 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
     /// Load household data for editing
     public func loadHousehold(id: String) async {
         await executeTask(.load) { [weak self] in
-            guard let self = self else { return }
-            await self.performLoadHousehold(id: id)
+            guard let self else { return }
+            await performLoadHousehold(id: id)
         }
     }
 
@@ -308,7 +308,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         let result: Household? = await executeTask(.save) { [weak self, dependencies] in
             let household = try await dependencies.householdService.createHousehold(
                 name: trimmedName,
-                description: description
+                description: description,
             )
 
             await MainActor.run {
@@ -347,7 +347,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
             let household = try await dependencies.householdService.updateHousehold(
                 id: householdId,
                 name: trimmedName,
-                description: description
+                description: description,
             )
 
             await MainActor.run {

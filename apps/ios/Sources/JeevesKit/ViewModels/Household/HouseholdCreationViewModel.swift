@@ -46,7 +46,7 @@ public final class HouseholdCreationViewModel: BaseReactiveViewModel<HouseholdCr
 
             let household = try await self.dependencies.householdService.createHousehold(
                 name: trimmedName,
-                description: trimmedDescription.isEmpty ? nil : trimmedDescription
+                description: trimmedDescription.isEmpty ? nil : trimmedDescription,
             )
 
             Self.logger.info("Successfully created household: \(household.id)")

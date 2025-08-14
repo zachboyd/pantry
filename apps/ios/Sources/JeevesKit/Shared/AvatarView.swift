@@ -12,19 +12,19 @@ public struct AvatarView: View {
 
         var value: CGFloat {
             switch self {
-            case .small: return 32
-            case .medium: return 44
-            case .large: return 64
-            case .extraLarge: return 80
+            case .small: 32
+            case .medium: 44
+            case .large: 64
+            case .extraLarge: 80
             }
         }
 
         var fontSize: CGFloat {
             switch self {
-            case .small: return 14
-            case .medium: return 18
-            case .large: return 24
-            case .extraLarge: return 32
+            case .small: 14
+            case .medium: 18
+            case .large: 24
+            case .extraLarge: 32
             }
         }
     }
@@ -79,10 +79,10 @@ public struct AvatarView: View {
 
     public var body: some View {
         let avatarContent = Group {
-            if let user = user, user.isAi {
+            if let user, user.isAi {
                 // Show AI avatar for AI users using the dedicated component
                 AIAvatarView(customSize: size.value)
-            } else if let avatarUrl = avatarUrl,
+            } else if let avatarUrl,
                       !avatarUrl.isEmpty,
                       let url = URL(string: avatarUrl)
             {
@@ -120,7 +120,7 @@ public struct AvatarView: View {
         .frame(width: size.value, height: size.value)
         .contentShape(Circle())
 
-        if let onTap = onTap {
+        if let onTap {
             Button(action: onTap) {
                 avatarContent
             }
@@ -176,9 +176,9 @@ public struct AvatarView: View {
                         id: UUID().uuidString,
                         email: "test@example.com",
                         name: "John Doe",
-                        createdAt: Date()
+                        createdAt: Date(),
                     ),
-                    size: size
+                    size: size,
                 )
 
                 Text(String(describing: size))
@@ -198,8 +198,8 @@ public struct AvatarView: View {
                 id: UUID().uuidString,
                 email: "test@example.com",
                 name: "Jane Smith",
-                createdAt: Date()
-            )
+                createdAt: Date(),
+            ),
         )
 
         // With single name
@@ -208,8 +208,8 @@ public struct AvatarView: View {
                 id: UUID().uuidString,
                 email: "test@example.com",
                 name: "Madonna",
-                createdAt: Date()
-            )
+                createdAt: Date(),
+            ),
         )
 
         // No user
@@ -221,11 +221,11 @@ public struct AvatarView: View {
                 id: UUID().uuidString,
                 email: "test@example.com",
                 name: "Tap Me",
-                createdAt: Date()
+                createdAt: Date(),
             ),
             onTap: {
                 print("Avatar tapped!")
-            }
+            },
         )
     }
     .padding()

@@ -31,9 +31,9 @@ public struct MainTabView: View {
             if showNoHouseholdState {
                 NoHouseholdContentView(
                     showingCreateHousehold: $showingCreateHousehold,
-                    showingJoinHousehold: $showingJoinHousehold
+                    showingJoinHousehold: $showingJoinHousehold,
                 )
-            } else if DeviceType.isiPad && sizeClassInfo.isRegular {
+            } else if DeviceType.isiPad, sizeClassInfo.isRegular {
                 // iPad split view layout
                 iPadLayout
             } else {
@@ -70,7 +70,7 @@ public struct MainTabView: View {
                     onComplete: { _ in
                         showingJoinHousehold = false
                         // The household selection will be handled by hydration
-                    }
+                    },
                 )
             }
         }
@@ -114,7 +114,7 @@ public struct MainTabView: View {
                     HStack(spacing: 12) {
                         AvatarView(
                             user: appState?.currentUser,
-                            size: .medium
+                            size: .medium,
                         )
 
                         VStack(alignment: .leading, spacing: 2) {
@@ -182,7 +182,7 @@ public struct MainTabView: View {
                 currentHousehold: appState?.currentHousehold,
                 onSelectHousehold: { household in
                     appState?.selectHousehold(household)
-                }
+                },
             )
         case .chat:
             ChatTabView()
@@ -206,7 +206,7 @@ public struct MainTabView: View {
                 },
                 onSelectHousehold: { household in
                     currentAppState?.selectHousehold(household)
-                }
+                },
             )
         }
     }
@@ -224,16 +224,16 @@ public struct MainTabView: View {
     private func navigationPath(for tab: MainTab) -> Binding<NavigationPath> {
         switch tab {
         case .pantry:
-            return $pantryPath
+            $pantryPath
         case .chat:
-            return $chatPath
+            $chatPath
         case .lists:
-            return $listsPath
+            $listsPath
         case .settings:
-            return $settingsPath
+            $settingsPath
         case .profile:
             // Profile doesn't have its own path in the current implementation
-            return $settingsPath
+            $settingsPath
         }
     }
 
@@ -241,9 +241,9 @@ public struct MainTabView: View {
     private func tabLabelColor(for tab: MainTab) -> Color {
         switch selectedTab == tab {
         case true:
-            return DesignTokens.Colors.Primary.base
+            DesignTokens.Colors.Primary.base
         case false:
-            return DesignTokens.Colors.Text.primary
+            DesignTokens.Colors.Text.primary
         }
     }
 
@@ -268,14 +268,14 @@ public struct MainTabView: View {
                 },
                 onComplete: { _ in
                     // Handle completion
-                }
+                },
             )
         case .householdSwitcher:
             HouseholdSwitcherView(
                 currentHouseholdId: appState?.currentHousehold?.id,
                 onSelectHousehold: { _ in
                     // Handle household selection through container
-                }
+                },
             )
         // Profile Navigation
         case .userProfile:
@@ -295,7 +295,7 @@ public struct MainTabView: View {
                 onSelectHousehold: { household in
                     Logger.app.info("🏠 UserProfileView selectHousehold called, appState: \(currentAppState != nil ? "exists" : "nil")")
                     currentAppState?.selectHousehold(household)
-                }
+                },
             )
         case .appearanceSettings:
             AppearanceSettingsView()
@@ -306,7 +306,7 @@ public struct MainTabView: View {
                 title: L("error.generic_title"),
                 subtitle: "Tab navigation should not be pushed",
                 actionTitle: nil,
-                action: nil
+                action: nil,
             ))
         // Auth Navigation (shouldn't be used in main app)
         case .authentication, .onboarding:
@@ -315,7 +315,7 @@ public struct MainTabView: View {
                 title: L("error.generic_title"),
                 subtitle: "Auth navigation not available here",
                 actionTitle: nil,
-                action: nil
+                action: nil,
             ))
         }
     }
@@ -341,7 +341,7 @@ private struct NoHouseholdContentView: View {
                         Task { @MainActor in
                             showingCreateHousehold = true
                         }
-                    }
+                    },
                 ),
                 EmptyStateAction(
                     title: L("household.join_existing"),
@@ -350,9 +350,9 @@ private struct NoHouseholdContentView: View {
                         Task { @MainActor in
                             showingJoinHousehold = true
                         }
-                    }
+                    },
                 ),
-            ]
+            ],
         ))
     }
 }

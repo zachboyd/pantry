@@ -30,7 +30,7 @@ public struct JeevesTabView: View {
         Group {
             if isLoading {
                 StandardLoadingView(showLogo: false)
-            } else if let viewModel = viewModel {
+            } else if let viewModel {
                 pantryContent(viewModel: viewModel)
             } else {
                 EmptyStateView(config: EmptyStateConfig(
@@ -40,7 +40,7 @@ public struct JeevesTabView: View {
                     actionTitle: L("error.try_again"),
                     action: {
                         Task { await loadViewModel() }
-                    }
+                    },
                 ))
             }
         }
@@ -74,7 +74,7 @@ public struct JeevesTabView: View {
                             Task { @MainActor in
                                 viewModel.showAddItemSheet()
                             }
-                        }
+                        },
                     ))
                 } else {
                     // Content with items
@@ -99,7 +99,7 @@ public struct JeevesTabView: View {
         }
         .sheet(isPresented: Binding(
             get: { viewModel.showingAddItemSheet },
-            set: { _ in viewModel.hideAddItemSheet() }
+            set: { _ in viewModel.hideAddItemSheet() },
         )) {
             addIngredientSheet()
         }
@@ -108,7 +108,7 @@ public struct JeevesTabView: View {
         }
         .alert(L("error"), isPresented: Binding(
             get: { viewModel.showingError },
-            set: { _ in viewModel.dismissError() }
+            set: { _ in viewModel.dismissError() },
         )) {
             Button(L("ok")) {
                 viewModel.dismissError()
@@ -156,7 +156,7 @@ public struct JeevesTabView: View {
     }
 
     private func loadViewModel() async {
-        guard let factory = factory else {
+        guard let factory else {
             isLoading = false
             return
         }
@@ -170,12 +170,12 @@ public struct JeevesTabView: View {
             await newViewModel.onAppear()
 
             await MainActor.run {
-                self.viewModel = newViewModel
-                self.isLoading = false
+                viewModel = newViewModel
+                isLoading = false
             }
         } catch {
             await MainActor.run {
-                self.isLoading = false
+                isLoading = false
             }
         }
     }
@@ -227,13 +227,13 @@ struct ItemRow: View {
 
     private func categoryIcon(for category: ItemCategory) -> String {
         switch category {
-        case .produce: return "leaf"
-        case .dairy: return "drop"
-        case .meat: return "fish"
-        case .pantry: return "archivebox"
-        case .frozen: return "snowflake"
-        case .beverages: return "cup.and.saucer"
-        case .other: return "questionmark.circle"
+        case .produce: "leaf"
+        case .dairy: "drop"
+        case .meat: "fish"
+        case .pantry: "archivebox"
+        case .frozen: "snowflake"
+        case .beverages: "cup.and.saucer"
+        case .other: "questionmark.circle"
         }
     }
 }

@@ -68,7 +68,7 @@ public final class UserService: UserServiceProtocol {
         }
 
         let user = try await fetchUserFromGraphQL(userId: id)
-        if let user = user {
+        if let user {
             userCache[id] = user
         }
         return user
@@ -173,9 +173,9 @@ public final class UserService: UserServiceProtocol {
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
-            cachePolicy: .returnCacheDataAndFetch
+            cachePolicy: .returnCacheDataAndFetch,
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetCurrentUserQuery.Data>, Error>) in
-            guard let self = self, let result = result else { return }
+            guard let self, let result else { return }
 
             switch graphQLResult {
             case let .success(data):
@@ -198,7 +198,7 @@ public final class UserService: UserServiceProtocol {
                         preferences: userData.preferences,
                         isAi: userData.is_ai,
                         createdAt: userData.created_at,
-                        updatedAt: userData.updated_at
+                        updatedAt: userData.updated_at,
                     )
 
                     // Update the watched result (this triggers view updates!)
@@ -270,15 +270,15 @@ public final class UserService: UserServiceProtocol {
         // Create a REAL Apollo watcher that observes cache changes!
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
-            cachePolicy: .returnCacheDataAndFetch
+            cachePolicy: .returnCacheDataAndFetch,
         ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.GetUserQuery.Data>, Error>) in
-            guard let self = self, let result = result else { return }
+            guard let self, let result else { return }
 
             switch graphQLResult {
             case let .success(data):
                 if let userData = data.data?.user {
                     // Transform GraphQL data to User model
-                    let user = self.createUserFromGraphQLData(userData)
+                    let user = createUserFromGraphQLData(userData)
 
                     // Update the watched result (this triggers view updates!)
                     Task { @MainActor in
@@ -327,7 +327,7 @@ public final class UserService: UserServiceProtocol {
 
     // Helper method to create User from GraphQL data
     private func createUserFromGraphQLData(_ userData: JeevesGraphQL.GetUserQuery.Data.User) -> User {
-        return User(
+        User(
             id: userData.id,
             authUserId: userData.auth_user_id,
             email: userData.email,
@@ -344,7 +344,7 @@ public final class UserService: UserServiceProtocol {
             preferences: userData.preferences,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
-            updatedAt: userData.updated_at
+            updatedAt: userData.updated_at,
         )
     }
 }
@@ -378,7 +378,7 @@ private extension UserService {
             preferences: userData.preferences,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
-            updatedAt: userData.updated_at
+            updatedAt: userData.updated_at,
         )
 
         Self.logger.info("✅ GraphQL current user fetched: \(user.name ?? "Unknown")")
@@ -413,7 +413,7 @@ private extension UserService {
             preferences: userData.preferences,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
-            updatedAt: userData.updated_at
+            updatedAt: userData.updated_at,
         )
 
         Self.logger.info("✅ GraphQL user fetched: \(user.name ?? "Unknown")")
@@ -433,7 +433,7 @@ private extension UserService {
             avatarUrl: user.avatarUrl.map { .some($0) } ?? .none,
             phone: user.phone.map { .some($0) } ?? .none,
             birthDate: user.birthDate.map { .some($0) } ?? .none,
-            email: user.email.map { .some($0) } ?? .none
+            email: user.email.map { .some($0) } ?? .none,
         )
 
         let mutation = JeevesGraphQL.UpdateUserMutation(input: input)
@@ -459,7 +459,7 @@ private extension UserService {
             preferences: userData.preferences,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
-            updatedAt: userData.updated_at
+            updatedAt: userData.updated_at,
         )
 
         Self.logger.info("✅ GraphQL user updated: \(updatedUser.name ?? "Unknown")")
@@ -480,7 +480,7 @@ private extension UserService {
 extension UserService: ServiceLogging {
     public func logOperation(_ operation: String, parameters: Any?) {
         Self.logger.info("👤 Operation: \(operation)")
-        if let parameters = parameters {
+        if let parameters {
             Self.logger.debug("📊 Parameters: \(String(describing: parameters))")
         }
     }
@@ -491,7 +491,7 @@ extension UserService: ServiceLogging {
 
     public func logSuccess(_ operation: String, result: Any?) {
         Self.logger.info("✅ Success: \(operation)")
-        if let result = result {
+        if let result {
             Self.logger.debug("📊 Result: \(String(describing: result))")
         }
     }
@@ -531,7 +531,7 @@ extension UserService: ServiceHealth {
             isHealthy: isHealthy,
             lastChecked: Date(),
             errors: errors,
-            responseTime: responseTime
+            responseTime: responseTime,
         )
 
         Self.logger.info("🏥 User service health check: \(isHealthy ? "✅ Healthy" : "❌ Unhealthy")")

@@ -18,7 +18,7 @@ public final class ServiceFactory {
     /// Create AuthService with all required dependencies
     public static func createAuthService(
         authEndpoint: String = getAuthEndpoint(),
-        apolloClient: ApolloClient? = nil
+        apolloClient: ApolloClient? = nil,
     ) throws -> AuthService {
         logger.info("🏭 Creating AuthService")
 
@@ -28,7 +28,7 @@ public final class ServiceFactory {
         let service = AuthService(
             authClient: authClient,
             authTokenManager: authTokenManager,
-            apolloClient: apolloClient
+            apolloClient: apolloClient,
         )
 
         logger.info("✅ AuthService created successfully")
@@ -50,7 +50,7 @@ public final class ServiceFactory {
 
     /// Create GraphQL Service with all required dependencies
     public static func createGraphQLService(
-        apolloClientService: ApolloClientService
+        apolloClientService: ApolloClientService,
     ) throws -> GraphQLService {
         logger.info("🏭 Creating GraphQLService")
 
@@ -64,14 +64,14 @@ public final class ServiceFactory {
     public static func createHouseholdService(
         graphQLService: GraphQLServiceProtocol,
         authService: any AuthServiceProtocol,
-        watchManager: WatchManager? = nil
+        watchManager: WatchManager? = nil,
     ) throws -> HouseholdService {
         logger.info("🏭 Creating HouseholdService")
 
         let service = HouseholdService(
             graphQLService: graphQLService,
             authService: authService,
-            watchManager: watchManager
+            watchManager: watchManager,
         )
 
         logger.info("✅ HouseholdService created successfully")
@@ -82,14 +82,14 @@ public final class ServiceFactory {
     public static func createUserService(
         authService: any AuthServiceProtocol,
         graphQLService: GraphQLServiceProtocol,
-        watchManager: WatchManager? = nil
+        watchManager: WatchManager? = nil,
     ) throws -> UserService {
         logger.info("🏭 Creating UserService with GraphQL")
 
         let service = UserService(
             authService: authService,
             graphQLService: graphQLService,
-            watchManager: watchManager
+            watchManager: watchManager,
         )
 
         logger.info("✅ UserService created successfully")
@@ -99,13 +99,13 @@ public final class ServiceFactory {
     /// Create UserPreferencesService with all required dependencies
     public static func createUserPreferencesService(
         authService: any AuthServiceProtocol,
-        userDefaults: UserDefaults = .standard
+        userDefaults: UserDefaults = .standard,
     ) throws -> UserPreferencesService {
         logger.info("🏭 Creating UserPreferencesService")
 
         let service = UserPreferencesService(
             authService: authService,
-            userDefaults: userDefaults
+            userDefaults: userDefaults,
         )
 
         logger.info("✅ UserPreferencesService created successfully")
@@ -114,12 +114,12 @@ public final class ServiceFactory {
 
     /// Create ItemService with all required dependencies
     public static func createItemService(
-        householdService: HouseholdServiceProtocol
+        householdService: HouseholdServiceProtocol,
     ) throws -> ItemServiceProtocol {
         logger.info("🏭 Creating ItemService")
 
         let service = ItemService(
-            householdService: householdService
+            householdService: householdService,
         )
 
         logger.info("✅ ItemService created successfully")
@@ -128,12 +128,12 @@ public final class ServiceFactory {
 
     /// Create ShoppingListService with all required dependencies
     public static func createShoppingListService(
-        householdService: HouseholdServiceProtocol
+        householdService: HouseholdServiceProtocol,
     ) throws -> ShoppingListServiceProtocol {
         logger.info("🏭 Creating ShoppingListService")
 
         let service = ShoppingListService(
-            householdService: householdService
+            householdService: householdService,
         )
 
         logger.info("✅ ShoppingListService created successfully")
@@ -154,14 +154,14 @@ public final class ServiceFactory {
     public static func createPermissionService(
         userService: UserServiceProtocol,
         householdService: HouseholdServiceProtocol,
-        apolloClient: ApolloClient? = nil
+        apolloClient: ApolloClient? = nil,
     ) async throws -> PermissionServiceProtocol {
         logger.info("🏭 Creating PermissionService")
 
         let service = PermissionService(userService: userService, householdService: householdService)
 
         // Subscribe to user updates if Apollo client is available
-        if let apolloClient = apolloClient {
+        if let apolloClient {
             await service.subscribeToUserUpdates(apolloClient: apolloClient)
         }
 
@@ -172,13 +172,13 @@ public final class ServiceFactory {
     /// Create HydrationService with all required dependencies
     public static func createHydrationService(
         graphQLService: GraphQLServiceProtocol,
-        watchManager: WatchManager? = nil
+        watchManager: WatchManager? = nil,
     ) throws -> HydrationService {
         logger.info("🏭 Creating HydrationService")
 
         let service = HydrationService(
             graphQLService: graphQLService,
-            watchManager: watchManager
+            watchManager: watchManager,
         )
 
         logger.info("✅ HydrationService created successfully")

@@ -52,7 +52,7 @@ public struct HouseholdHeaderView: View {
                     onSelectHousehold: { selectedHousehold in
                         onSelectHousehold?(selectedHousehold)
                         showingHouseholdSwitcher = false
-                    }
+                    },
                 )
             }
         }

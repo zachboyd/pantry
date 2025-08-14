@@ -224,7 +224,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     /// Show member actions for a specific member
     public func showMemberActions(for member: HouseholdMemberInfo) {
-        guard canManageMembers && member.canBeRemoved else {
+        guard canManageMembers, member.canBeRemoved else {
             Self.logger.warning("⚠️ Cannot show member actions - insufficient permissions")
             return
         }
@@ -245,15 +245,15 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     /// Change member role
     public func changeMemberRole(member: HouseholdMemberInfo, to newRole: MemberRole) async -> Bool {
-        guard canManageMembers && member.canChangeRole else {
+        guard canManageMembers, member.canChangeRole else {
             Self.logger.warning("⚠️ Cannot change member role - insufficient permissions")
             return false
         }
 
         Self.logger.info("👥 Changing role for member \(member.displayName) to \(newRole.rawValue)")
 
-        let householdId = self.householdId
-        let dependencies = self.dependencies
+        let householdId = householdId
+        let dependencies = dependencies
         let userId = member.userId
         _ = member.id // Capture member ID for potential future use
 
@@ -261,7 +261,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
             let _ = try await dependencies.householdService.updateMemberRole(
                 householdId: householdId,
                 userId: userId,
-                role: newRole
+                role: newRole,
             )
             let success = true
 
@@ -276,9 +276,9 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
                                     userId: member.userId,
                                     householdId: member.householdId,
                                     role: newRole,
-                                    joinedAt: member.joinedAt
+                                    joinedAt: member.joinedAt,
                                 ),
-                                user: member.user
+                                user: member.user,
                             )
                             state.members[index] = updatedMember
                         }
@@ -296,7 +296,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     /// Show remove member confirmation
     public func showRemoveMemberConfirmation(for member: HouseholdMemberInfo) {
-        guard canManageMembers && member.canBeRemoved else {
+        guard canManageMembers, member.canBeRemoved else {
             Self.logger.warning("⚠️ Cannot remove member - insufficient permissions")
             return
         }
@@ -318,22 +318,22 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     /// Remove member from household
     public func removeMember(_ member: HouseholdMemberInfo) async -> Bool {
-        guard canManageMembers && member.canBeRemoved else {
+        guard canManageMembers, member.canBeRemoved else {
             Self.logger.warning("⚠️ Cannot remove member - insufficient permissions")
             return false
         }
 
         Self.logger.info("🚪 Removing member: \(member.displayName)")
 
-        let householdId = self.householdId
-        let dependencies = self.dependencies
+        let householdId = householdId
+        let dependencies = dependencies
         let userId = member.userId
         _ = member.id // Capture member ID for potential future use
 
         let result: Bool? = await executeTask(.delete) {
             try await dependencies.householdService.removeMember(
                 from: householdId,
-                userId: userId
+                userId: userId,
             )
             let success = true
 

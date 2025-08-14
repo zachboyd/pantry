@@ -128,26 +128,24 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
             shoppingListUpdates: true,
             householdInvitations: true,
             pushNotificationsEnabled: preferences.pushNotificationsEnabled,
-            emailNotificationsEnabled: preferences.emailNotificationsEnabled
+            emailNotificationsEnabled: preferences.emailNotificationsEnabled,
         )
 
         try await updateNotificationSettings(notificationSettings)
 
         // For MVP, we create a User object with the updated preferences
         // In a full implementation, this would update the user via an API call
-        let createdAt: Date = {
-            if let createdAtString = authService.currentAuthUser?.createdAt {
-                return DateUtilities.dateFromGraphQLOrNow(createdAtString)
-            } else {
-                return Date()
-            }
-        }()
+        let createdAt: Date = if let createdAtString = authService.currentAuthUser?.createdAt {
+            DateUtilities.dateFromGraphQLOrNow(createdAtString)
+        } else {
+            Date()
+        }
 
         let updatedUser = User(
             id: authService.currentAuthUser?.id ?? UUID().uuidString,
             email: preferences.email,
             name: preferences.name,
-            createdAt: createdAt
+            createdAt: createdAt,
         )
 
         Self.logger.info("✅ User preferences updated successfully")
@@ -232,7 +230,7 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
            let notificationSettings = try? JSONDecoder().decode(NotificationSettings.self, from: notificationData)
         {
             preferences["notifications"] = try JSONSerialization.jsonObject(
-                with: JSONEncoder().encode(notificationSettings)
+                with: JSONEncoder().encode(notificationSettings),
             )
         }
 
@@ -241,7 +239,7 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
            let appSettings = try? JSONDecoder().decode(AppSettings.self, from: appData)
         {
             preferences["app"] = try JSONSerialization.jsonObject(
-                with: JSONEncoder().encode(appSettings)
+                with: JSONEncoder().encode(appSettings),
             )
         }
 
@@ -346,7 +344,7 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
 extension UserPreferencesService: ServiceLogging {
     public func logOperation(_ operation: String, parameters: Any?) {
         Self.logger.info("⚙️ Operation: \(operation)")
-        if let parameters = parameters {
+        if let parameters {
             Self.logger.debug("📊 Parameters: \(String(describing: parameters))")
         }
     }
@@ -357,7 +355,7 @@ extension UserPreferencesService: ServiceLogging {
 
     public func logSuccess(_ operation: String, result: Any?) {
         Self.logger.info("✅ Success: \(operation)")
-        if let result = result {
+        if let result {
             Self.logger.debug("📊 Result: \(String(describing: result))")
         }
     }
@@ -390,7 +388,7 @@ extension UserPreferencesService: ServiceHealth {
             isHealthy: isHealthy,
             lastChecked: Date(),
             errors: errors,
-            responseTime: responseTime
+            responseTime: responseTime,
         )
 
         Self.logger.info("🏥 User preferences service health check: \(isHealthy ? "✅ Healthy" : "❌ Unhealthy")")
@@ -444,13 +442,13 @@ public extension UserPreferencesService {
     /// Quick save for commonly changed preferences
     func quickSave(
         householdId: String? = nil,
-        theme: ThemePreference? = nil
+        theme: ThemePreference? = nil,
     ) async {
-        if let householdId = householdId {
+        if let householdId {
             await setLastSelectedHouseholdId(householdId)
         }
 
-        if let theme = theme {
+        if let theme {
             await setThemePreference(theme)
         }
     }

@@ -13,9 +13,9 @@ public struct ErrorAlertModifier: ViewModifier {
                 "Error",
                 isPresented: Binding(
                     get: { error != nil },
-                    set: { _ in error = nil }
+                    set: { _ in error = nil },
                 ),
-                presenting: error
+                presenting: error,
             ) { _ in
                 Button("OK") {
                     error = nil
@@ -43,7 +43,7 @@ public extension View {
     ///   - onDismiss: Optional closure called when the alert is dismissed
     func errorAlert(
         error: Binding<ViewModelError?>,
-        onDismiss: (() -> Void)? = nil
+        onDismiss: (() -> Void)? = nil,
     ) -> some View {
         modifier(ErrorAlertModifier(error: error, onDismiss: onDismiss))
     }
@@ -94,15 +94,13 @@ public struct ErrorHandler: Sendable {
     }
 
     public func handle(_ error: Error) {
-        let viewModelError: ViewModelError
-
-        switch error {
+        let viewModelError: ViewModelError = switch error {
         case let vmError as ViewModelError:
-            viewModelError = vmError
+            vmError
         case let validationError as ValidationError:
-            viewModelError = .validationFailed([validationError])
+            .validationFailed([validationError])
         default:
-            viewModelError = .unknown(error.localizedDescription)
+            .unknown(error.localizedDescription)
         }
 
         handler(viewModelError)
@@ -117,10 +115,10 @@ public extension View {
     ///   - priority: Task priority
     ///   - errorHandler: Error handler to use
     ///   - operation: The async operation to perform
-    func task<T>(
+    func task(
         priority: TaskPriority = .userInitiated,
         errorHandler: ErrorHandler,
-        _ operation: @escaping @Sendable () async throws -> T
+        _ operation: @escaping @Sendable () async throws -> some Any,
     ) -> some View {
         task(priority: priority) {
             do {

@@ -39,7 +39,7 @@ public struct SignUpView: View {
     }
 
     private var isFormValid: Bool {
-        return !email.isEmpty &&
+        !email.isEmpty &&
             email.contains("@") &&
             password.count >= PasswordConstants.minimumLength &&
             password == confirmPassword
@@ -89,7 +89,7 @@ public struct SignUpView: View {
                                 text: $password,
                                 isNewPassword: true,
                                 validation: { $0.count >= PasswordConstants.minimumLength },
-                                errorMessage: PasswordConstants.tooShortError
+                                errorMessage: PasswordConstants.tooShortError,
                             )
                             .focused($focusedField, equals: .password)
                             .onSubmit {
@@ -109,7 +109,7 @@ public struct SignUpView: View {
                             text: $confirmPassword,
                             isNewPassword: true,
                             validation: { $0 == password && !$0.isEmpty },
-                            errorMessage: PasswordConstants.mismatchError
+                            errorMessage: PasswordConstants.mismatchError,
                         )
                         .focused($focusedField, equals: .confirmPassword)
                         .onSubmit {
@@ -154,7 +154,7 @@ public struct SignUpView: View {
         Self.logger.info("📧 Email: \(email)")
         Self.logger.info("🔑 Password length: \(password.count)")
 
-        guard let authService = authService else {
+        guard let authService else {
             Self.logger.error("❌ Cannot sign up - authService not available")
             alertMessage = "Unable to sign up. Please try again."
             showingAlert = true

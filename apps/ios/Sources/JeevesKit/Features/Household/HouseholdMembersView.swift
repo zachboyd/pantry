@@ -21,8 +21,8 @@ public struct HouseholdMembersView: View {
 
     public var body: some View {
         Group {
-            if let membersWatch = membersWatch {
-                if membersWatch.isLoading && membersWatch.value == nil {
+            if let membersWatch {
+                if membersWatch.isLoading, membersWatch.value == nil {
                     // Initial loading state
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -38,7 +38,7 @@ public struct HouseholdMembersView: View {
                     ContentUnavailableView(
                         L("household.members.empty.title"),
                         systemImage: "person.2.slash",
-                        description: Text(L("household.members.empty.description"))
+                        description: Text(L("household.members.empty.description")),
                     )
                 }
             } else {
@@ -83,7 +83,7 @@ struct HouseholdMemberRowView: View {
             // Avatar using shared component
             AvatarView(
                 user: userInfo,
-                size: .medium
+                size: .medium,
             )
 
             VStack(alignment: .leading, spacing: 2) {
@@ -92,7 +92,7 @@ struct HouseholdMemberRowView: View {
                     .foregroundColor(DesignTokens.Colors.Text.primary)
 
                 // Only show email for non-AI users
-                if let userInfo = userInfo, !userInfo.isAi, let email = displayEmail {
+                if let userInfo, !userInfo.isAi, let email = displayEmail {
                     Text(email)
                         .font(DesignTokens.Typography.Semantic.caption())
                         .foregroundColor(DesignTokens.Colors.Text.secondary)
@@ -142,13 +142,13 @@ public extension HouseholdMember {
     var name: String {
         // TODO: Look up user name from userId
         // For now, generate mock names based on userId
-        return "User \(userId.prefix(3))"
+        "User \(userId.prefix(3))"
     }
 
     var email: String {
         // TODO: Look up user email from userId
         // For now, generate mock emails
-        return "user\(userId.prefix(3))@example.com"
+        "user\(userId.prefix(3))@example.com"
     }
 
     /// Get member initials for avatar
@@ -172,17 +172,17 @@ public extension HouseholdMember {
 public extension MemberRole {
     var displayName: String {
         switch self {
-        case .manager: return "Manager"
-        case .member: return "Member"
-        case .ai: return "AI"
+        case .manager: "Manager"
+        case .member: "Member"
+        case .ai: "AI"
         }
     }
 
     var color: Color {
         switch self {
-        case .manager: return DesignTokens.Colors.Primary.base
-        case .member: return DesignTokens.Colors.Text.secondary
-        case .ai: return DesignTokens.Colors.Secondary.base
+        case .manager: DesignTokens.Colors.Primary.base
+        case .member: DesignTokens.Colors.Text.secondary
+        case .ai: DesignTokens.Colors.Secondary.base
         }
     }
 }

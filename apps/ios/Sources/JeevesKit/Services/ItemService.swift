@@ -103,7 +103,7 @@ public final class ItemService: ItemServiceProtocol {
                 notes: "2% milk",
                 addedBy: "mock_user_1",
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
             ),
             Item(
                 id: UUID().uuidString,
@@ -117,7 +117,7 @@ public final class ItemService: ItemServiceProtocol {
                 notes: "Getting ripe",
                 addedBy: "mock_user_1",
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
             ),
             Item(
                 id: UUID().uuidString,
@@ -131,7 +131,7 @@ public final class ItemService: ItemServiceProtocol {
                 notes: "Organic, free-range",
                 addedBy: "mock_user_1",
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
             ),
             Item(
                 id: UUID().uuidString,
@@ -145,7 +145,7 @@ public final class ItemService: ItemServiceProtocol {
                 notes: "Jasmine rice",
                 addedBy: "mock_user_1",
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
             ),
             Item(
                 id: UUID().uuidString,
@@ -159,7 +159,7 @@ public final class ItemService: ItemServiceProtocol {
                 notes: "Organic",
                 addedBy: "mock_user_1",
                 createdAt: now,
-                updatedAt: now
+                updatedAt: now,
             ),
         ]
 
@@ -179,13 +179,13 @@ public enum ItemServiceError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case let .itemNotFound(id):
-            return "Item with ID '\(id)' not found"
+            "Item with ID '\(id)' not found"
         case let .householdNotFound(id):
-            return "Household with ID '\(id)' not found"
+            "Household with ID '\(id)' not found"
         case .invalidData:
-            return "Invalid pantry item data"
+            "Invalid pantry item data"
         case let .networkError(error):
-            return "Network error: \(error.localizedDescription)"
+            "Network error: \(error.localizedDescription)"
         }
     }
 }

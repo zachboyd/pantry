@@ -39,26 +39,26 @@ public final class OnboardingCoordinator {
         public var title: String {
             switch self {
             case .welcome:
-                return "Welcome"
+                "Welcome"
             case .householdChoice:
-                return "Household Setup"
+                "Household Setup"
             case .createHousehold:
-                return "Create Household"
+                "Create Household"
             case .joinHousehold:
-                return "Join Household"
+                "Join Household"
             case .notifications:
-                return "Notifications"
+                "Notifications"
             case .completion:
-                return "Complete"
+                "Complete"
             }
         }
 
         public var isModal: Bool {
             switch self {
             case .notifications, .completion:
-                return true
+                true
             default:
-                return false
+                false
             }
         }
     }
@@ -72,22 +72,22 @@ public final class OnboardingCoordinator {
         public var title: String {
             switch self {
             case .create:
-                return "Create New Household"
+                "Create New Household"
             case .join:
-                return "Join Existing Household"
+                "Join Existing Household"
             case .skip:
-                return "Skip for Now"
+                "Skip for Now"
             }
         }
 
         public var subtitle: String {
             switch self {
             case .create:
-                return "Start fresh with your own household"
+                "Start fresh with your own household"
             case .join:
-                return "Join a household using an invite code"
+                "Join a household using an invite code"
             case .skip:
-                return "You can set this up later"
+                "You can set this up later"
             }
         }
     }

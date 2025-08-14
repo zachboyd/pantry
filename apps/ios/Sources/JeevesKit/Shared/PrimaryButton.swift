@@ -23,36 +23,36 @@ public enum ButtonStyleVariant {
     var backgroundColor: Color {
         switch self {
         case .primary:
-            return Color.accentColor
+            Color.accentColor
         case .secondary:
-            return Color(UIColor.secondarySystemBackground)
+            Color(UIColor.secondarySystemBackground)
         }
     }
 
     var foregroundColor: Color {
         switch self {
         case .primary:
-            return .white
+            .white
         case .secondary:
-            return .accentColor
+            .accentColor
         }
     }
 
     var strokeColor: Color? {
         switch self {
         case .primary:
-            return nil
+            nil
         case .secondary:
-            return .accentColor
+            .accentColor
         }
     }
 
     var strokeWidth: CGFloat {
         switch self {
         case .primary:
-            return 0
+            0
         case .secondary:
-            return 1.0
+            1.0
         }
     }
 }
@@ -128,11 +128,11 @@ struct BaseButton: View {
 
     private var contentLayer: some View {
         HStack(spacing: Constants.contentSpacing) {
-            if isLoading && style == .primary {
+            if isLoading, style == .primary {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: style.foregroundColor))
                     .scaleEffect(Constants.loadingScaleFactor)
-            } else if let icon = icon {
+            } else if let icon {
                 Image(systemName: icon)
                     .foregroundColor(style.foregroundColor)
             }
@@ -186,7 +186,7 @@ public struct PrimaryButton: View {
             style: .primary,
             isLoading: isLoading,
             isDisabled: isDisabled,
-            action: action
+            action: action,
         )
     }
 }
@@ -222,7 +222,7 @@ public struct SecondaryButton: View {
             icon: icon,
             style: .secondary,
             isDisabled: isDisabled,
-            action: action
+            action: action,
         )
     }
 }

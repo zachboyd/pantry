@@ -67,13 +67,13 @@ public struct EnhancedLoadingView: View {
                             .easeInOut(duration: 0.6)
                                 .repeatForever(autoreverses: true)
                                 .delay(Double(index) * 0.2),
-                            value: scale
+                            value: scale,
                         )
                         .animation(
                             .easeInOut(duration: 0.6)
                                 .repeatForever(autoreverses: true)
                                 .delay(Double(index) * 0.2),
-                            value: opacity
+                            value: opacity,
                         )
                 }
             }
@@ -386,15 +386,15 @@ extension View {
                     LinearGradient(
                         colors: [.clear, .white.opacity(0.6), .clear],
                         startPoint: .leading,
-                        endPoint: .trailing
-                    )
+                        endPoint: .trailing,
+                    ),
                 )
                 .scaleEffect(x: isAnimating ? 1 : 0.01, anchor: .leading)
                 .animation(
                     .easeInOut(duration: 1.2).repeatForever(autoreverses: false),
-                    value: isAnimating
+                    value: isAnimating,
                 )
-                .clipped()
+                .clipped(),
         )
         .clipShape(RoundedRectangle(cornerRadius: 4))
     }
@@ -403,7 +403,7 @@ extension View {
     func contentTransition() -> some View {
         transition(.asymmetric(
             insertion: .move(edge: .trailing).combined(with: .opacity),
-            removal: .move(edge: .leading).combined(with: .opacity)
+            removal: .move(edge: .leading).combined(with: .opacity),
         ))
     }
 

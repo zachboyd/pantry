@@ -84,7 +84,7 @@ public final class WatchManager {
             query: query,
             cachePolicy: cachePolicy,
             resultHandler: { [weak self, weak result] graphQLResult in
-                guard let self = self, let result = result else { return }
+                guard let self, let result else { return }
 
                 Task { @MainActor in
                     switch graphQLResult {
@@ -106,7 +106,7 @@ public final class WatchManager {
                         self.logger.error("Query failed for \(key.queryType): \(error)")
                     }
                 }
-            }
+            },
         )
 
         // Store watcher - it already conforms to Cancellable
@@ -141,7 +141,7 @@ public final class WatchManager {
     }
 
     /// Retry a failed query
-    public func retry<T>(_: WatchedResult<T>) async {
+    public func retry(_: WatchedResult<some Any>) async {
         // Retry functionality would require keeping track of the original query
         // For now, we'll just log that retry was requested
         logger.info("Retry requested but not implemented in this version")
@@ -165,24 +165,24 @@ public final class WatchManager {
         WatchManagerDebugInfo(
             activeWatcherCount: activeWatchers.count,
             totalObserverCount: activeWatchers.values
-                .map { $0.observers.count }
+                .map(\.observers.count)
                 .reduce(0, +),
             oldestWatcher: activeWatchers.values
-                .map { $0.startTime }
+                .map(\.startTime)
                 .min(),
             watcherDetails: activeWatchers.map { key, info in
                 WatcherDetail(
                     queryType: key.queryType,
                     observerCount: info.observers.count,
-                    startTime: info.startTime
+                    startTime: info.startTime,
                 )
-            }
+            },
         )
     }
 
     // MARK: - Private Helpers
 
-    private func notifyObservers<T>(for key: QueryKey, with _: T?) {
+    private func notifyObservers(for key: QueryKey, with _: (some Any)?) {
         guard let info = activeWatchers[key] else { return }
 
         // All observers for this query have already been updated

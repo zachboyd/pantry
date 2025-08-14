@@ -51,10 +51,10 @@ public struct HouseholdCreationView: View {
                         placeholder: L("household.name.placeholder"),
                         text: Binding(
                             get: { viewModel?.state.householdName ?? "" },
-                            set: { viewModel?.updateHouseholdName($0) }
+                            set: { viewModel?.updateHouseholdName($0) },
                         ),
                         autocorrectionDisabled: true,
-                        autoFocus: true
+                        autoFocus: true,
                     )
 
                     // Description Field (Optional)
@@ -63,9 +63,9 @@ public struct HouseholdCreationView: View {
                         placeholder: L("household.description.placeholder"),
                         text: Binding(
                             get: { viewModel?.state.householdDescription ?? "" },
-                            set: { viewModel?.updateHouseholdDescription($0) }
+                            set: { viewModel?.updateHouseholdDescription($0) },
                         ),
-                        lineLimit: 3 ... 6
+                        lineLimit: 3 ... 6,
                     )
                 }
 
@@ -91,7 +91,7 @@ public struct HouseholdCreationView: View {
                         Task {
                             if let householdId = await viewModel?.createHousehold() {
                                 await MainActor.run {
-                                    if let onComplete = onComplete {
+                                    if let onComplete {
                                         onComplete(householdId)
                                     } else {
                                         dismiss()
@@ -99,7 +99,7 @@ public struct HouseholdCreationView: View {
                                 }
                             }
                         }
-                    }
+                    },
                 )
                 Spacer()
 

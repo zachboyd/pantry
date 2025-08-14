@@ -151,7 +151,7 @@ public struct HouseholdInviteView: View {
     NavigationStack {
         HouseholdInviteView(
             householdId: "123",
-            householdName: "Smith Family"
+            householdName: "Smith Family",
         )
     }
 }

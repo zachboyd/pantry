@@ -42,11 +42,10 @@ public struct Logger: Sendable {
 
     /// Errors that need attention
     public func error(_ message: String, error: Error? = nil) {
-        let formattedMessage: String
-        if let error = error {
-            formattedMessage = "❌ [\(category)] \(message): \(error.localizedDescription)"
+        let formattedMessage = if let error {
+            "❌ [\(category)] \(message): \(error.localizedDescription)"
         } else {
-            formattedMessage = "❌ [\(category)] \(message)"
+            "❌ [\(category)] \(message)"
         }
         logger.error("\(formattedMessage)")
         #if DEBUG
@@ -56,11 +55,10 @@ public struct Logger: Sendable {
 
     /// Critical errors that may cause app instability
     public func critical(_ message: String, error: Error? = nil) {
-        let formattedMessage: String
-        if let error = error {
-            formattedMessage = "🚨 [\(category)] \(message): \(error.localizedDescription)"
+        let formattedMessage = if let error {
+            "🚨 [\(category)] \(message): \(error.localizedDescription)"
         } else {
-            formattedMessage = "🚨 [\(category)] \(message)"
+            "🚨 [\(category)] \(message)"
         }
         logger.critical("\(formattedMessage)")
         #if DEBUG
@@ -80,12 +78,12 @@ public struct Logger: Sendable {
     /// Log network requests (with privacy protection)
     public func network(_ message: String, url: String? = nil, statusCode: Int? = nil) {
         var logMessage = "🌐 [\(category)] \(message)"
-        if let url = url {
+        if let url {
             // Redact sensitive query parameters
             let sanitizedURL = sanitizeURL(url)
             logMessage += " - URL: \(sanitizedURL)"
         }
-        if let statusCode = statusCode {
+        if let statusCode {
             logMessage += " - Status: \(statusCode)"
         }
         logger.info("\(logMessage)")
@@ -96,7 +94,7 @@ public struct Logger: Sendable {
     /// Log data operations with privacy
     public func data(_ message: String, count: Int? = nil) {
         var logMessage = "💾 [\(category)] \(message)"
-        if let count = count {
+        if let count {
             logMessage += " - Count: \(count)"
         }
         logger.debug("\(logMessage)")

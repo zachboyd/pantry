@@ -89,13 +89,13 @@ public extension View {
         label: String? = nil,
         hint: String? = nil,
         identifier: String? = nil,
-        traits: AccessibilityTraits = []
+        traits: AccessibilityTraits = [],
     ) -> some View {
         modifier(AccessibilityHelper(
             label: label,
             hint: hint,
             identifier: identifier,
-            traits: traits
+            traits: traits,
         ))
     }
 
@@ -103,25 +103,25 @@ public extension View {
     func accessibilityButton(
         label: String? = nil,
         hint: String? = nil,
-        identifier: String? = nil
+        identifier: String? = nil,
     ) -> some View {
         accessibility(
             label: label,
             hint: hint,
             identifier: identifier,
-            traits: .isButton
+            traits: .isButton,
         )
     }
 
     /// Mark as a header for accessibility
     func accessibilityHeader(
         label: String? = nil,
-        identifier: String? = nil
+        identifier: String? = nil,
     ) -> some View {
         accessibility(
             label: label,
             identifier: identifier,
-            traits: .isHeader
+            traits: .isHeader,
         )
     }
 }
@@ -149,11 +149,11 @@ public extension Color {
     /// Ensure proper contrast for text on background
     static func contrastText(on _: Color) -> Color {
         // Simplified contrast calculation - in production, use proper contrast algorithms
-        return .primary
+        .primary
     }
 
     /// High contrast color for important elements
     static var highContrast: Color {
-        return .primary
+        .primary
     }
 }

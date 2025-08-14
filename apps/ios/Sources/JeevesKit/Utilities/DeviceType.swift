@@ -14,11 +14,11 @@ public enum DeviceType: Sendable {
 
     /// Current device type
     public static var current: DeviceType {
-        return MainActor.assumeIsolated {
+        MainActor.assumeIsolated {
             if UIDevice.current.userInterfaceIdiom == .pad {
-                return .iPad
+                .iPad
             } else {
-                return .iPhone
+                .iPhone
             }
         }
     }
@@ -76,7 +76,7 @@ public struct SizeClassInfoModifier: ViewModifier {
         content
             .environment(\.sizeClassInfo, SizeClassInfo(
                 horizontal: horizontalSizeClass,
-                vertical: verticalSizeClass
+                vertical: verticalSizeClass,
             ))
     }
 }

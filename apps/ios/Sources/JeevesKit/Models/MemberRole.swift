@@ -16,25 +16,25 @@ public enum MemberRole: String, Codable, CaseIterable, Sendable {
     /// Sort order for displaying members (manager first, then member, then ai)
     public var sortOrder: Int {
         switch self {
-        case .manager: return 0
-        case .member: return 1
-        case .ai: return 2
+        case .manager: 0
+        case .member: 1
+        case .ai: 2
         }
     }
 
     /// Whether this role has permission to manage household settings
     public var canManageHousehold: Bool {
         switch self {
-        case .manager: return true
-        case .member, .ai: return false
+        case .manager: true
+        case .member, .ai: false
         }
     }
 
     /// Whether this role has permission to manage members
     public var canManageMembers: Bool {
         switch self {
-        case .manager: return true
-        case .member, .ai: return false
+        case .manager: true
+        case .member, .ai: false
         }
     }
 }

@@ -25,7 +25,7 @@ public struct Household: Codable, Identifiable, Sendable {
     public var isCurrentUserOwner: Bool {
         // TODO: This should be determined from the authenticated user's role
         // Would need to fetch members separately or include user's role in the household query
-        return false
+        false
     }
 
     public init(id: String, name: String, description: String?, createdBy: String, createdAt: Date, updatedAt: Date, memberCount: Int = 0) {

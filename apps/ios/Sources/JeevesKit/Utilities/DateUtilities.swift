@@ -61,7 +61,7 @@ public enum DateUtilities {
     /// - Parameter dateTimeString: The optional GraphQL DateTime string
     /// - Returns: An optional Date object
     public static func dateFromGraphQL(_ dateTimeString: String?) -> Date? {
-        guard let dateTimeString = dateTimeString else { return nil }
+        guard let dateTimeString else { return nil }
         return dateFromGraphQL(dateTimeString)
     }
 
@@ -69,7 +69,7 @@ public enum DateUtilities {
     /// - Parameter date: The optional Date object
     /// - Returns: An optional GraphQL DateTime string
     public static func graphQLStringFromDate(_ date: Date?) -> String? {
-        guard let date = date else { return nil }
+        guard let date else { return nil }
         return graphQLStringFromDate(date)
     }
 }

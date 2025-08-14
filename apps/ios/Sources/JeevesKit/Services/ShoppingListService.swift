@@ -41,7 +41,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
             items: [],
             createdBy: "mock_user_1",
             createdAt: Date(),
-            updatedAt: Date()
+            updatedAt: Date(),
         )
 
         if listsStorage[householdId] == nil {
@@ -73,7 +73,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                     items: newItems,
                     createdBy: updatedList.createdBy,
                     createdAt: updatedList.createdAt,
-                    updatedAt: Date()
+                    updatedAt: Date(),
                 )
 
                 lists[listIndex] = updatedList
@@ -112,7 +112,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                         items: newItems,
                         createdBy: updatedList.createdBy,
                         createdAt: updatedList.createdAt,
-                        updatedAt: Date()
+                        updatedAt: Date(),
                     )
 
                     lists[listIndex] = updatedList
@@ -155,7 +155,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                         isCompleted: !item.isCompleted,
                         addedBy: item.addedBy,
                         completedBy: item.isCompleted ? nil : "mock_user_1",
-                        completedAt: item.isCompleted ? nil : Date()
+                        completedAt: item.isCompleted ? nil : Date(),
                     )
 
                     newItems[itemIndex] = toggledItem
@@ -167,7 +167,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                         items: newItems,
                         createdBy: updatedList.createdBy,
                         createdAt: updatedList.createdAt,
-                        updatedAt: Date()
+                        updatedAt: Date(),
                     )
 
                     lists[listIndex] = updatedList
@@ -224,7 +224,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                 isCompleted: false,
                 addedBy: "mock_user_1",
                 completedBy: nil,
-                completedAt: nil
+                completedAt: nil,
             ),
             ShoppingListItem(
                 id: UUID().uuidString,
@@ -235,7 +235,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                 isCompleted: true,
                 addedBy: "mock_user_1",
                 completedBy: "mock_user_1",
-                completedAt: Calendar.current.date(byAdding: .hour, value: -2, to: now)
+                completedAt: Calendar.current.date(byAdding: .hour, value: -2, to: now),
             ),
             ShoppingListItem(
                 id: UUID().uuidString,
@@ -246,7 +246,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                 isCompleted: false,
                 addedBy: "mock_user_1",
                 completedBy: nil,
-                completedAt: nil
+                completedAt: nil,
             ),
         ]
 
@@ -260,7 +260,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                 isCompleted: false,
                 addedBy: "mock_user_1",
                 completedBy: nil,
-                completedAt: nil
+                completedAt: nil,
             ),
             ShoppingListItem(
                 id: UUID().uuidString,
@@ -271,7 +271,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                 isCompleted: false,
                 addedBy: "mock_user_1",
                 completedBy: nil,
-                completedAt: nil
+                completedAt: nil,
             ),
         ]
 
@@ -283,7 +283,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                 items: groceryItems,
                 createdBy: "mock_user_1",
                 createdAt: Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now,
-                updatedAt: now
+                updatedAt: now,
             ),
             ShoppingList(
                 id: UUID().uuidString,
@@ -292,7 +292,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                 items: weeklyShoppingItems,
                 createdBy: "mock_user_1",
                 createdAt: Calendar.current.date(byAdding: .day, value: -3, to: now) ?? now,
-                updatedAt: now
+                updatedAt: now,
             ),
         ]
 
@@ -313,15 +313,15 @@ public enum ShoppingListServiceError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case let .listNotFound(id):
-            return "Shopping list with ID '\(id)' not found"
+            "Shopping list with ID '\(id)' not found"
         case let .itemNotFound(id):
-            return "Shopping list item with ID '\(id)' not found"
+            "Shopping list item with ID '\(id)' not found"
         case let .householdNotFound(id):
-            return "Household with ID '\(id)' not found"
+            "Household with ID '\(id)' not found"
         case .invalidData:
-            return "Invalid shopping list data"
+            "Invalid shopping list data"
         case let .networkError(error):
-            return "Network error: \(error.localizedDescription)"
+            "Network error: \(error.localizedDescription)"
         }
     }
 }
