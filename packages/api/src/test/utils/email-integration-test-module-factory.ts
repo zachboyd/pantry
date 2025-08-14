@@ -30,6 +30,9 @@ export class EmailIntegrationTestModuleFactory {
     db: Kysely<DB>;
     testDbService: TestDatabaseService;
   }> {
+    // Force real email service (not mock) for integration testing
+    process.env.USE_MOCK_EMAIL_SERVICE = 'false';
+
     // Create test database service instance
     const testDbService = new TestDatabaseService();
 
@@ -40,7 +43,7 @@ export class EmailIntegrationTestModuleFactory {
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      // Only override database service - keep email service and auth factory as-is
+      // Only override database service - email service will use real implementation due to env var
       .overrideProvider(TOKENS.DATABASE.SERVICE)
       .useValue(testDbService)
       .overrideProvider(TOKENS.DATABASE.CONNECTION)
