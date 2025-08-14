@@ -57,6 +57,8 @@ export class ConfigServiceImpl implements ConfigService {
             this.configService.get<string>('AWS_S3_BUCKET_NAME') || '',
         },
         ses: {
+          useMockService:
+            this.configService.get<string>('USE_MOCK_EMAIL_SERVICE') === 'true',
           region:
             this.configService.get<string>('AWS_SES_REGION') ||
             this.configService.get<string>('AWS_REGION') ||

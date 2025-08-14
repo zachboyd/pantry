@@ -46,6 +46,7 @@ export class ConfigServiceMock {
           bucketName: 'test-bucket',
         },
         ses: {
+          useMockService: false,
           region: 'us-east-1',
           fromAddress: 'noreply@test.com',
           configurationSetName: 'test-config-set',
@@ -103,6 +104,7 @@ export class ConfigServiceMock {
           bucketName: 'jeeves-prod-bucket',
         },
         ses: {
+          useMockService: false,
           region: 'us-east-1',
           fromAddress: 'noreply@jeevesapp.dev',
           configurationSetName: 'jeeves-prod-config-set',
@@ -125,6 +127,7 @@ export class ConfigServiceMock {
           bucketName: '',
         },
         ses: {
+          useMockService: false,
           region: 'us-east-1',
           fromAddress: 'noreply@localhost.dev',
           configurationSetName: undefined,
