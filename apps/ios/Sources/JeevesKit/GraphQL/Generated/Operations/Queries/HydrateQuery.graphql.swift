@@ -52,7 +52,6 @@ public extension JeevesGraphQL {
         public var managed_by: String? { __data["managed_by"] }
         public var relationship_to_manager: String? { __data["relationship_to_manager"] }
         public var primary_household_id: String? { __data["primary_household_id"] }
-        public var permissions: JeevesGraphQL.JSON? { __data["permissions"] }
         public var preferences: JeevesGraphQL.JSON? { __data["preferences"] }
         public var is_ai: Bool { __data["is_ai"] }
         public var created_at: JeevesGraphQL.DateTime { __data["created_at"] }

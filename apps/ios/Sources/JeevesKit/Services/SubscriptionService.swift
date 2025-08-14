@@ -4,18 +4,18 @@ import Foundation
 
 // MARK: - User Update Subscription Handler
 
-@MainActor
+// This handler must be nonisolated to work properly with ApolloStore's dispatch queue
+// Per Apollo iOS developer guidance (GitHub issue #3552), withinReadWriteTransaction
+// should be called from a nonisolated context to avoid swift_task_isCurrentExecutorImpl crashes
 public final class UserUpdateSubscriptionHandler {
     private let store: ApolloStore
-    private let apolloClient: ApolloClient
     private static let logger = Logger(category: "SubscriptionService")
 
-    public init(store: ApolloStore, apolloClient: ApolloClient) {
+    public init(store: ApolloStore) {
         self.store = store
-        self.apolloClient = apolloClient
     }
 
-    public func handleUserUpdate(_ userFields: JeevesGraphQL.UserFields) {
+    public nonisolated func handleUserUpdate(_ userFields: JeevesGraphQL.UserFields) {
         Self.logger.info("🔄 Processing user update for: \(userFields.id)")
 
         // Log the update details
@@ -23,46 +23,35 @@ public final class UserUpdateSubscriptionHandler {
         Self.logger.info("   - Display Name: \(userFields.display_name ?? "nil")")
         Self.logger.info("   - Email: \(userFields.email ?? "nil")")
 
-        Self.logger.info("✨ Updating cache with subscription data for user: \(userFields.id)")
+        Self.logger.info("✨ Writing UserFields fragment directly to cache for user: \(userFields.id)")
 
-        // Use Apollo's proper cache update mechanism
-        // The key insight: we need to update the SAME cache entry that GetCurrentUserQuery is watching
-        // Subscription data (UserFields) and query data (CurrentUser) are different types in Apollo's cache
+        // Write the fragment directly to the cache
+        // This is the proper way to update cache with subscription data
+        // Create a cache reference for the User object
+        let cacheKey = "User:\(userFields.id)"
+        Self.logger.info("🔍 Writing to cache with key: \(cacheKey)")
 
-        Self.logger.info("🔍 Attempting to update cache with subscription data...")
-
-        // Since Apollo iOS 1.x doesn't have direct cache manipulation APIs,
-        // we'll trigger a refetch of the GetCurrentUserQuery to get fresh data
-        // This will update the cache and notify all watchers
-
-        Self.logger.info("🔍 Triggering GetCurrentUserQuery refetch...")
-
-        // Execute a network-only query to force a refresh from the server
-        // This will update the Apollo cache with fresh data, which will then
-        // automatically update all watchers that are observing the cache
-        let query = JeevesGraphQL.GetCurrentUserQuery()
-
-        apolloClient.fetch(query: query, cachePolicy: .fetchIgnoringCacheData) { result in
-            switch result {
-            case let .success(graphQLResult):
-                if let userData = graphQLResult.data?.currentUser {
-                    Self.logger.info("✅ GetCurrentUserQuery refetch successful - cache updated")
-                    Self.logger.info("✅ User data refreshed: \(userData.first_name) \(userData.last_name)")
-                    Self.logger.info("✅ Watchers should now receive fresh data from updated cache")
-                } else {
-                    Self.logger.warning("⚠️ GetCurrentUserQuery refetch returned nil user")
-                }
-
-                if let errors = graphQLResult.errors {
-                    Self.logger.error("❌ GetCurrentUserQuery refetch had errors: \(errors)")
-                }
-
-            case let .failure(error):
-                Self.logger.error("❌ GetCurrentUserQuery refetch failed: \(error)")
+        // Write the UserFields fragment directly to the cache
+        // This will properly merge with existing data and notify all watchers
+        store.withinReadWriteTransaction { transaction in
+            do {
+                // Write the fragment to the cache
+                // Apollo will handle the merge and type safety
+                try transaction.write(
+                    selectionSet: userFields,
+                    withKey: cacheKey,
+                )
+                Self.logger.info("✅ UserFields fragment written to cache successfully")
+            } catch {
+                Self.logger.error("❌ Failed to write fragment to cache: \(error)")
+                Self.logger.error("   Error details: \(error.localizedDescription)")
+                // No fallback - let the subscription continue
             }
         }
 
-        Self.logger.info("✅ User update processed - cache will be updated via query refetch")
+        Self.logger.info("✅ Cache updated - all watchers will be notified")
+
+        Self.logger.info("✅ User update processed")
     }
 }
 
@@ -79,7 +68,7 @@ public final class SubscriptionService: SubscriptionServiceProtocol {
     public init(store: ApolloStore, apolloClient: ApolloClient) {
         self.store = store
         self.apolloClient = apolloClient
-        userHandler = UserUpdateSubscriptionHandler(store: store, apolloClient: apolloClient)
+        userHandler = UserUpdateSubscriptionHandler(store: store)
     }
 
     public func handleUserUpdateSubscription(

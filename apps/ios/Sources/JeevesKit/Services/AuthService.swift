@@ -308,8 +308,7 @@ public class AuthService: AuthServiceProtocol {
                 isLoading = false
             }
 
-            // Clear permissions
-            await _permissionService?.clearPermissions()
+            // Permissions removed - no longer needed
 
             // Stop session validation
             stopSessionValidation()
@@ -333,17 +332,10 @@ public class AuthService: AuthServiceProtocol {
         }
     }
 
-    /// Load user permissions from backend
+    /// Load user permissions from backend - DEPRECATED
+    /// Permissions have been removed from the User model
     public func loadUserPermissions() async {
-        // Loading user permissions
-
-        // Connect permission service to Apollo for automatic updates
-        if let apolloClient {
-            await _permissionService?.subscribeToUserUpdates(apolloClient: apolloClient)
-            // Permission service connected to Apollo cache
-        } else {
-            Self.logger.warning("⚠️ No Apollo client available for permission updates")
-        }
+        // Permissions removed - this method is now a no-op
     }
 
     /// Clear stored session (used when session is invalid)

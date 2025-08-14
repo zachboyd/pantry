@@ -109,7 +109,6 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
                 managedBy: currentUser.managedBy,
                 relationshipToManager: currentUser.relationshipToManager,
                 primaryHouseholdId: currentUser.primaryHouseholdId,
-                permissions: currentUser.permissions,
                 preferences: currentUser.preferences,
                 isAi: currentUser.isAi,
                 createdAt: currentUser.createdAt,
