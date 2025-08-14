@@ -1,35 +1,12 @@
-"""
-A directive used by the Apollo iOS client to annotate operations or fragments that should be used exclusively for generating local cache mutations instead of as standard operations.
-"""
-directive @apollo_client_ios_localCacheMutation on QUERY | MUTATION | SUBSCRIPTION | FRAGMENT_DEFINITION
-
-"""
-A directive used by the Apollo iOS code generation engine to generate custom import statements in operation or fragment definition files. An import statement to import a module with the name provided in the `module` argument will be added to the generated definition file.
-"""
-directive @import(
-  """The name of the module to import."""
-  module: String!
-) repeatable on QUERY | MUTATION | SUBSCRIPTION | FRAGMENT_DEFINITION
-
-"""Attach extra information to a given type."""
-directive @typePolicy(
-  """
-  A selection set containing fields used to compute the cache key of an object. Referenced fields must have non-nullable scalar types. Order is important.
-  """
-  keyFields: String!
-) on OBJECT | INTERFACE
-
-"""
-Directs the executor to defer this fragment when the `if` argument is true or undefined.
-"""
-directive @defer(
-  """Deferred when true or undefined."""
-  if: Boolean
-
-  """Unique name"""
-  label: String
-) on FRAGMENT_SPREAD | INLINE_FRAGMENT
-
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+"The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)."
+scalar JSON
+"A null-safe DateTime scalar"
+scalar DateTime
 type User {
   id: ID!
   auth_user_id: String
@@ -49,12 +26,6 @@ type User {
   created_at: DateTime!
   updated_at: DateTime!
 }
-
-"""
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
-scalar JSON
-
 type Household {
   id: ID!
   name: String!
@@ -64,7 +35,6 @@ type Household {
   updated_at: DateTime!
   memberCount: Float
 }
-
 type HouseholdMember {
   id: ID!
   household_id: String!
@@ -72,10 +42,6 @@ type HouseholdMember {
   role: String!
   joined_at: DateTime!
 }
-
-"""A null-safe DateTime scalar"""
-scalar DateTime
-
 type Query {
   user(input: GetUserInput!): User!
   currentUser: User!
@@ -83,19 +49,6 @@ type Query {
   households: [Household!]!
   householdMembers(input: GetHouseholdMembersInput!): [HouseholdMember!]!
 }
-
-input GetUserInput {
-  id: String!
-}
-
-input GetHouseholdInput {
-  id: String!
-}
-
-input GetHouseholdMembersInput {
-  householdId: String!
-}
-
 type Mutation {
   updateUser(input: UpdateUserInput!): User!
   createHousehold(input: CreateHouseholdInput!): Household!
@@ -104,7 +57,18 @@ type Mutation {
   changeHouseholdMemberRole(input: ChangeHouseholdMemberRoleInput!): HouseholdMember!
   updateHousehold(input: UpdateHouseholdInput!): Household!
 }
-
+type Subscription {
+  userUpdated: User!
+}
+input GetUserInput {
+  id: String!
+}
+input GetHouseholdInput {
+  id: String!
+}
+input GetHouseholdMembersInput {
+  householdId: String!
+}
 input UpdateUserInput {
   id: String!
   first_name: String
@@ -117,35 +81,33 @@ input UpdateUserInput {
   primary_household_id: String
   preferences: JSON
 }
-
 input CreateHouseholdInput {
   name: String!
   description: String
 }
-
 input AddHouseholdMemberInput {
   householdId: String!
   userId: String!
   role: String!
 }
-
 input RemoveHouseholdMemberInput {
   householdId: String!
   userId: String!
 }
-
 input ChangeHouseholdMemberRoleInput {
   householdId: String!
   userId: String!
   newRole: String!
 }
-
 input UpdateHouseholdInput {
   id: String!
   name: String
   description: String
 }
-
-type Subscription {
-  userUpdated: User!
-}
+"Exposes a URL that specifies the behavior of this scalar."
+directive @specifiedBy(
+    "The URL that specifies the behavior of this scalar."
+    url: String!
+  ) on SCALAR
+"Indicates exactly one field must be supplied and this field must not be `null`."
+directive @oneOf on INPUT_OBJECT

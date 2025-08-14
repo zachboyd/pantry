@@ -95,6 +95,10 @@ public final class AppState {
         container.userPreferencesService
     }
 
+    public var subscriptionService: (any SubscriptionServiceProtocol)? {
+        container.subscriptionService
+    }
+
     // MARK: - Initialization
 
     public init() {
@@ -172,6 +176,9 @@ public final class AppState {
     public func signOut() async {
         // Starting sign out
         await setPhase(.signingOut)
+
+        // Stop all subscriptions before signing out
+        subscriptionService?.stopAllSubscriptions()
 
         do {
             // Attempt to sign out from auth service
@@ -374,9 +381,21 @@ public final class AppState {
             // This ensures currentHousehold stays in sync with Apollo cache changes
             setupHouseholdWatcher()
 
+            // Start subscriptions after successful hydration
+            if let subscriptionService {
+                Self.logger.info("📡 Starting real-time subscriptions")
+                do {
+                    try await subscriptionService.subscribeToUserUpdates()
+                    Self.logger.info("✅ Real-time subscriptions started")
+                } catch {
+                    Self.logger.warning("⚠️ Failed to start subscriptions: \(error)")
+                    // Non-critical - continue without subscriptions
+                }
+            }
+
             // Transition to hydrated phase
             await setPhase(.hydrated)
-            // Hydration complete, app ready
+            // Hydration complete, app ready with real-time updates
         } catch ServiceError.unauthorized {
             // Handle authentication errors by signing out
             Self.logger.error("Authentication error during hydration - signing out")

@@ -4,9 +4,9 @@
 import ApolloAPI
 
 public extension JeevesGraphQL.Objects {
-    static let HouseholdMember = ApolloAPI.Object(
-        typename: "HouseholdMember",
-        implementedInterfaces: [],
-        keyFields: nil,
-    )
+  static let HouseholdMember = ApolloAPI.Object(
+    typename: "HouseholdMember",
+    implementedInterfaces: [],
+    keyFields: nil
+  )
 }

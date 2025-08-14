@@ -4,9 +4,9 @@
 import ApolloAPI
 
 public extension JeevesGraphQL.Objects {
-    static let Mutation = ApolloAPI.Object(
-        typename: "Mutation",
-        implementedInterfaces: [],
-        keyFields: nil,
-    )
+  static let Mutation = ApolloAPI.Object(
+    typename: "Mutation",
+    implementedInterfaces: [],
+    keyFields: nil
+  )
 }

@@ -4,8 +4,8 @@
 import ApolloAPI
 
 public extension JeevesGraphQL.Objects {
-  static let Query = ApolloAPI.Object(
-    typename: "Query",
+  static let Subscription = ApolloAPI.Object(
+    typename: "Subscription",
     implementedInterfaces: [],
     keyFields: nil
   )

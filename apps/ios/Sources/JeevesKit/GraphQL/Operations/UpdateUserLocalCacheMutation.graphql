@@ -1,0 +1,19 @@
+fragment MutableUserFields on User @apollo_client_ios_localCacheMutation {
+  id
+  auth_user_id
+  email
+  first_name
+  last_name
+  display_name
+  avatar_url
+  phone
+  birth_date
+  managed_by
+  relationship_to_manager
+  primary_household_id
+  permissions
+  preferences
+  is_ai
+  created_at
+  updated_at
+}

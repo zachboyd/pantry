@@ -1,0 +1,33 @@
+# Subscription Operations
+
+# Currently Available
+subscription UserUpdated {
+  userUpdated {
+    ...UserFields
+  }
+}
+
+# Future Subscriptions (add as backend implements them)
+# subscription HouseholdUpdated($id: ID!) {
+#   householdUpdated(id: $id) {
+#     ...HouseholdFields
+#   }
+# }
+
+# subscription HouseholdMemberUpdated($householdId: ID!) {
+#   householdMemberUpdated(householdId: $householdId) {
+#     ...HouseholdMemberFields
+#   }
+# }
+
+# subscription ItemUpdated($id: ID!) {
+#   itemUpdated(id: $id) {
+#     ...ItemFields
+#   }
+# }
+
+# subscription ShoppingListUpdated($householdId: ID!) {
+#   shoppingListUpdated(householdId: $householdId) {
+#     ...ShoppingListFields
+#   }
+# }

@@ -95,6 +95,19 @@ public protocol GraphQLServiceProtocol: Sendable {
     func testConnection() async -> Bool
 }
 
+/// Protocol for subscription management
+@MainActor
+public protocol SubscriptionServiceProtocol: Sendable {
+    /// Start user update subscription
+    func subscribeToUserUpdates() async throws
+
+    /// Stop user update subscription
+    func unsubscribeFromUserUpdates()
+
+    /// Stop all active subscriptions
+    func stopAllSubscriptions()
+}
+
 // MARK: - Supporting Protocols
 
 /// Logging protocol for consistent service logging

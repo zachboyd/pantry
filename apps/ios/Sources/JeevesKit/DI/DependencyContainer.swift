@@ -24,6 +24,7 @@ public final class DependencyContainer {
     private var _shoppingListService: ShoppingListServiceProtocol?
     private var _notificationService: NotificationServiceProtocol?
     private var _permissionService: PermissionServiceProtocol?
+    private var _subscriptionService: SubscriptionServiceProtocol?
 
     // MARK: - Repositories (Removed)
 
@@ -151,6 +152,9 @@ public final class DependencyContainer {
     public func shutdown() async {
         Self.logger.info("🔄 Shutting down services")
 
+        // Stop all subscriptions before clearing services
+        _subscriptionService?.stopAllSubscriptions()
+
         // Clear all services
         _authService = nil
         _apolloClientService = nil
@@ -164,6 +168,7 @@ public final class DependencyContainer {
         _shoppingListService = nil
         _notificationService = nil
         _permissionService = nil
+        _subscriptionService = nil
 
         isInitialized = false
         isConnected = false
@@ -267,6 +272,24 @@ public final class DependencyContainer {
             if let apolloClient = _apolloClientService?.apolloClient {
                 await _permissionService?.subscribeToUserUpdates(apolloClient: apolloClient)
             }
+        }
+
+        if _subscriptionService == nil {
+            Self.logger.info("📡 Creating SubscriptionService...")
+            guard let apolloClientService = _apolloClientService,
+                  let authService = _authService
+            else {
+                Self.logger.warning("⚠️ Cannot create SubscriptionService - ApolloClientService or AuthService not available")
+                return
+            }
+            guard let store = apolloClientService.store else {
+                Self.logger.warning("⚠️ Cannot create SubscriptionService - Apollo store not available")
+                return
+            }
+            _subscriptionService = SubscriptionService(
+                store: store,
+                apolloClient: apolloClientService.apollo
+            )
         }
 
         Self.logger.info("✅ All missing services created successfully")
@@ -533,6 +556,13 @@ public final class DependencyContainer {
         return service
     }
 
+    public func getSubscriptionService() throws -> SubscriptionServiceProtocol {
+        guard let service = _subscriptionService else {
+            throw DependencyContainerError.serviceNotInitialized(serviceName: "SubscriptionService")
+        }
+        return service
+    }
+
     // MARK: - Utility Services
 
     public func makeUserPreferencesManager() -> UserPreferencesManager {
@@ -584,6 +614,9 @@ public final class DependencyContainer {
     /// Clear service caches and reset state
     public func clearServices() async {
         Self.logger.info("🧹 Clearing service caches")
+
+        // Stop all subscriptions before clearing
+        _subscriptionService?.stopAllSubscriptions()
 
         // Clear GraphQL cache
         if let graphQLService = _graphQLService {
@@ -682,6 +715,11 @@ public final class DependencyContainer {
     /// Get permission service - available after initialization
     public var permissionService: PermissionServiceProtocol? {
         try? getPermissionService()
+    }
+
+    /// Get subscription service - available after initialization
+    public var subscriptionService: SubscriptionServiceProtocol? {
+        try? getSubscriptionService()
     }
 
     /// Get Apollo client directly - available after initialization

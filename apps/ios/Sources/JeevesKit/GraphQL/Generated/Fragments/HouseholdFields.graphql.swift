@@ -4,32 +4,33 @@
 @_exported import ApolloAPI
 
 public extension JeevesGraphQL {
-    struct HouseholdFields: JeevesGraphQL.SelectionSet, Fragment {
-        public static var fragmentDefinition: StaticString {
-            #"fragment HouseholdFields on Household { __typename id name description created_by created_at updated_at memberCount }"#
-        }
-
-        public let __data: DataDict
-        public init(_dataDict: DataDict) { __data = _dataDict }
-
-        public static var __parentType: any ApolloAPI.ParentType { JeevesGraphQL.Objects.Household }
-        public static var __selections: [ApolloAPI.Selection] { [
-            .field("__typename", String.self),
-            .field("id", JeevesGraphQL.ID.self),
-            .field("name", String.self),
-            .field("description", String?.self),
-            .field("created_by", String.self),
-            .field("created_at", JeevesGraphQL.DateTime.self),
-            .field("updated_at", JeevesGraphQL.DateTime.self),
-            .field("memberCount", Double?.self),
-        ] }
-
-        public var id: JeevesGraphQL.ID { __data["id"] }
-        public var name: String { __data["name"] }
-        public var description: String? { __data["description"] }
-        public var created_by: String { __data["created_by"] }
-        public var created_at: JeevesGraphQL.DateTime { __data["created_at"] }
-        public var updated_at: JeevesGraphQL.DateTime { __data["updated_at"] }
-        public var memberCount: Double? { __data["memberCount"] }
+  struct HouseholdFields: JeevesGraphQL.SelectionSet, Fragment {
+    public static var fragmentDefinition: StaticString {
+      #"fragment HouseholdFields on Household { __typename id name description created_by created_at updated_at memberCount }"#
     }
+
+    public let __data: DataDict
+    public init(_dataDict: DataDict) { __data = _dataDict }
+
+    public static var __parentType: any ApolloAPI.ParentType { JeevesGraphQL.Objects.Household }
+    public static var __selections: [ApolloAPI.Selection] { [
+      .field("__typename", String.self),
+      .field("id", JeevesGraphQL.ID.self),
+      .field("name", String.self),
+      .field("description", String?.self),
+      .field("created_by", String.self),
+      .field("created_at", JeevesGraphQL.DateTime.self),
+      .field("updated_at", JeevesGraphQL.DateTime.self),
+      .field("memberCount", Double?.self),
+    ] }
+
+    public var id: JeevesGraphQL.ID { __data["id"] }
+    public var name: String { __data["name"] }
+    public var description: String? { __data["description"] }
+    public var created_by: String { __data["created_by"] }
+    public var created_at: JeevesGraphQL.DateTime { __data["created_at"] }
+    public var updated_at: JeevesGraphQL.DateTime { __data["updated_at"] }
+    public var memberCount: Double? { __data["memberCount"] }
+  }
+
 }

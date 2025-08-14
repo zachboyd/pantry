@@ -4,12 +4,12 @@
 @_exported import ApolloAPI
 
 public extension JeevesGraphQL {
-  class HydrateQuery: GraphQLQuery {
-    public static let operationName: String = "Hydrate"
+  class UserUpdatedSubscription: GraphQLSubscription {
+    public static let operationName: String = "UserUpdated"
     public static let operationDocument: ApolloAPI.OperationDocument = .init(
       definition: .init(
-        #"query Hydrate { currentUser { __typename ...UserFields } households { __typename ...HouseholdFields } }"#,
-        fragments: [HouseholdFields.self, UserFields.self]
+        #"subscription UserUpdated { userUpdated { __typename ...UserFields } }"#,
+        fragments: [UserFields.self]
       ))
 
     public init() {}
@@ -18,19 +18,17 @@ public extension JeevesGraphQL {
       public let __data: DataDict
       public init(_dataDict: DataDict) { __data = _dataDict }
 
-      public static var __parentType: any ApolloAPI.ParentType { JeevesGraphQL.Objects.Query }
+      public static var __parentType: any ApolloAPI.ParentType { JeevesGraphQL.Objects.Subscription }
       public static var __selections: [ApolloAPI.Selection] { [
-        .field("currentUser", CurrentUser.self),
-        .field("households", [Household].self),
+        .field("userUpdated", UserUpdated.self),
       ] }
 
-      public var currentUser: CurrentUser { __data["currentUser"] }
-      public var households: [Household] { __data["households"] }
+      public var userUpdated: UserUpdated { __data["userUpdated"] }
 
-      /// CurrentUser
+      /// UserUpdated
       ///
       /// Parent Type: `User`
-      public struct CurrentUser: JeevesGraphQL.SelectionSet {
+      public struct UserUpdated: JeevesGraphQL.SelectionSet {
         public let __data: DataDict
         public init(_dataDict: DataDict) { __data = _dataDict }
 
@@ -63,35 +61,6 @@ public extension JeevesGraphQL {
           public init(_dataDict: DataDict) { __data = _dataDict }
 
           public var userFields: UserFields { _toFragment() }
-        }
-      }
-
-      /// Household
-      ///
-      /// Parent Type: `Household`
-      public struct Household: JeevesGraphQL.SelectionSet {
-        public let __data: DataDict
-        public init(_dataDict: DataDict) { __data = _dataDict }
-
-        public static var __parentType: any ApolloAPI.ParentType { JeevesGraphQL.Objects.Household }
-        public static var __selections: [ApolloAPI.Selection] { [
-          .field("__typename", String.self),
-          .fragment(HouseholdFields.self),
-        ] }
-
-        public var id: JeevesGraphQL.ID { __data["id"] }
-        public var name: String { __data["name"] }
-        public var description: String? { __data["description"] }
-        public var created_by: String { __data["created_by"] }
-        public var created_at: JeevesGraphQL.DateTime { __data["created_at"] }
-        public var updated_at: JeevesGraphQL.DateTime { __data["updated_at"] }
-        public var memberCount: Double? { __data["memberCount"] }
-
-        public struct Fragments: FragmentContainer {
-          public let __data: DataDict
-          public init(_dataDict: DataDict) { __data = _dataDict }
-
-          public var householdFields: HouseholdFields { _toFragment() }
         }
       }
     }
