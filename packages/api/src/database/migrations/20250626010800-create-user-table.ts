@@ -9,7 +9,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .createTable('user')
     .addColumn('id', 'uuid', (col) => col.primaryKey().notNull())
     .addColumn('auth_user_id', 'text', (col) =>
-      col.unique().references('auth_user.id').onDelete('cascade'),
+      col.unique().references('auth_user.id').onDelete('set null'),
     )
     .addColumn('email', 'varchar', (col) => col.unique())
     .addColumn('first_name', 'varchar(50)', (col) => col.notNull())

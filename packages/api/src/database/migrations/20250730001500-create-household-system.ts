@@ -20,7 +20,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .addColumn('name', 'varchar(200)', (col) => col.notNull())
     .addColumn('description', 'text')
     .addColumn('created_by', 'uuid', (col) =>
-      col.notNull().references('user.id').onDelete('cascade'),
+      col.references('user.id').onDelete('set null'),
     )
     .addColumn('created_at', 'timestamptz', (col) =>
       col.notNull().defaultTo(sql`now()`),

@@ -7,11 +7,14 @@ import type {
   EmailTemplateOptions,
   EmailTemplate,
   EmailSendResult,
-  EmailAddress,
   EmailTemplateRegistry,
   EmailConfig,
 } from './email.types.js';
 import { templateRegistry } from './templates/template-registry.js';
+import {
+  normalizeEmailAddress,
+  normalizeEmailAddresses,
+} from './email.utils.js';
 
 @Injectable()
 export class EmailServiceImpl implements EmailService, OnModuleInit {
@@ -36,18 +39,18 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
   async sendEmail(options: EmailOptions): Promise<EmailSendResult> {
     try {
       this.logger.debug('Preparing to send email', {
-        to: this.normalizeAddresses(options.to),
+        to: normalizeEmailAddresses(options.to),
         subject: options.subject,
       });
 
       const emailParams = {
         Destination: {
-          ToAddresses: this.normalizeAddresses(options.to),
+          ToAddresses: normalizeEmailAddresses(options.to),
           CcAddresses: options.cc
-            ? this.normalizeAddresses(options.cc)
+            ? normalizeEmailAddresses(options.cc)
             : undefined,
           BccAddresses: options.bcc
-            ? this.normalizeAddresses(options.bcc)
+            ? normalizeEmailAddresses(options.bcc)
             : undefined,
         },
         Message: {
@@ -70,11 +73,11 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
             }),
           },
         },
-        Source: this.normalizeAddress(
+        Source: normalizeEmailAddress(
           options.from || this.emailConfig.fromAddress,
         ),
         ...(options.replyTo && {
-          ReplyToAddresses: [this.normalizeAddress(options.replyTo)],
+          ReplyToAddresses: [normalizeEmailAddress(options.replyTo)],
         }),
         ...(this.emailConfig.configurationSetName && {
           ConfigurationSetName: this.emailConfig.configurationSetName,
@@ -86,9 +89,9 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
 
       // Collect all recipients (to, cc, bcc) for accurate reporting
       const allRecipients = [
-        ...this.normalizeAddresses(options.to),
-        ...(options.cc ? this.normalizeAddresses(options.cc) : []),
-        ...(options.bcc ? this.normalizeAddresses(options.bcc) : []),
+        ...normalizeEmailAddresses(options.to),
+        ...(options.cc ? normalizeEmailAddresses(options.cc) : []),
+        ...(options.bcc ? normalizeEmailAddresses(options.bcc) : []),
       ];
 
       const successResult: EmailSendResult = {
@@ -106,7 +109,7 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
     } catch (error) {
       this.logger.error('Failed to send email', {
         error: error.message,
-        to: this.normalizeAddresses(options.to),
+        to: normalizeEmailAddresses(options.to),
         subject: options.subject,
       });
       throw error;
@@ -190,22 +193,6 @@ export class EmailServiceImpl implements EmailService, OnModuleInit {
       });
       throw error;
     }
-  }
-
-  private normalizeAddress(address: string | EmailAddress): string {
-    if (typeof address === 'string') {
-      return address;
-    }
-    return address.name
-      ? `${address.name} <${address.address}>`
-      : address.address;
-  }
-
-  private normalizeAddresses(
-    addresses: string | string[] | EmailAddress | EmailAddress[],
-  ): string[] {
-    const addressArray = Array.isArray(addresses) ? addresses : [addresses];
-    return addressArray.map((addr) => this.normalizeAddress(addr));
   }
 
   private processTemplate(

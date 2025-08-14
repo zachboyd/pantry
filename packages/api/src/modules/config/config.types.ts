@@ -29,6 +29,7 @@ export interface Configuration {
       bucketName: string;
     };
     ses: {
+      useMockService: boolean;
       region: string;
       fromAddress: string;
       configurationSetName?: string;

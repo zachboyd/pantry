@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { EmailServiceImpl } from './email.service.js';
+import { MockEmailService } from './mock-email.service.js';
 import { TOKENS } from '../../common/tokens.js';
 import { AppConfigModule } from '../config/config.module.js';
-import type { EmailConfig } from './email.types.js';
+import type { EmailConfig, EmailService } from './email.types.js';
 import type { ConfigService } from '../config/config.types.js';
 
 @Module({
@@ -28,7 +29,17 @@ import type { ConfigService } from '../config/config.types.js';
     },
     {
       provide: TOKENS.EMAIL.SERVICE,
-      useClass: EmailServiceImpl,
+      useFactory: (
+        configService: ConfigService,
+        emailConfig: EmailConfig,
+      ): EmailService => {
+        const { aws } = configService.config;
+        if (aws.ses.useMockService) {
+          return new MockEmailService();
+        }
+        return new EmailServiceImpl(emailConfig);
+      },
+      inject: [TOKENS.CONFIG.SERVICE, TOKENS.EMAIL.CONFIG],
     },
   ],
   exports: [TOKENS.EMAIL.SERVICE],
