@@ -28,4 +28,6 @@ export interface AuthService {
 
 export interface AuthSyncService {
   createBusinessUser(authUser: BetterAuthUser): Promise<void>;
+  syncUserUpdate(authUser: BetterAuthUser): Promise<void>;
+  findUserByAuthId(authUserId: string): Promise<{ email: string } | null>;
 }

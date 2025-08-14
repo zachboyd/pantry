@@ -3,21 +3,43 @@ import { PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 
 import type { BetterAuthUser } from './auth.types.js';
-import type { EmailService } from '../email/email.types.js';
-import { EMAIL_TEMPLATES } from '../email/templates/template-constants.js';
+import type { SecondaryStorage } from './auth-secondary-storage.service.js';
 
 type AuthInstance = ReturnType<typeof betterAuth>;
 type UserCreatedCallback = (user: BetterAuthUser) => Promise<void>;
+type UserUpdatedCallback = (user: BetterAuthUser) => Promise<void>;
+type EmailVerificationCallback = (data: {
+  user: BetterAuthUser;
+  url: string;
+  token: string;
+}) => Promise<void>;
+type EmailChangeVerificationCallback = (data: {
+  user: BetterAuthUser;
+  newEmail: string;
+  url: string;
+  token: string;
+}) => Promise<void>;
 
 export interface CreateAuthOptions {
   onUserCreated?: UserCreatedCallback;
-  emailService?: EmailService;
+  onUserUpdated?: UserUpdatedCallback;
+  onEmailVerification?: EmailVerificationCallback;
+  onEmailChangeVerification?: EmailChangeVerificationCallback;
+  secondaryStorage?: SecondaryStorage;
   apiUrl?: string;
   secret?: string;
 }
 
 export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
-  const { onUserCreated, emailService, apiUrl, secret } = options;
+  const {
+    onUserCreated,
+    onUserUpdated,
+    onEmailVerification,
+    onEmailChangeVerification,
+    secondaryStorage,
+    apiUrl,
+    secret,
+  } = options;
   return betterAuth({
     database: {
       dialect: new PostgresDialect({
@@ -27,6 +49,7 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
       }),
       provider: 'pg',
     },
+    secondaryStorage,
     secret: secret || '',
     baseURL: apiUrl,
     basePath: '/api/auth',
@@ -37,21 +60,10 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
       enabled: true,
       requireEmailVerification: false, // Allow login without verification
     },
-    emailVerification: emailService
+    emailVerification: onEmailVerification
       ? {
-          sendVerificationEmail: async ({ user, url, token: _token }) => {
-            await emailService.sendTemplateEmail({
-              template: EMAIL_TEMPLATES.EMAIL_VERIFICATION,
-              to: user.email,
-              variables: {
-                userName: user.name || 'User',
-                appName: 'Jeeves',
-                userEmail: user.email,
-                verificationUrl: url, // Use Better Auth's generated URL
-                expiryHours: '1', // Default 1 hour from Better Auth
-                supportEmail: 'support@jeevesapp.dev',
-              },
-            });
+          sendVerificationEmail: async ({ user, url, token }) => {
+            await onEmailVerification({ user, url, token });
           },
           sendOnSignUp: true, // Send verification email after sign up
           sendOnSignIn: false, // Don't send on sign in (user can verify later)
@@ -64,13 +76,26 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
       additionalFields: {
         // Add any custom user fields here
       },
+      changeEmail: onEmailChangeVerification
+        ? {
+            enabled: true,
+            sendChangeEmailVerification: async ({
+              user,
+              newEmail,
+              url,
+              token,
+            }) => {
+              await onEmailChangeVerification({ user, newEmail, url, token });
+            },
+          }
+        : undefined,
     },
     session: {
       modelName: 'auth_session',
       expiresIn: 60 * 60 * 24 * 7, // 7 days
       updateAge: 60 * 60 * 24, // 1 day
       cookieCache: {
-        enabled: true,
+        enabled: false, // Disabled since we will use redis for session caching
       },
     },
     account: {
@@ -79,22 +104,23 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
     verification: {
       modelName: 'auth_verification',
     },
-    databaseHooks: onUserCreated
-      ? {
-          user: {
-            create: {
-              after: onUserCreated,
+    databaseHooks:
+      onUserCreated || onUserUpdated
+        ? {
+            user: {
+              ...(onUserCreated && {
+                create: {
+                  after: onUserCreated,
+                },
+              }),
+              ...(onUserUpdated && {
+                update: {
+                  after: onUserUpdated,
+                },
+              }),
             },
-          },
-        }
-      : undefined,
-    // You can add social providers here
-    // socialProviders: {
-    //   google: {
-    //     clientId: process.env.GOOGLE_CLIENT_ID,
-    //     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //   },
-    // },
+          }
+        : undefined,
   });
 }
 

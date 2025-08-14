@@ -12,11 +12,19 @@ import {
 describe('AuthSyncService', () => {
   let authSyncService: AuthSyncServiceImpl;
   let mockDb: KyselyMock;
+  let loggerSpy: {
+    log: ReturnType<typeof vi.spyOn>;
+    error: ReturnType<typeof vi.spyOn>;
+    warn: ReturnType<typeof vi.spyOn>;
+  };
 
   beforeEach(async () => {
     // Mock logger to avoid console output during tests
-    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
-    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+    loggerSpy = {
+      log: vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {}),
+      error: vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {}),
+      warn: vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {}),
+    };
 
     // Create mock database using utility
     mockDb = DatabaseMock.createKyselyMock();
@@ -205,6 +213,143 @@ describe('AuthSyncService', () => {
       await expect(
         authSyncService.createBusinessUser(authUser),
       ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('syncUserUpdate', () => {
+    it('should sync all auth user fields to business user', async () => {
+      // Arrange
+      const authUser: BetterAuthUser = {
+        id: 'auth-123',
+        email: 'updated@example.com',
+        emailVerified: true,
+        name: 'Jane Smith',
+        image: 'https://example.com/avatar.jpg',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockDb.mockBuilder.mockExecuteTakeFirst({ numUpdatedRows: 1n });
+
+      // Act
+      await authSyncService.syncUserUpdate(authUser);
+
+      // Assert
+      expect(mockDb.updateTable).toHaveBeenCalledWith('user');
+      expect(mockDb.set).toHaveBeenCalledWith({
+        email: 'updated@example.com',
+        first_name: 'Jane',
+        last_name: 'Smith',
+        display_name: 'Jane Smith',
+        avatar_url: 'https://example.com/avatar.jpg',
+        updated_at: expect.any(Date),
+      });
+      expect(mockDb.where).toHaveBeenCalledWith(
+        'auth_user_id',
+        '=',
+        'auth-123',
+      );
+    });
+
+    it('should handle null email and image fields', async () => {
+      // Arrange
+      const authUser: BetterAuthUser = {
+        id: 'auth-456',
+        name: 'John Doe',
+        emailVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockDb.mockBuilder.mockExecuteTakeFirst({ numUpdatedRows: 1n });
+
+      // Act
+      await authSyncService.syncUserUpdate(authUser);
+
+      // Assert
+      expect(mockDb.set).toHaveBeenCalledWith({
+        email: null,
+        first_name: 'John',
+        last_name: 'Doe',
+        display_name: 'John Doe',
+        avatar_url: null,
+        updated_at: expect.any(Date),
+      });
+    });
+
+    it('should handle single name correctly', async () => {
+      // Arrange
+      const authUser: BetterAuthUser = {
+        id: 'auth-789',
+        email: 'single@example.com',
+        emailVerified: true,
+        name: 'Madonna',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockDb.mockBuilder.mockExecuteTakeFirst({ numUpdatedRows: 1n });
+
+      // Act
+      await authSyncService.syncUserUpdate(authUser);
+
+      // Assert
+      expect(mockDb.set).toHaveBeenCalledWith({
+        email: 'single@example.com',
+        first_name: 'Madonna',
+        last_name: '', // Empty last name for single name
+        display_name: 'Madonna',
+        avatar_url: null,
+        updated_at: expect.any(Date),
+      });
+    });
+
+    it('should warn when no business user found', async () => {
+      // Arrange
+      const authUser: BetterAuthUser = {
+        id: 'auth-missing',
+        email: 'missing@example.com',
+        emailVerified: true,
+        name: 'Missing User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockDb.mockBuilder.mockExecuteTakeFirst({ numUpdatedRows: 0n });
+
+      // Act
+      await authSyncService.syncUserUpdate(authUser);
+
+      // Assert
+      expect(loggerSpy.warn).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'No business user found for auth user auth-missing',
+        ),
+      );
+    });
+
+    it('should not throw on database errors during sync', async () => {
+      // Arrange
+      const authUser: BetterAuthUser = {
+        id: 'auth-error',
+        email: 'error@example.com',
+        emailVerified: true,
+        name: 'Error User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockDb.mockBuilder.mockError(new Error('Sync DB Error'));
+
+      // Act & Assert - should not throw
+      await expect(
+        authSyncService.syncUserUpdate(authUser),
+      ).resolves.toBeUndefined();
+
+      expect(loggerSpy.error).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.stringContaining('Failed to sync user update'),
+      );
     });
   });
 });
