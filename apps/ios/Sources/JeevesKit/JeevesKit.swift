@@ -22,10 +22,6 @@ struct HouseholdSwitchAnimationModifier: ViewModifier {
                     nil,
                 value: switchOffset,
             )
-            .animation(
-                .easeInOut(duration: TransitionConstants.householdSwitchScaleDuration),
-                value: switchScale,
-            )
             .animation(nil, value: hideInactiveView)
     }
 
@@ -265,13 +261,13 @@ struct AppRootContentView: View {
             guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
 
             // Scale down to 90%
-            withAnimation(.easeInOut(duration: TransitionConstants.householdSwitchScaleDuration)) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                 householdSwitchScale = TransitionConstants.householdSwitchScaleFactor
             }
             animationPhase = .sliding
 
-            // Start sliding
-            DispatchQueue.main.asyncAfter(deadline: .now() + TransitionConstants.householdSwitchScaleDuration) {
+            // Start sliding after spring animation completes (~0.35 seconds)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
 
                 // Slide the views - both views move together
@@ -285,26 +281,19 @@ struct AppRootContentView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + TransitionConstants.householdSwitchSlideDuration) {
                     guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
 
-                    // Hide the inactive view to prevent animation during reset
-                    hideInactiveView = true
+                    // Flip to the other view and reset offset without hiding
+                    useSecondView.toggle()
+                    householdSwitchOffset = 0
 
-                    // Small delay to ensure the view is hidden
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                        // Flip to the other view and reset offset
-                        useSecondView.toggle()
-                        householdSwitchOffset = 0
-
-                        // Show the views again
-                        hideInactiveView = false
-
-                        animationPhase = .scalingUp
-                        withAnimation(.easeInOut(duration: TransitionConstants.householdSwitchScaleDuration)) {
-                            householdSwitchScale = 1.0
-                        }
+                    animationPhase = .scalingUp
+                    // Use a spring animation with higher damping for smoother scaling
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.9)) {
+                        householdSwitchScale = 1.0
                     }
 
                     // After scaling completes, check if we can unblur
-                    DispatchQueue.main.asyncAfter(deadline: .now() + TransitionConstants.householdSwitchScaleDuration) {
+                    // Spring animation takes ~0.4 seconds to complete
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
 
                         // Animation complete
