@@ -19,17 +19,17 @@ public final class UserUpdateSubscriptionHandler {
         Self.logger.info("🔄 Processing user update for: \(userFields.id)")
 
         // Log the update details
-        Self.logger.info("   - Name: \(userFields.first_name) \(userFields.last_name)")
-        Self.logger.info("   - Display Name: \(userFields.display_name ?? "nil")")
-        Self.logger.info("   - Email: \(userFields.email ?? "nil")")
+        // Self.logger.info("   - Name: \(userFields.first_name) \(userFields.last_name)")
+        // Self.logger.info("   - Display Name: \(userFields.display_name ?? "nil")")
+        // Self.logger.info("   - Email: \(userFields.email ?? "nil")")
 
-        Self.logger.info("✨ Writing UserFields fragment directly to cache for user: \(userFields.id)")
+        // Self.logger.info("✨ Writing UserFields fragment directly to cache for user: \(userFields.id)")
 
         // Write the fragment directly to the cache
         // This is the proper way to update cache with subscription data
         // Create a cache reference for the User object
         let cacheKey = "User:\(userFields.id)"
-        Self.logger.info("🔍 Writing to cache with key: \(cacheKey)")
+        // Self.logger.info("🔍 Writing to cache with key: \(cacheKey)")
 
         // Write the UserFields fragment directly to the cache
         // This will properly merge with existing data and notify all watchers
@@ -49,9 +49,7 @@ public final class UserUpdateSubscriptionHandler {
             }
         }
 
-        Self.logger.info("✅ Cache updated - all watchers will be notified")
-
-        Self.logger.info("✅ User update processed")
+        Self.logger.info("✅ Cache updated - all watchers will be notified. User update processed.")
     }
 }
 
