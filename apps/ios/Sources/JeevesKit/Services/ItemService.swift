@@ -8,7 +8,7 @@ public final class ItemService: ItemServiceProtocol {
     private static let logger = Logger.jeeves
 
     private let householdService: HouseholdServiceProtocol
-    private var itemsStorage: [String: [Item]] = [:]
+    private var itemsStorage: [UUID: [Item]] = [:]
 
     public init(householdService: HouseholdServiceProtocol) {
         self.householdService = householdService
@@ -17,7 +17,7 @@ public final class ItemService: ItemServiceProtocol {
 
     // MARK: - Public Methods
 
-    public func getItems(for householdId: String) async throws -> [Item] {
+    public func getItems(for householdId: UUID) async throws -> [Item] {
         Self.logger.info("📡 Getting pantry items for household: \(householdId)")
 
         // Simulate network delay
@@ -49,11 +49,11 @@ public final class ItemService: ItemServiceProtocol {
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
 
         guard var items = itemsStorage[item.householdId] else {
-            throw ItemServiceError.itemNotFound(item.id)
+            throw ItemServiceError.itemNotFound(item.id.uuidString)
         }
 
         guard let index = items.firstIndex(where: { $0.id == item.id }) else {
-            throw ItemServiceError.itemNotFound(item.id)
+            throw ItemServiceError.itemNotFound(item.id.uuidString)
         }
 
         items[index] = item
@@ -61,7 +61,7 @@ public final class ItemService: ItemServiceProtocol {
         Self.logger.info("✅ Updated pantry item successfully")
     }
 
-    public func deleteItem(id: String) async throws {
+    public func deleteItem(id: UUID) async throws {
         Self.logger.info("🗑️ Deleting pantry item: \(id)")
 
         // Simulate network delay
@@ -78,7 +78,7 @@ public final class ItemService: ItemServiceProtocol {
         }
 
         guard found else {
-            throw ItemServiceError.itemNotFound(id)
+            throw ItemServiceError.itemNotFound(id.uuidString)
         }
 
         Self.logger.info("✅ Deleted pantry item successfully")
@@ -87,12 +87,12 @@ public final class ItemService: ItemServiceProtocol {
     // MARK: - Private Methods
 
     private func seedMockData() {
-        let mockHouseholdId = "mock_household_1"
+        let mockHouseholdId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
         let now = Date()
 
         let mockItems = [
             Item(
-                id: UUID().uuidString,
+                id: UUID(),
                 householdId: mockHouseholdId,
                 name: "Milk",
                 quantity: 1.0,
@@ -101,12 +101,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .day, value: 3, to: now),
                 location: "Refrigerator",
                 notes: "2% milk",
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID().uuidString,
+                id: UUID(),
                 householdId: mockHouseholdId,
                 name: "Bananas",
                 quantity: 6.0,
@@ -115,12 +115,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .day, value: 5, to: now),
                 location: "Counter",
                 notes: "Getting ripe",
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID().uuidString,
+                id: UUID(),
                 householdId: mockHouseholdId,
                 name: "Chicken Breast",
                 quantity: 2.0,
@@ -129,12 +129,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .day, value: 2, to: now),
                 location: "Refrigerator",
                 notes: "Organic, free-range",
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID().uuidString,
+                id: UUID(),
                 householdId: mockHouseholdId,
                 name: "Rice",
                 quantity: 5.0,
@@ -143,12 +143,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .year, value: 1, to: now),
                 location: "Pantry",
                 notes: "Jasmine rice",
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID().uuidString,
+                id: UUID(),
                 householdId: mockHouseholdId,
                 name: "Frozen Peas",
                 quantity: 1.0,
@@ -157,7 +157,7 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .month, value: 6, to: now),
                 location: "Freezer",
                 notes: "Organic",
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),

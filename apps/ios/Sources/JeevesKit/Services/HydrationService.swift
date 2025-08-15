@@ -40,8 +40,11 @@ public final class HydrationService {
         Self.logger.info("🔑 Auth User ID: \(currentUser.auth_user_id ?? "nil")")
 
         // Convert GraphQL user to our User model
+        guard let id = currentUser.id.uuid else {
+            throw ServiceError.invalidData("Invalid UUID in user data")
+        }
         let user = User(
-            id: currentUser.id,
+            id: id,
             authUserId: currentUser.auth_user_id,
             email: currentUser.email,
             firstName: currentUser.first_name,
@@ -50,21 +53,27 @@ public final class HydrationService {
             avatarUrl: currentUser.avatar_url,
             phone: currentUser.phone,
             birthDate: currentUser.birth_date,
-            managedBy: currentUser.managed_by,
+            managedBy: currentUser.managed_by?.uuid,
             relationshipToManager: currentUser.relationship_to_manager,
-            primaryHouseholdId: currentUser.primary_household_id,
+            primaryHouseholdId: currentUser.primary_household_id?.uuid,
             isAi: currentUser.is_ai,
             createdAt: currentUser.created_at,
             updatedAt: currentUser.updated_at,
         )
 
         // Extract households data
-        let households: [Household] = hydrateData.households.map { graphQLHousehold in
-            Household(
-                id: graphQLHousehold.id,
+        let households: [Household] = hydrateData.households.compactMap { graphQLHousehold in
+            guard let householdId = graphQLHousehold.id.uuid,
+                  let createdBy = graphQLHousehold.created_by.uuid
+            else {
+                Self.logger.warning("⚠️ Invalid UUID in household data")
+                return nil
+            }
+            return Household(
+                id: householdId,
                 name: graphQLHousehold.name,
                 description: graphQLHousehold.description,
-                createdBy: graphQLHousehold.created_by,
+                createdBy: createdBy,
                 createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                 updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
                 memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0,
@@ -121,8 +130,12 @@ public final class HydrationService {
                     let currentUser = hydrateData.currentUser
 
                     // Convert GraphQL user to our User model
+                    guard let userId = currentUser.id.uuid else {
+                        Self.logger.error("❌ Invalid UUID in user data")
+                        return
+                    }
                     let user = User(
-                        id: currentUser.id,
+                        id: userId,
                         authUserId: currentUser.auth_user_id,
                         email: currentUser.email,
                         firstName: currentUser.first_name,
@@ -131,21 +144,27 @@ public final class HydrationService {
                         avatarUrl: currentUser.avatar_url,
                         phone: currentUser.phone,
                         birthDate: currentUser.birth_date,
-                        managedBy: currentUser.managed_by,
+                        managedBy: currentUser.managed_by?.uuid,
                         relationshipToManager: currentUser.relationship_to_manager,
-                        primaryHouseholdId: currentUser.primary_household_id,
+                        primaryHouseholdId: currentUser.primary_household_id?.uuid,
                         isAi: currentUser.is_ai,
                         createdAt: currentUser.created_at,
                         updatedAt: currentUser.updated_at,
                     )
 
                     // Extract households data
-                    let households: [Household] = hydrateData.households.map { graphQLHousehold in
-                        Household(
-                            id: graphQLHousehold.id,
+                    let households: [Household] = hydrateData.households.compactMap { graphQLHousehold in
+                        guard let householdId = graphQLHousehold.id.uuid,
+                              let createdBy = graphQLHousehold.created_by.uuid
+                        else {
+                            Self.logger.warning("⚠️ Invalid UUID in household data")
+                            return nil
+                        }
+                        return Household(
+                            id: householdId,
                             name: graphQLHousehold.name,
                             description: graphQLHousehold.description,
-                            createdBy: graphQLHousehold.created_by,
+                            createdBy: createdBy,
                             createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
                             updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
                             memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0,

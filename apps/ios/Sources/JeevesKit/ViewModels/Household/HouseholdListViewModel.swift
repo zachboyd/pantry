@@ -17,7 +17,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
 
     public struct State: Sendable {
         var households: [Household] = []
-        var selectedHouseholdId: String?
+        var selectedHouseholdId: UUID?
         var viewState: CommonViewState = .idle
         var showingError = false
         var errorMessage: String?
@@ -32,7 +32,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
         householdsWatch.value ?? state.households
     }
 
-    public var selectedHouseholdId: String? {
+    public var selectedHouseholdId: UUID? {
         state.selectedHouseholdId
     }
 
@@ -122,14 +122,15 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
                 state.viewState = households.isEmpty ? .empty : .loaded
 
                 // Restore selected household from UserDefaults
-                if let savedSelectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
+                if let savedSelectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
+                   let savedSelectedId = UUID(uuidString: savedSelectedIdString),
                    households.contains(where: { $0.id == savedSelectedId })
                 {
                     state.selectedHouseholdId = savedSelectedId
                 } else if let firstHousehold = households.first {
                     // Auto-select first household if none was previously selected
                     state.selectedHouseholdId = firstHousehold.id
-                    UserDefaults.standard.set(firstHousehold.id, forKey: "selectedHouseholdId")
+                    UserDefaults.standard.set(firstHousehold.id.uuidString, forKey: "selectedHouseholdId")
                 }
             }
             filterHouseholds()
@@ -162,7 +163,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
         updateState { $0.selectedHouseholdId = household.id }
 
         // Persist the selection
-        UserDefaults.standard.set(household.id, forKey: "selectedHouseholdId")
+        UserDefaults.standard.set(household.id.uuidString, forKey: "selectedHouseholdId")
     }
 
     /// Deselect current household
@@ -338,14 +339,15 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
                 state.viewState = households.isEmpty ? .empty : .loaded
 
                 // Restore selected household from UserDefaults
-                if let savedSelectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
+                if let savedSelectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
+                   let savedSelectedId = UUID(uuidString: savedSelectedIdString),
                    households.contains(where: { $0.id == savedSelectedId })
                 {
                     state.selectedHouseholdId = savedSelectedId
                 } else if let firstHousehold = households.first {
                     // Auto-select first household if none was previously selected
                     state.selectedHouseholdId = firstHousehold.id
-                    UserDefaults.standard.set(firstHousehold.id, forKey: "selectedHouseholdId")
+                    UserDefaults.standard.set(firstHousehold.id.uuidString, forKey: "selectedHouseholdId")
                 }
             }
 

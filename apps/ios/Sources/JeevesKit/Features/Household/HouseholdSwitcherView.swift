@@ -15,11 +15,11 @@ public struct HouseholdSwitcherView: View {
     @State private var showingCreateHousehold = false
     @State private var showingJoinHousehold = false
 
-    let currentHouseholdId: String?
+    let currentHouseholdId: UUID?
     let onSelectHousehold: (Household) -> Void
 
     public init(
-        currentHouseholdId: String?,
+        currentHouseholdId: UUID?,
         onSelectHousehold: @escaping (Household) -> Void
     ) {
         self.currentHouseholdId = currentHouseholdId
@@ -169,7 +169,7 @@ struct HouseholdRowView: View {
 
 #Preview {
     HouseholdSwitcherView(
-        currentHouseholdId: "1",
+        currentHouseholdId: UUID(uuidString: "11111111-1111-1111-1111-111111111111"),
         onSelectHousehold: { _ in },
     )
 }

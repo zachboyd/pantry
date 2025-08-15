@@ -48,7 +48,7 @@ public final class HouseholdViewModel {
 
     /// Fetch household data by ID
     /// - Parameter householdId: ID of the household to fetch
-    public func fetchHousehold(id householdId: String) async {
+    public func fetchHousehold(id householdId: UUID) async {
         Self.logger.info("📡 Fetching household data for ID: \(householdId)")
 
         isLoading = true
@@ -101,7 +101,7 @@ public final class HouseholdViewModel {
     /// - Parameters:
     ///   - userId: ID of the user to add
     ///   - role: Role for the new member ("manager", "member", "ai")
-    public func addMember(userId: String, role: String) async {
+    public func addMember(userId: UUID, role: String) async {
         guard let household = currentHousehold else {
             Self.logger.error("❌ No current household to add member to")
             return
@@ -129,7 +129,7 @@ public final class HouseholdViewModel {
 
     /// Remove member from current household
     /// - Parameter userId: ID of the user to remove
-    public func removeMember(userId: String) async {
+    public func removeMember(userId: UUID) async {
         guard let household = currentHousehold else {
             Self.logger.error("❌ No current household to remove member from")
             return
@@ -157,7 +157,7 @@ public final class HouseholdViewModel {
     /// - Parameters:
     ///   - userId: ID of the user
     ///   - newRole: New role for the member
-    public func changeMemberRole(userId: String, newRole: String) async {
+    public func changeMemberRole(userId: UUID, newRole: String) async {
         guard let household = currentHousehold else {
             Self.logger.error("❌ No current household to change member role in")
             return
@@ -201,12 +201,10 @@ public final class HouseholdViewModel {
 extension HouseholdViewModel {
     /// Check if user is the owner of the current household
     var isCurrentUserOwner: Bool {
-        guard let household = currentHousehold,
-              let currentUserId = authService.currentAuthUser?.id
-        else {
-            return false
-        }
-        return household.createdBy == currentUserId
+        // TODO: This needs to be updated to compare with the actual business user ID
+        // Currently, authService only has the auth user ID (String), not the business user ID (UUID)
+        // For now, returning false until we have access to the actual business user
+        false
     }
 
     /// Get display name for the current household

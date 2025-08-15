@@ -21,7 +21,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
     public struct State: Sendable {
         var currentUser: User?
         var userHouseholds: [Household] = []
-        var selectedHouseholdId: String?
+        var selectedHouseholdId: UUID?
         var viewState: CommonViewState = .idle
         var showingError = false
         var errorMessage: String?
@@ -59,7 +59,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         householdsWatch.value ?? state.userHouseholds
     }
 
-    public var selectedHouseholdId: String? {
+    public var selectedHouseholdId: UUID? {
         state.selectedHouseholdId
     }
 
@@ -212,7 +212,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
 
     /// Check if current user can create new members for a specific household (e.g., invite members)
     /// This is reactive and will automatically update when permissions change
-    public func canCreateHouseholdMember(for householdId: String) -> Bool {
+    public func canCreateHouseholdMember(for householdId: UUID) -> Bool {
         // Use the permission service which is Observable
         // This will automatically trigger view updates when permissions change
         dependencies.permissionService.canCreateHouseholdMember(for: householdId)
@@ -403,7 +403,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         }
 
         // Persist the selection
-        UserDefaults.standard.set(household.id, forKey: "selectedHouseholdId")
+        UserDefaults.standard.set(household.id.uuidString, forKey: "selectedHouseholdId")
 
         // Notify other parts of the app about the household change
         NotificationCenter.default.post(
@@ -581,8 +581,11 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
     }
 
     private func loadSelectedHousehold() {
-        let selectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId")
-        updateState { $0.selectedHouseholdId = selectedId }
+        if let selectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
+           let selectedId = UUID(uuidString: selectedIdString)
+        {
+            updateState { $0.selectedHouseholdId = selectedId }
+        }
     }
 
     private func loadNotificationSettings() {

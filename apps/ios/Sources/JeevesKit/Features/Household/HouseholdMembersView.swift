@@ -13,9 +13,9 @@ public struct HouseholdMembersView: View {
     @State private var viewModel: HouseholdMembersViewModel?
     @State private var membersWatch: WatchedResult<[HouseholdMember]>?
 
-    let householdId: String
+    let householdId: UUID
 
-    public init(householdId: String) {
+    public init(householdId: UUID) {
         self.householdId = householdId
     }
 
@@ -142,13 +142,13 @@ public extension HouseholdMember {
     var name: String {
         // TODO: Look up user name from userId
         // For now, generate mock names based on userId
-        "User \(userId.prefix(3))"
+        "User \(userId.uuidString.prefix(3))"
     }
 
     var email: String {
         // TODO: Look up user email from userId
         // For now, generate mock emails
-        "user\(userId.prefix(3))@example.com"
+        "user\(userId.uuidString.prefix(3))@example.com"
     }
 
     /// Get member initials for avatar
@@ -189,6 +189,6 @@ public extension MemberRole {
 
 #Preview {
     NavigationStack {
-        HouseholdMembersView(householdId: "1")
+        HouseholdMembersView(householdId: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
     }
 }

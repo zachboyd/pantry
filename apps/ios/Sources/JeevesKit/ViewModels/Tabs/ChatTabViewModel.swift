@@ -11,7 +11,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
     // MARK: - State
 
     public struct State: Sendable {
-        var selectedHouseholdId: String?
+        var selectedHouseholdId: UUID?
         var householdName: String?
         var memberCount = 0
         var viewState: CommonViewState = .idle
@@ -26,17 +26,17 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
 
     /// Placeholder message type for future implementation
     public struct ChatMessage: Identifiable, Sendable {
-        public let id: String
+        public let id: UUID
         public let content: String
-        public let senderId: String
+        public let senderId: UUID
         public let senderName: String
         public let timestamp: Date
         public let isFromCurrentUser: Bool
 
         public init(
-            id: String,
+            id: UUID,
             content: String,
-            senderId: String,
+            senderId: UUID,
             senderName: String,
             timestamp: Date,
             isFromCurrentUser: Bool
@@ -52,7 +52,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
 
     // MARK: - Computed Properties
 
-    public var selectedHouseholdId: String? {
+    public var selectedHouseholdId: UUID? {
         state.selectedHouseholdId
     }
 
@@ -156,7 +156,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
     // MARK: - Public Methods
 
     /// Load chat data for a household (placeholder)
-    public func loadChatData(for householdId: String) async {
+    public func loadChatData(for householdId: UUID) async {
         guard isFeatureEnabled else {
             Self.logger.info("💬 Chat feature not enabled, skipping data load")
             return
@@ -227,17 +227,21 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
     private func setupHouseholdObservation() {
         // This would typically observe household changes from a service or coordinator
         // For now, we'll load the selected household from UserDefaults
-        let selectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId")
-        updateState { $0.selectedHouseholdId = selectedId }
+        if let selectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
+           let selectedId = UUID(uuidString: selectedIdString)
+        {
+            updateState { $0.selectedHouseholdId = selectedId }
+        }
     }
 
     private func loadSelectedHousehold() async {
         // Check for currently selected household
-        let selectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId")
+        let selectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId")
+        let selectedId = selectedIdString.flatMap { UUID(uuidString: $0) }
 
         if selectedId != state.selectedHouseholdId {
             updateState { $0.selectedHouseholdId = selectedId }
-            Self.logger.info("🏠 Selected household changed to: \(selectedId ?? "none")")
+            Self.logger.info("🏠 Selected household changed to: \(selectedId?.uuidString ?? "none")")
 
             // Load household info if we have an ID
             if let householdId = selectedId {
@@ -251,7 +255,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
         }
     }
 
-    private func loadHouseholdInfo(_ householdId: String) async {
+    private func loadHouseholdInfo(_ householdId: UUID) async {
         Self.logger.info("📡 Loading household info for chat: \(householdId)")
 
         do {
@@ -270,7 +274,7 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
         }
     }
 
-    private func performLoadChatData(for householdId: String) async {
+    private func performLoadChatData(for householdId: UUID) async {
         Self.logger.info("📡 Loading chat data for household: \(householdId)")
 
         updateState { $0.viewState = .loading }
@@ -294,25 +298,25 @@ public final class ChatTabViewModel: BaseReactiveViewModel<ChatTabViewModel.Stat
         // This is just for UI development - remove when real chat is implemented
         [
             ChatMessage(
-                id: "1",
+                id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                 content: "Hey, we're running low on milk!",
-                senderId: "user1",
+                senderId: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 senderName: "Alice",
                 timestamp: Date().addingTimeInterval(-3600),
                 isFromCurrentUser: false,
             ),
             ChatMessage(
-                id: "2",
+                id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
                 content: "I'll pick some up on my way home",
-                senderId: "current",
+                senderId: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!,
                 senderName: "You",
                 timestamp: Date().addingTimeInterval(-1800),
                 isFromCurrentUser: true,
             ),
             ChatMessage(
-                id: "3",
+                id: UUID(uuidString: "00000000-0000-0000-0000-000000000005")!,
                 content: "Thanks! Also need bread if you see it",
-                senderId: "user1",
+                senderId: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 senderName: "Alice",
                 timestamp: Date().addingTimeInterval(-900),
                 isFromCurrentUser: false,

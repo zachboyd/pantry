@@ -173,7 +173,7 @@ public struct AvatarView: View {
             VStack {
                 AvatarView(
                     user: User(
-                        id: UUID().uuidString,
+                        id: UUID(),
                         email: "test@example.com",
                         name: "John Doe",
                         createdAt: Date(),
@@ -195,7 +195,7 @@ public struct AvatarView: View {
         // With initials
         AvatarView(
             user: User(
-                id: UUID().uuidString,
+                id: UUID(),
                 email: "test@example.com",
                 name: "Jane Smith",
                 createdAt: Date(),
@@ -205,7 +205,7 @@ public struct AvatarView: View {
         // With single name
         AvatarView(
             user: User(
-                id: UUID().uuidString,
+                id: UUID(),
                 email: "test@example.com",
                 name: "Madonna",
                 createdAt: Date(),
@@ -218,7 +218,7 @@ public struct AvatarView: View {
         // With tap action
         AvatarView(
             user: User(
-                id: UUID().uuidString,
+                id: UUID(),
                 email: "test@example.com",
                 name: "Tap Me",
                 createdAt: Date(),
