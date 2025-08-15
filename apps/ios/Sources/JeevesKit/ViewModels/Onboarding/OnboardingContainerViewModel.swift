@@ -113,7 +113,7 @@ public final class OnboardingContainerViewModel: BaseReactiveViewModel<Onboardin
     }
 
     /// Handle completion of household creation
-    public func handleHouseholdCreated(householdId: String) {
+    public func handleHouseholdCreated(householdId: UUID) {
         updateState {
             $0.selectedHouseholdId = householdId
             $0.currentStep = .complete
@@ -121,7 +121,7 @@ public final class OnboardingContainerViewModel: BaseReactiveViewModel<Onboardin
     }
 
     /// Get the household ID for completing onboarding
-    public func getCompletionHouseholdId() -> String? {
+    public func getCompletionHouseholdId() -> UUID? {
         if let selectedId = state.selectedHouseholdId {
             return selectedId
         }
@@ -150,7 +150,7 @@ public struct OnboardingContainerState: Equatable, Sendable {
     public var currentStep: OnboardingContainerStep = .loading
     public var currentUser: User?
     public var userHouseholds: [Household] = []
-    public var selectedHouseholdId: String?
+    public var selectedHouseholdId: UUID?
 
     public var isLoading: Bool {
         currentStep == .loading

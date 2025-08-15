@@ -8,7 +8,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
     private static let logger = Logger.shopping
 
     private let householdService: HouseholdServiceProtocol
-    private var listsStorage: [String: [ShoppingList]] = [:]
+    private var listsStorage: [UUID: [ShoppingList]] = [:]
 
     public init(householdService: HouseholdServiceProtocol) {
         self.householdService = householdService
@@ -17,7 +17,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
 
     // MARK: - Public Methods
 
-    public func getLists(for householdId: String) async throws -> [ShoppingList] {
+    public func getLists(for householdId: UUID) async throws -> [ShoppingList] {
         Self.logger.info("📡 Getting shopping lists for household: \(householdId)")
 
         // Simulate network delay
@@ -28,18 +28,18 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
         return lists
     }
 
-    public func createList(name: String, householdId: String) async throws -> ShoppingList {
+    public func createList(name: String, householdId: UUID) async throws -> ShoppingList {
         Self.logger.info("➕ Creating shopping list: \(name)")
 
         // Simulate network delay
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
 
         let newList = ShoppingList(
-            id: UUID().uuidString,
+            id: UUID(),
             householdId: householdId,
             name: name,
             items: [],
-            createdBy: "mock_user_1",
+            createdBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
             createdAt: Date(),
             updatedAt: Date(),
         )
@@ -53,7 +53,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
         return newList
     }
 
-    public func addItem(to listId: String, item: ShoppingListItem) async throws {
+    public func addItem(to listId: UUID, item: ShoppingListItem) async throws {
         Self.logger.info("➕ Adding item to shopping list: \(listId)")
 
         // Simulate network delay
@@ -84,13 +84,13 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
         }
 
         guard found else {
-            throw ShoppingListServiceError.listNotFound(listId)
+            throw ShoppingListServiceError.listNotFound(listId.uuidString)
         }
 
         Self.logger.info("✅ Added item to shopping list successfully")
     }
 
-    public func removeItem(from listId: String, itemId: String) async throws {
+    public func removeItem(from listId: UUID, itemId: UUID) async throws {
         Self.logger.info("🗑️ Removing item from shopping list: \(listId)")
 
         // Simulate network delay
@@ -124,7 +124,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
         }
 
         guard found else {
-            throw ShoppingListServiceError.itemNotFound(itemId)
+            throw ShoppingListServiceError.itemNotFound(itemId.uuidString)
         }
 
         Self.logger.info("✅ Removed item from shopping list successfully")
@@ -132,7 +132,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
 
     // MARK: - Additional Methods
 
-    public func toggleItemCompleted(listId: String, itemId: String) async throws {
+    public func toggleItemCompleted(listId: UUID, itemId: UUID) async throws {
         Self.logger.info("✅ Toggling item completion in list: \(listId)")
 
         // Simulate network delay
@@ -154,7 +154,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
                         category: item.category,
                         isCompleted: !item.isCompleted,
                         addedBy: item.addedBy,
-                        completedBy: item.isCompleted ? nil : "mock_user_1",
+                        completedBy: item.isCompleted ? nil : UUID(uuidString: "00000000-0000-0000-0000-000000000001"),
                         completedAt: item.isCompleted ? nil : Date(),
                     )
 
@@ -179,13 +179,13 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
         }
 
         guard found else {
-            throw ShoppingListServiceError.itemNotFound(itemId)
+            throw ShoppingListServiceError.itemNotFound(itemId.uuidString)
         }
 
         Self.logger.info("✅ Toggled item completion successfully")
     }
 
-    public func deleteList(_ listId: String) async throws {
+    public func deleteList(_ listId: UUID) async throws {
         Self.logger.info("🗑️ Deleting shopping list: \(listId)")
 
         // Simulate network delay
@@ -202,7 +202,7 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
         }
 
         guard found else {
-            throw ShoppingListServiceError.listNotFound(listId)
+            throw ShoppingListServiceError.listNotFound(listId.uuidString)
         }
 
         Self.logger.info("✅ Deleted shopping list successfully")
@@ -211,40 +211,40 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
     // MARK: - Private Methods
 
     private func seedMockData() {
-        let mockHouseholdId = "mock_household_1"
+        let mockHouseholdId = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
         let now = Date()
 
         let groceryItems = [
             ShoppingListItem(
-                id: UUID().uuidString,
+                id: UUID(),
                 name: "Bread",
                 quantity: 2.0,
                 unit: "loaves",
                 category: .pantry,
                 isCompleted: false,
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                 completedBy: nil,
                 completedAt: nil,
             ),
             ShoppingListItem(
-                id: UUID().uuidString,
+                id: UUID(),
                 name: "Eggs",
                 quantity: 1.0,
                 unit: "dozen",
                 category: .dairy,
                 isCompleted: true,
-                addedBy: "mock_user_1",
-                completedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+                completedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001"),
                 completedAt: Calendar.current.date(byAdding: .hour, value: -2, to: now),
             ),
             ShoppingListItem(
-                id: UUID().uuidString,
+                id: UUID(),
                 name: "Apples",
                 quantity: 3.0,
                 unit: "lbs",
                 category: .produce,
                 isCompleted: false,
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                 completedBy: nil,
                 completedAt: nil,
             ),
@@ -252,24 +252,24 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
 
         let weeklyShoppingItems = [
             ShoppingListItem(
-                id: UUID().uuidString,
+                id: UUID(),
                 name: "Salmon",
                 quantity: 2.0,
                 unit: "fillets",
                 category: .meat,
                 isCompleted: false,
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                 completedBy: nil,
                 completedAt: nil,
             ),
             ShoppingListItem(
-                id: UUID().uuidString,
+                id: UUID(),
                 name: "Spinach",
                 quantity: 1.0,
                 unit: "bag",
                 category: .produce,
                 isCompleted: false,
-                addedBy: "mock_user_1",
+                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                 completedBy: nil,
                 completedAt: nil,
             ),
@@ -277,20 +277,20 @@ public final class ShoppingListService: ShoppingListServiceProtocol {
 
         let mockLists = [
             ShoppingList(
-                id: UUID().uuidString,
+                id: UUID(),
                 householdId: mockHouseholdId,
                 name: "Grocery Run",
                 items: groceryItems,
-                createdBy: "mock_user_1",
+                createdBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                 createdAt: Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now,
                 updatedAt: now,
             ),
             ShoppingList(
-                id: UUID().uuidString,
+                id: UUID(),
                 householdId: mockHouseholdId,
                 name: "Weekly Shopping",
                 items: weeklyShoppingItems,
-                createdBy: "mock_user_1",
+                createdBy: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
                 createdAt: Calendar.current.date(byAdding: .day, value: -3, to: now) ?? now,
                 updatedAt: now,
             ),

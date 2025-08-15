@@ -142,7 +142,7 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
         }
 
         let updatedUser = User(
-            id: authService.currentAuthUser?.id ?? UUID().uuidString,
+            id: authService.currentAuthUser?.id.uuid ?? UUID(),
             email: preferences.email,
             name: preferences.name,
             createdAt: createdAt,
@@ -155,10 +155,11 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
     }
 
     /// Get last selected household ID
-    public func getLastSelectedHouseholdId() async -> String? {
+    public func getLastSelectedHouseholdId() async -> UUID? {
         Self.logger.debug("🏠 Getting last selected household ID")
 
-        let householdId = userDefaults.string(forKey: Keys.lastSelectedHousehold)
+        let householdIdString = userDefaults.string(forKey: Keys.lastSelectedHousehold)
+        let householdId = householdIdString?.uuid
 
         if let id = householdId {
             Self.logger.debug("✅ Found last selected household: \(id)")
@@ -170,11 +171,11 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
     }
 
     /// Set last selected household ID
-    public func setLastSelectedHouseholdId(_ householdId: String?) async {
-        Self.logger.info("🏠 Setting last selected household ID: \(householdId ?? "nil")")
+    public func setLastSelectedHouseholdId(_ householdId: UUID?) async {
+        Self.logger.info("🏠 Setting last selected household ID: \(householdId?.uuidString ?? "nil")")
 
         if let id = householdId {
-            userDefaults.set(id, forKey: Keys.lastSelectedHousehold)
+            userDefaults.set(id.uuidString, forKey: Keys.lastSelectedHousehold)
             Self.logger.info("✅ Last selected household ID saved: \(id)")
         } else {
             userDefaults.removeObject(forKey: Keys.lastSelectedHousehold)
@@ -295,7 +296,9 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
         }
 
         // Import simple preferences
-        if let householdId = preferences["lastHousehold"] as? String {
+        if let householdIdString = preferences["lastHousehold"] as? String,
+           let householdId = UUID(uuidString: householdIdString)
+        {
             await setLastSelectedHouseholdId(householdId)
             Self.logger.debug("✅ Imported last selected household")
         }
@@ -441,7 +444,7 @@ public extension UserPreferencesService {
 
     /// Quick save for commonly changed preferences
     func quickSave(
-        householdId: String? = nil,
+        householdId: UUID? = nil,
         theme: ThemePreference? = nil,
     ) async {
         if let householdId {

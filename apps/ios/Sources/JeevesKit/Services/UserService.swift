@@ -21,17 +21,17 @@ public final class UserService: UserServiceProtocol {
     private let watchManager: WatchManager?
 
     /// User data cache
-    private var userCache: [String: User] = [:]
+    private var userCache: [UUID: User] = [:]
 
     /// Current user ID for proper cache tracking
-    private var currentUserId: String?
+    private var currentUserId: UUID?
 
     /// Cached watched results for query deduplication
     private var currentUserWatch: WatchedResult<User>?
-    private var userWatches: [String: WatchedResult<User>] = [:]
+    private var userWatches: [UUID: WatchedResult<User>] = [:]
 
     /// Apollo watchers for reactive updates (stored to allow cancellation)
-    private var apolloWatchers: [String: GraphQLQueryWatcher<JeevesGraphQL.GetUserQuery>] = [:]
+    private var apolloWatchers: [UUID: GraphQLQueryWatcher<JeevesGraphQL.GetUserQuery>] = [:]
     private var currentUserApolloWatcher: GraphQLQueryWatcher<JeevesGraphQL.GetCurrentUserQuery>?
 
     // MARK: - Initialization
@@ -58,7 +58,7 @@ public final class UserService: UserServiceProtocol {
     }
 
     /// Get a user by ID
-    public func getUser(id: String) async throws -> User? {
+    public func getUser(id: UUID) async throws -> User? {
         Self.logger.info("🔍 Getting business user by ID: \(id)")
 
         // Check cache first
@@ -67,7 +67,7 @@ public final class UserService: UserServiceProtocol {
             return cachedUser
         }
 
-        let user = try await fetchUserFromGraphQL(userId: id)
+        let user = try await fetchUserFromGraphQL(userId: id.uuidString)
         if let user {
             userCache[id] = user
         }
@@ -75,7 +75,7 @@ public final class UserService: UserServiceProtocol {
     }
 
     /// Get multiple users by IDs
-    public func getUsersByIds(_ ids: [String]) async throws -> [User] {
+    public func getUsersByIds(_ ids: [UUID]) async throws -> [User] {
         Self.logger.info("🔍 Getting \(ids.count) business users by IDs")
 
         var users: [User] = []
@@ -181,8 +181,12 @@ public final class UserService: UserServiceProtocol {
             case let .success(data):
                 if let userData = data.data?.currentUser {
                     // Transform GraphQL data to User model
+                    guard let id = userData.id.uuid else {
+                        Self.logger.error("❌ Invalid UUID in user data")
+                        return
+                    }
                     let user = User(
-                        id: userData.id,
+                        id: id,
                         authUserId: userData.auth_user_id,
                         email: userData.email,
                         firstName: userData.first_name,
@@ -191,9 +195,9 @@ public final class UserService: UserServiceProtocol {
                         avatarUrl: userData.avatar_url,
                         phone: userData.phone,
                         birthDate: userData.birth_date,
-                        managedBy: userData.managed_by,
+                        managedBy: userData.managed_by?.uuid,
                         relationshipToManager: userData.relationship_to_manager,
-                        primaryHouseholdId: userData.primary_household_id,
+                        primaryHouseholdId: userData.primary_household_id?.uuid,
                         isAi: userData.is_ai,
                         createdAt: userData.created_at,
                         updatedAt: userData.updated_at,
@@ -241,7 +245,7 @@ public final class UserService: UserServiceProtocol {
     }
 
     /// Watch specific user by ID with reactive updates
-    public func watchUser(id: String) -> WatchedResult<User> {
+    public func watchUser(id: UUID) -> WatchedResult<User> {
         Self.logger.info("👁️ Creating watched result for user: \(id)")
 
         // Return existing watch if available
@@ -262,7 +266,7 @@ public final class UserService: UserServiceProtocol {
         }
 
         // Create the query for the specific user
-        let input = JeevesGraphQL.GetUserInput(id: id)
+        let input = JeevesGraphQL.GetUserInput(id: id.uuidString)
         let query = JeevesGraphQL.GetUserQuery(input: input)
 
         // Create a REAL Apollo watcher that observes cache changes!
@@ -325,8 +329,11 @@ public final class UserService: UserServiceProtocol {
 
     // Helper method to create User from GraphQL data
     private func createUserFromGraphQLData(_ userData: JeevesGraphQL.GetUserQuery.Data.User) -> User {
-        User(
-            id: userData.id,
+        guard let id = userData.id.uuid else {
+            fatalError("Invalid UUID in GraphQL user data")
+        }
+        return User(
+            id: id,
             authUserId: userData.auth_user_id,
             email: userData.email,
             firstName: userData.first_name,
@@ -335,9 +342,9 @@ public final class UserService: UserServiceProtocol {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by,
+            managedBy: userData.managed_by?.uuid,
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id,
+            primaryHouseholdId: userData.primary_household_id?.uuid,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,
@@ -357,8 +364,11 @@ private extension UserService {
 
         let userData = data.currentUser
 
+        guard let id = userData.id.uuid else {
+            throw ServiceError.invalidData("Invalid UUID in user data")
+        }
         let user = User(
-            id: userData.id,
+            id: id,
             authUserId: userData.auth_user_id,
             email: userData.email,
             firstName: userData.first_name,
@@ -367,9 +377,9 @@ private extension UserService {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by,
+            managedBy: userData.managed_by?.uuid,
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id,
+            primaryHouseholdId: userData.primary_household_id?.uuid,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,
@@ -390,8 +400,11 @@ private extension UserService {
 
         let userData = data.user
 
+        guard let id = userData.id.uuid else {
+            throw ServiceError.invalidData("Invalid UUID in user data")
+        }
         let user = User(
-            id: userData.id,
+            id: id,
             authUserId: userData.auth_user_id,
             email: userData.email,
             firstName: userData.first_name,
@@ -400,9 +413,9 @@ private extension UserService {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by,
+            managedBy: userData.managed_by?.uuid,
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id,
+            primaryHouseholdId: userData.primary_household_id?.uuid,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,
@@ -414,11 +427,11 @@ private extension UserService {
 
     /// Update user in GraphQL
     func updateUserInGraphQL(user: User) async throws -> User {
-        Self.logger.info("🌐 Updating business user in GraphQL: \(user.id)")
+        Self.logger.info("🌐 Updating business user in GraphQL: \(user.id.uuidString)")
 
         // Use the actual first and last name from the User model
         let input = JeevesGraphQL.UpdateUserInput(
-            id: user.id,
+            id: user.id.uuidString,
             firstName: .some(user.firstName),
             lastName: .some(user.lastName),
             displayName: user.displayName.map { .some($0) } ?? .none,
@@ -434,8 +447,11 @@ private extension UserService {
 
         let userData = data.updateUser
 
+        guard let id = userData.id.uuid else {
+            throw ServiceError.invalidData("Invalid UUID in user data")
+        }
         let updatedUser = User(
-            id: userData.id,
+            id: id,
             authUserId: userData.auth_user_id,
             email: userData.email,
             firstName: userData.first_name,
@@ -444,9 +460,9 @@ private extension UserService {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by,
+            managedBy: userData.managed_by?.uuid,
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id,
+            primaryHouseholdId: userData.primary_household_id?.uuid,
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,

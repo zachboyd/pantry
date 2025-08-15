@@ -14,12 +14,12 @@ public struct HouseholdJoinView: View {
 
     let showBackButton: Bool
     let onBack: () -> Void
-    let onComplete: (String) -> Void
+    let onComplete: (UUID) -> Void
 
     public init(
         showBackButton: Bool = false,
         onBack: @escaping () -> Void,
-        onComplete: @escaping (String) -> Void
+        onComplete: @escaping (UUID) -> Void
     ) {
         self.showBackButton = showBackButton
         self.onBack = onBack

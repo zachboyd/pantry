@@ -22,7 +22,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
         var filteredMembers: [HouseholdMemberInfo] = []
 
         // Member management
-        var selectedMemberId: String?
+        var selectedMemberId: UUID?
         var showingMemberActions = false
         var showingRemoveMemberConfirmation = false
         var memberToRemove: HouseholdMemberInfo?
@@ -30,9 +30,9 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     /// Extended member information combining HouseholdMember with User details
     public struct HouseholdMemberInfo: Identifiable, Sendable {
-        public let id: String
-        public let userId: String
-        public let householdId: String
+        public let id: UUID
+        public let userId: UUID
+        public let householdId: UUID
         public let role: MemberRole
         public let joinedAt: Date
         public let user: User?
@@ -61,7 +61,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     // MARK: - Dependencies
 
-    public let householdId: String
+    public let householdId: UUID
 
     // MARK: - Computed Properties
 
@@ -156,7 +156,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     // MARK: - Initialization
 
-    public init(dependencies: HouseholdMembersDependencies, householdId: String) {
+    public init(dependencies: HouseholdMembersDependencies, householdId: UUID) {
         self.householdId = householdId
         let initialState = State()
         super.init(dependencies: dependencies, initialState: initialState)
@@ -164,14 +164,14 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
     }
 
     public required init(dependencies: HouseholdMembersDependencies) {
-        // This should not be used directly
-        householdId = ""
+        // This should not be used directly - use init with householdId
+        householdId = UUID() // Placeholder UUID
         let initialState = State()
         super.init(dependencies: dependencies, initialState: initialState)
     }
 
     public required init(dependencies: HouseholdMembersDependencies, initialState: State) {
-        householdId = ""
+        householdId = UUID() // Placeholder UUID
         super.init(dependencies: dependencies, initialState: initialState)
     }
 

@@ -14,14 +14,14 @@ public struct HouseholdCreationView: View {
     @Environment(\.safeViewModelFactory) private var viewModelFactory
     @State private var viewModel: HouseholdCreationViewModel?
     let onBack: (() -> Void)?
-    let onComplete: ((String) -> Void)?
+    let onComplete: ((UUID) -> Void)?
     let showBackButton: Bool
 
     public init(
         viewModel: HouseholdCreationViewModel? = nil,
         showBackButton: Bool = false,
         onBack: (() -> Void)? = nil,
-        onComplete: ((String) -> Void)? = nil
+        onComplete: ((UUID) -> Void)? = nil
     ) {
         _viewModel = State(initialValue: viewModel)
         self.showBackButton = showBackButton

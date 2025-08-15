@@ -12,7 +12,7 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
 
     public struct State: Sendable {
         var items: [Item] = []
-        var selectedHouseholdId: String?
+        var selectedHouseholdId: UUID?
         var viewState: CommonViewState = .idle
         var showingError = false
         var errorMessage: String?
@@ -53,7 +53,7 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
         state.items
     }
 
-    public var selectedHouseholdId: String? {
+    public var selectedHouseholdId: UUID? {
         state.selectedHouseholdId
     }
 
@@ -185,7 +185,7 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
     }
 
     /// Load pantry items for a specific household
-    public func loadItems(for householdId: String) async {
+    public func loadItems(for householdId: UUID) async {
         await executeTask(.load) {
             await self.performLoadItems(for: householdId)
         }
@@ -305,7 +305,7 @@ public final class JeevesTabViewModel: BaseReactiveViewModel<JeevesTabViewModel.
 
     // MARK: - Private Methods
 
-    private func performLoadItems(for householdId: String) async {
+    private func performLoadItems(for householdId: UUID) async {
         Self.logger.info("📡 Loading pantry items for household: \(householdId)")
 
         updateState { $0.viewState = .loading }

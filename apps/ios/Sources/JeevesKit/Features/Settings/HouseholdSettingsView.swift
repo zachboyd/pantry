@@ -94,15 +94,18 @@ public struct HouseholdSettingsView: View {
             }
 
             // Only show invite member option if user has permission to manage members
-            if settingsViewModel?.canCreateHouseholdMember(for: household.id) == true {
-                NavigationLink(destination: HouseholdInviteView(householdId: household.id, householdName: household.name)) {
-                    HStack {
-                        Label(L("household.invite_member"), systemImage: "person.badge.plus")
-                            .foregroundColor(.accentColor)
-                        Spacer()
-                    }
-                }
-            }
+            // TODO: Uncomment when HouseholdInviteView is implemented with UUID support
+            /*
+             if settingsViewModel?.canCreateHouseholdMember(for: household.id) == true {
+                 NavigationLink(destination: HouseholdInviteView(householdId: household.id, householdName: household.name)) {
+                     HStack {
+                         Label(L("household.invite_member"), systemImage: "person.badge.plus")
+                             .foregroundColor(.accentColor)
+                         Spacer()
+                     }
+                 }
+             }
+             */
         } header: {
             Text(L("household.members"))
         }

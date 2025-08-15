@@ -21,21 +21,21 @@ public protocol HouseholdServiceProtocol: Sendable {
     func getCurrentHousehold() async throws -> Household?
     func getHouseholds() async throws -> [Household]
     func getUserHouseholds(cachePolicy: CachePolicy) async throws -> [Household]
-    func getHousehold(id: String) async throws -> Household
+    func getHousehold(id: UUID) async throws -> Household
     func createHousehold(name: String, description: String?) async throws -> Household
-    func updateHousehold(id: String, name: String, description: String?) async throws -> Household
+    func updateHousehold(id: UUID, name: String, description: String?) async throws -> Household
     func joinHousehold(inviteCode: String) async throws -> Household
 
     // Member management
-    func getHouseholdMembers(householdId: String) async throws -> [HouseholdMember]
-    func addMember(to householdId: String, userId: String, role: MemberRole) async throws -> HouseholdMember
-    func updateMemberRole(householdId: String, userId: String, role: MemberRole) async throws -> HouseholdMember
-    func removeMember(from householdId: String, userId: String) async throws
+    func getHouseholdMembers(householdId: UUID) async throws -> [HouseholdMember]
+    func addMember(to householdId: UUID, userId: UUID, role: MemberRole) async throws -> HouseholdMember
+    func updateMemberRole(householdId: UUID, userId: UUID, role: MemberRole) async throws -> HouseholdMember
+    func removeMember(from householdId: UUID, userId: UUID) async throws
 
     // Reactive watch methods
-    func watchHousehold(id: String) -> WatchedResult<Household>
+    func watchHousehold(id: UUID) -> WatchedResult<Household>
     func watchUserHouseholds() -> WatchedResult<[Household]>
-    func watchHouseholdMembers(householdId: String) -> WatchedResult<[HouseholdMember]>
+    func watchHouseholdMembers(householdId: UUID) -> WatchedResult<[HouseholdMember]>
 
     // Cache management
     func invalidateCache()
@@ -54,8 +54,8 @@ public extension HouseholdServiceProtocol {
 @MainActor
 public protocol UserServiceProtocol: Sendable {
     func getCurrentUser() async throws -> User?
-    func getUser(id: String) async throws -> User?
-    func getUsersByIds(_ ids: [String]) async throws -> [User]
+    func getUser(id: UUID) async throws -> User?
+    func getUsersByIds(_ ids: [UUID]) async throws -> [User]
     func updateUser(_ user: User) async throws -> User
     func searchUsers(query: String) async throws -> [User]
 
@@ -64,7 +64,7 @@ public protocol UserServiceProtocol: Sendable {
 
     // Reactive watch methods
     func watchCurrentUser() -> WatchedResult<User>
-    func watchUser(id: String) -> WatchedResult<User>
+    func watchUser(id: UUID) -> WatchedResult<User>
 }
 
 /// User Preferences Service Protocol
@@ -78,8 +78,8 @@ public protocol UserPreferencesServiceProtocol: Sendable {
     func updateUserPreferences(_ preferences: UserPreferences) async throws -> User
 
     // Household preferences
-    func getLastSelectedHouseholdId() async -> String?
-    func setLastSelectedHouseholdId(_ householdId: String?) async
+    func getLastSelectedHouseholdId() async -> UUID?
+    func setLastSelectedHouseholdId(_ householdId: UUID?) async
 
     // Theme and display preferences
     func getThemePreference() async -> ThemePreference

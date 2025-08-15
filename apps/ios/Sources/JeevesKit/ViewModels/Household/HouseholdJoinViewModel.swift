@@ -51,7 +51,7 @@ public final class HouseholdJoinViewModel: BaseReactiveViewModel<HouseholdJoinSt
     /// Join household with the provided invite code
     /// Returns the household ID if successful
     @MainActor
-    public func joinHousehold() async -> String? {
+    public func joinHousehold() async -> UUID? {
         guard isFormValid else {
             Self.logger.warning("⚠️ Cannot join household - form validation failed")
             return nil

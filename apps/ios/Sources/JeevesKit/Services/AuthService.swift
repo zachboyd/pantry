@@ -122,9 +122,9 @@ public class AuthService: AuthServiceProtocol {
         guard let apiUser = currentAuthUser else { return nil }
         // Note: This is a temporary User object with limited data from auth
         // The real business user will be loaded by UserService
-        // We use the auth user ID as a temporary ID here since we don't have the business user ID yet
+        // We create a placeholder UUID since we don't have the business user ID yet
         return User(
-            id: apiUser.id, // WARNING: This is AUTH user ID, not business user ID
+            id: UUID(), // Placeholder - real business user ID will be loaded by UserService
             email: apiUser.email,
             name: apiUser.name,
             createdAt: DateUtilities.dateFromGraphQLOrNow(apiUser.createdAt),

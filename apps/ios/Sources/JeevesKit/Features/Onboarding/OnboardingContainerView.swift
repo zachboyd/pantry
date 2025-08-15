@@ -17,9 +17,9 @@ public struct OnboardingContainerView: View {
     @State private var householdCreationViewModel: HouseholdCreationViewModel?
 
     let onSignOut: () async -> Void
-    let onComplete: (String) async -> Void
+    let onComplete: (UUID) async -> Void
 
-    public init(onSignOut: @escaping () async -> Void, onComplete: @escaping (String) async -> Void) {
+    public init(onSignOut: @escaping () async -> Void, onComplete: @escaping (UUID) async -> Void) {
         self.onSignOut = onSignOut
         self.onComplete = onComplete
     }
@@ -138,7 +138,7 @@ public struct OnboardingContainerView: View {
         }
     }
 
-    private func completeOnboarding(with householdId: String) {
+    private func completeOnboarding(with householdId: UUID) {
         Task {
             await onComplete(householdId)
         }

@@ -12,14 +12,14 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
 
     public struct State: Sendable {
         var lists: [ShoppingList] = []
-        var selectedHouseholdId: String?
+        var selectedHouseholdId: UUID?
         var viewState: CommonViewState = .idle
         var showingError = false
         var errorMessage: String?
         var searchText = ""
         var filteredLists: [ShoppingList] = []
         var showingCreateListSheet = false
-        var selectedListId: String?
+        var selectedListId: UUID?
 
         // Quick stats
         var totalLists = 0
@@ -34,7 +34,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
         state.lists
     }
 
-    public var selectedHouseholdId: String? {
+    public var selectedHouseholdId: UUID? {
         state.selectedHouseholdId
     }
 
@@ -50,7 +50,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
         state.searchText.isEmpty ? state.lists : state.filteredLists
     }
 
-    public var selectedListId: String? {
+    public var selectedListId: UUID? {
         get { state.selectedListId }
         set { updateState { $0.selectedListId = newValue } }
     }
@@ -144,7 +144,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
     // MARK: - Public Methods
 
     /// Load shopping lists for a specific household
-    public func loadShoppingLists(for householdId: String) async {
+    public func loadShoppingLists(for householdId: UUID) async {
         await executeTask(.load) { [weak self] in
             guard let self else { return }
             await performLoadShoppingLists(for: householdId)
@@ -216,7 +216,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
     }
 
     /// Add item to a shopping list
-    public func addItem(to listId: String, item: ShoppingListItem) async -> Bool {
+    public func addItem(to listId: UUID, item: ShoppingListItem) async -> Bool {
         Self.logger.info("➕ Adding item to list: \(item.name)")
 
         let result: Void? = await executeTask(.addItem) { [weak self] in
@@ -255,7 +255,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
     }
 
     /// Remove item from a shopping list
-    public func removeItem(from listId: String, itemId: String) async -> Bool {
+    public func removeItem(from listId: UUID, itemId: UUID) async -> Bool {
         Self.logger.info("🗑️ Removing item from list")
 
         let result: Void? = await executeTask(.removeItem) { [weak self] in
@@ -293,7 +293,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
     }
 
     /// Toggle item completion status
-    public func toggleItemCompletion(_ item: ShoppingListItem, in listId: String) async -> Bool {
+    public func toggleItemCompletion(_ item: ShoppingListItem, in listId: UUID) async -> Bool {
         Self.logger.info("✅ Toggling item completion: \(item.name)")
 
         // Create updated item with toggled completion status
@@ -305,7 +305,7 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
             category: item.category,
             isCompleted: !item.isCompleted,
             addedBy: item.addedBy,
-            completedBy: item.isCompleted ? nil : "current_user", // This would be actual user ID
+            completedBy: item.isCompleted ? nil : UUID(uuidString: "00000000-0000-0000-0000-000000000001"), // This would be actual user ID
             completedAt: item.isCompleted ? nil : Date(),
         )
 
@@ -388,21 +388,25 @@ public final class ListsTabViewModel: BaseReactiveViewModel<ListsTabViewModel.St
     private func setupHouseholdObservation() {
         // This would typically observe household changes from a service or coordinator
         // For now, we'll load the selected household from UserDefaults
-        let selectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId")
-        updateState { $0.selectedHouseholdId = selectedId }
+        if let selectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
+           let selectedId = UUID(uuidString: selectedIdString)
+        {
+            updateState { $0.selectedHouseholdId = selectedId }
+        }
     }
 
     private func loadSelectedHousehold() async {
         // Check for currently selected household
-        let selectedId = UserDefaults.standard.string(forKey: "selectedHouseholdId")
+        let selectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId")
+        let selectedId = selectedIdString.flatMap { UUID(uuidString: $0) }
 
         if selectedId != state.selectedHouseholdId {
             updateState { $0.selectedHouseholdId = selectedId }
-            Self.logger.info("🏠 Selected household changed to: \(selectedId ?? "none")")
+            Self.logger.info("🏠 Selected household changed to: \(selectedId?.uuidString ?? "none")")
         }
     }
 
-    private func performLoadShoppingLists(for householdId: String) async {
+    private func performLoadShoppingLists(for householdId: UUID) async {
         Self.logger.info("📡 Loading shopping lists for household: \(householdId)")
 
         updateState { $0.viewState = .loading }
