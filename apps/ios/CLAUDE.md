@@ -43,6 +43,44 @@ xcodebuild -scheme Jeeves -destination 'platform=iOS Simulator,name=iPhone 16 Pr
   - `joined_at` → `joinedAt`
   - etc.
 
+### Reactive Apollo Cache Architecture
+
+**CRITICAL: The entire app is reactive to Apollo cache updates.** This is a fundamental architecture principle.
+
+#### Core Reactive Principles:
+1. **Apollo Cache is the Single Source of Truth** - All data flows through Apollo's normalized cache
+2. **Reactive Watchers Everywhere** - Use `watchUserHouseholds()`, `watchHousehold()`, etc. for ALL data
+3. **Cache Updates Trigger UI Updates** - When Apollo cache changes (from mutations or refetches), UI updates automatically
+4. **No Polling or Manual Refetching** - Let the reactive system handle updates
+
+#### How It Works:
+1. **Set up watchers** at app initialization (e.g., watch the households list)
+2. **Mutations update cache** - When you create a household, the mutation updates Apollo cache
+3. **Refetch with `.returnCacheDataAndFetch`** - Returns cache immediately, fetches in background
+4. **Watchers detect cache updates** - When the network response arrives, watchers fire automatically
+5. **UI updates reactively** - No need to manually check for new data
+
+#### Example Flow for Creating a Household:
+```swift
+// 1. Create household mutation - updates cache
+let newHousehold = try await householdService.createHousehold(...)
+
+// 2. Switch to new household (shows blur)
+await appState.switchToHousehold(withId: newHousehold.id, isNewlyCreated: true)
+
+// 3. Inside switchToHousehold:
+//    - The households list watcher is already active
+//    - Trigger refetch with .returnCacheDataAndFetch
+//    - Wait for watcher to detect the new household in cache
+//    - No manual polling needed!
+```
+
+#### What NOT to Do:
+- ❌ Don't poll with network-only fetches
+- ❌ Don't manually check for updates in loops
+- ❌ Don't bypass the cache unless absolutely necessary
+- ❌ Don't use one-time fetches when you should use watchers
+
 ### Architecture Pattern (MVVM)
 
 The app follows a strict MVVM (Model-View-ViewModel) architecture:
