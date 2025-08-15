@@ -109,7 +109,6 @@ public final class UserInfoViewModel: BaseReactiveViewModel<UserInfoState, UserI
                 managedBy: currentUser.managedBy,
                 relationshipToManager: currentUser.relationshipToManager,
                 primaryHouseholdId: currentUser.primaryHouseholdId,
-                preferences: currentUser.preferences,
                 isAi: currentUser.isAi,
                 createdAt: currentUser.createdAt,
                 updatedAt: DateUtilities.graphQLStringFromDate(Date()),

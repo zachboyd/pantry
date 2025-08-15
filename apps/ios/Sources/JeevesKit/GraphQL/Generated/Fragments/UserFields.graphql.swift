@@ -6,7 +6,7 @@
 public extension JeevesGraphQL {
   struct UserFields: JeevesGraphQL.SelectionSet, Fragment {
     public static var fragmentDefinition: StaticString {
-      #"fragment UserFields on User { __typename id auth_user_id email first_name last_name display_name avatar_url phone birth_date managed_by relationship_to_manager primary_household_id preferences is_ai created_at updated_at }"#
+      #"fragment UserFields on User { __typename id auth_user_id email first_name last_name display_name avatar_url phone birth_date managed_by relationship_to_manager primary_household_id is_ai created_at updated_at }"#
     }
 
     public let __data: DataDict
@@ -27,7 +27,6 @@ public extension JeevesGraphQL {
       .field("managed_by", String?.self),
       .field("relationship_to_manager", String?.self),
       .field("primary_household_id", String?.self),
-      .field("preferences", JeevesGraphQL.JSON?.self),
       .field("is_ai", Bool.self),
       .field("created_at", JeevesGraphQL.DateTime.self),
       .field("updated_at", JeevesGraphQL.DateTime.self),
@@ -45,7 +44,6 @@ public extension JeevesGraphQL {
     public var managed_by: String? { __data["managed_by"] }
     public var relationship_to_manager: String? { __data["relationship_to_manager"] }
     public var primary_household_id: String? { __data["primary_household_id"] }
-    public var preferences: JeevesGraphQL.JSON? { __data["preferences"] }
     public var is_ai: Bool { __data["is_ai"] }
     public var created_at: JeevesGraphQL.DateTime { __data["created_at"] }
     public var updated_at: JeevesGraphQL.DateTime { __data["updated_at"] }

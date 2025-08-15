@@ -21,7 +21,6 @@ public struct User: Identifiable, Sendable {
     public let managedBy: String?
     public let relationshipToManager: String?
     public let primaryHouseholdId: String?
-    public let preferences: JSONValue? // JSON object containing preferences
     public let isAi: Bool
     public let createdAt: String
     public let updatedAt: String
@@ -77,7 +76,6 @@ public struct User: Identifiable, Sendable {
         managedBy = nil
         relationshipToManager = nil
         primaryHouseholdId = nil
-        preferences = nil
         isAi = false
         self.createdAt = DateUtilities.graphQLStringFromDate(createdAt)
         updatedAt = DateUtilities.graphQLStringFromDate(createdAt)
@@ -96,7 +94,6 @@ public struct User: Identifiable, Sendable {
         managedBy: String?,
         relationshipToManager: String?,
         primaryHouseholdId: String?,
-        preferences: JSONValue?,
         isAi: Bool,
         createdAt: String,
         updatedAt: String
@@ -113,7 +110,6 @@ public struct User: Identifiable, Sendable {
         self.managedBy = managedBy
         self.relationshipToManager = relationshipToManager
         self.primaryHouseholdId = primaryHouseholdId
-        self.preferences = preferences
         self.isAi = isAi
         self.createdAt = createdAt
         self.updatedAt = updatedAt
