@@ -37,6 +37,20 @@ public enum TransitionConstants {
     /// Error screen transition
     public static let errorTransitionDuration: Double = 0.3
 
+    // MARK: - Household Switching Animation
+
+    /// Duration for the blur effect when switching households
+    public static let householdSwitchBlurDuration: Double = 0.3
+
+    /// Duration for the slide animation when switching households
+    public static let householdSwitchSlideDuration: Double = 0.5
+
+    /// Duration for the scale animation when switching households
+    public static let householdSwitchScaleDuration: Double = 0.2
+
+    /// Scale factor when switching households (0.9 = 90%)
+    public static let householdSwitchScaleFactor: Double = 0.9
+
     // MARK: - Animation Curves
 
     /// Standard easing curve for transitions

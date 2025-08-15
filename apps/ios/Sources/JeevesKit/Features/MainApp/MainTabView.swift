@@ -46,7 +46,8 @@ public struct MainTabView: View {
         // This is the minimal approach that actually works for the glass effect bug
         .id(hasAppearedOnce ? "rendered" : "initial")
         .onReceive(NotificationCenter.default.publisher(for: .householdChanged)) { _ in
-            // Reset all navigation paths when household changes
+            // Reset to first tab and all navigation paths when household changes
+            selectedTab = .pantry
             pantryPath = NavigationPath()
             chatPath = NavigationPath()
             listsPath = NavigationPath()

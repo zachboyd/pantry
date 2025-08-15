@@ -1,6 +1,67 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Household Switch Animation Modifier
+
+struct HouseholdSwitchAnimationModifier: ViewModifier {
+    let isActiveView: Bool
+    let animationPhase: AppRootContentView.HouseholdSwitchPhase
+    let switchOffset: CGFloat
+    let switchScale: CGFloat
+    let hideInactiveView: Bool
+    let screenWidth: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(animationPhase != .idle ? switchScale : 1.0)
+            .offset(x: calculateOffset())
+            .opacity(shouldHide() ? 0 : 1)
+            .animation(
+                animationPhase == .sliding ?
+                    .easeInOut(duration: TransitionConstants.householdSwitchSlideDuration) :
+                    nil,
+                value: switchOffset,
+            )
+            .animation(
+                .easeInOut(duration: TransitionConstants.householdSwitchScaleDuration),
+                value: switchScale,
+            )
+            .animation(nil, value: hideInactiveView)
+    }
+
+    private func calculateOffset() -> CGFloat {
+        if isActiveView {
+            switchOffset
+        } else {
+            switchOffset + screenWidth
+        }
+    }
+
+    private func shouldHide() -> Bool {
+        hideInactiveView && !isActiveView
+    }
+}
+
+extension View {
+    func householdSwitchAnimation(
+        isActiveView: Bool,
+        animationPhase: AppRootContentView.HouseholdSwitchPhase,
+        switchOffset: CGFloat,
+        switchScale: CGFloat,
+        hideInactiveView: Bool,
+        screenWidth: CGFloat,
+    ) -> some View {
+        modifier(HouseholdSwitchAnimationModifier(
+            isActiveView: isActiveView,
+            animationPhase: animationPhase,
+            switchOffset: switchOffset,
+            switchScale: switchScale,
+            hideInactiveView: hideInactiveView,
+            screenWidth: screenWidth,
+        ))
+    }
+}
+
 /// Main entry point for JeevesKit framework
 public struct JeevesKit {
     public static let version = "1.0.0"
@@ -35,6 +96,23 @@ public struct AppRootView: View {
 struct AppRootContentView: View {
     private static let logger = Logger.app
     let appState: AppState
+
+    // Animation state for household switching
+    @State private var householdSwitchOffset: CGFloat = 0
+    @State private var householdSwitchScale: CGFloat = 1.0
+    @State private var animationPhase: HouseholdSwitchPhase = .idle
+    @State private var shouldShowBlur = false
+    @State private var switchCounter = 0 // Track each switch uniquely
+    @State private var useSecondView = false // Flip-flop between two views
+    @State private var hideInactiveView = false // Hide inactive view during reset
+
+    enum HouseholdSwitchPhase {
+        case idle
+        case blurring
+        case sliding
+        case scalingUp
+        case waitingForSwitchComplete
+    }
 
     var body: some View {
         ZStack {
@@ -84,9 +162,40 @@ struct AppRootContentView: View {
                         .fadeTransition(duration: TransitionConstants.authToMainDuration)
                         .zIndex(7)
                     } else {
-                        MainTabView()
-                            .fadeTransition(duration: TransitionConstants.authToMainDuration)
-                            .zIndex(8)
+                        // Main tab view with household switching animation
+                        GeometryReader { geometry in
+                            ZStack {
+                                // First view - active when useSecondView is false
+                                if !useSecondView || animationPhase != .idle {
+                                    MainTabView()
+                                        .id("view-1")
+                                        .householdSwitchAnimation(
+                                            isActiveView: !useSecondView,
+                                            animationPhase: animationPhase,
+                                            switchOffset: householdSwitchOffset,
+                                            switchScale: householdSwitchScale,
+                                            hideInactiveView: hideInactiveView,
+                                            screenWidth: geometry.size.width,
+                                        )
+                                }
+
+                                // Second view - active when useSecondView is true
+                                if useSecondView || animationPhase != .idle {
+                                    MainTabView()
+                                        .id("view-2")
+                                        .householdSwitchAnimation(
+                                            isActiveView: useSecondView,
+                                            animationPhase: animationPhase,
+                                            switchOffset: householdSwitchOffset,
+                                            switchScale: householdSwitchScale,
+                                            hideInactiveView: hideInactiveView,
+                                            screenWidth: geometry.size.width,
+                                        )
+                                }
+                            }
+                        }
+                        .fadeTransition(duration: TransitionConstants.authToMainDuration)
+                        .zIndex(8)
                     }
 
                 case .signingOut:
@@ -100,8 +209,8 @@ struct AppRootContentView: View {
                         .zIndex(10)
                 }
             }
-            .blur(radius: appState.isSwitchingHousehold ? 10 : 0)
-            .animation(.easeInOut(duration: 0.3), value: appState.isSwitchingHousehold)
+            .blur(radius: shouldShowBlur ? 10 : 0)
+            .animation(.easeInOut(duration: TransitionConstants.householdSwitchBlurDuration), value: shouldShowBlur)
 
             // Loading overlay when switching household
             if appState.isSwitchingHousehold {
@@ -127,6 +236,102 @@ struct AppRootContentView: View {
         .animation(TransitionConstants.standardEasing(duration: TransitionConstants.totalTransitionDuration), value: appState.phase)
         .tint(DesignTokens.Colors.Primary.base)
         // Theme is now applied at WindowGroup level in JeevesApp - no need to apply here
+        .onChange(of: appState.isSwitchingHousehold) { oldValue, newValue in
+            if !oldValue, newValue, appState.phase == .hydrated, !appState.needsOnboarding {
+                // Transition from false to true - start animation
+                switchCounter += 1
+                shouldShowBlur = true
+                triggerHouseholdSwitchAnimation()
+            } else if oldValue, !newValue {
+                // Transition from true to false - check if we can unblur
+                checkAndCompleteAnimation()
+            }
+        }
+    }
+
+    // MARK: - Animation Control Methods
+
+    private func triggerHouseholdSwitchAnimation() {
+        // Prevent re-triggering if already animating
+        guard animationPhase == .idle else { return }
+
+        let currentSwitch = switchCounter
+
+        // Phase 1: Blur is already animating (triggered by shouldShowBlur)
+        animationPhase = .blurring
+
+        // Phase 2: After blur completes, start the slide animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + TransitionConstants.householdSwitchBlurDuration) {
+            guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
+
+            // Scale down to 90%
+            withAnimation(.easeInOut(duration: TransitionConstants.householdSwitchScaleDuration)) {
+                householdSwitchScale = TransitionConstants.householdSwitchScaleFactor
+            }
+            animationPhase = .sliding
+
+            // Start sliding
+            DispatchQueue.main.asyncAfter(deadline: .now() + TransitionConstants.householdSwitchScaleDuration) {
+                guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
+
+                // Slide the views - both views move together
+                // The current active view slides out to the left
+                // The inactive view (which will become active) slides in from the right
+                withAnimation(.easeInOut(duration: TransitionConstants.householdSwitchSlideDuration)) {
+                    householdSwitchOffset = -UIScreen.main.bounds.width
+                }
+
+                // Phase 3: After slide completes, flip to the new view and scale back up
+                DispatchQueue.main.asyncAfter(deadline: .now() + TransitionConstants.householdSwitchSlideDuration) {
+                    guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
+
+                    // Hide the inactive view to prevent animation during reset
+                    hideInactiveView = true
+
+                    // Small delay to ensure the view is hidden
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                        // Flip to the other view and reset offset
+                        useSecondView.toggle()
+                        householdSwitchOffset = 0
+
+                        // Show the views again
+                        hideInactiveView = false
+
+                        animationPhase = .scalingUp
+                        withAnimation(.easeInOut(duration: TransitionConstants.householdSwitchScaleDuration)) {
+                            householdSwitchScale = 1.0
+                        }
+                    }
+
+                    // After scaling completes, check if we can unblur
+                    DispatchQueue.main.asyncAfter(deadline: .now() + TransitionConstants.householdSwitchScaleDuration) {
+                        guard switchCounter == currentSwitch else { return } // Cancelled by newer switch
+
+                        // Animation complete
+                        animationPhase = .waitingForSwitchComplete
+
+                        // Check if we can unblur
+                        checkAndCompleteAnimation()
+                    }
+                }
+            }
+        }
+    }
+
+    private func checkAndCompleteAnimation() {
+        // Only unblur if animation is complete AND switching is done
+        if animationPhase == .waitingForSwitchComplete, !appState.isSwitchingHousehold {
+            shouldShowBlur = false
+            animationPhase = .idle
+        }
+        // If still switching, the animation will wait
+    }
+
+    private func resetHouseholdSwitchAnimation() {
+        // Clean reset for next animation
+        householdSwitchOffset = 0
+        householdSwitchScale = 1.0
+        // Don't reset animationPhase here - let checkAndCompleteAnimation handle it
     }
 }
 

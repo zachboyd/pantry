@@ -168,7 +168,19 @@ public struct UserProfileView: View {
 
                 // Show households list or empty state
                 if let displayHouseholds, !displayHouseholds.isEmpty {
-                    ForEach(displayHouseholds) { household in
+                    // Sort households so selected household appears first
+                    let sortedHouseholds = displayHouseholds.sorted { household1, household2 in
+                        if household1.id == selectedHousehold?.id {
+                            true // Selected household comes first
+                        } else if household2.id == selectedHousehold?.id {
+                            false // Other household comes after selected
+                        } else {
+                            // Keep original order for non-selected households
+                            displayHouseholds.firstIndex(of: household1) ?? 0 < displayHouseholds.firstIndex(of: household2) ?? 0
+                        }
+                    }
+
+                    ForEach(sortedHouseholds) { household in
                         HouseholdRow(
                             household: household,
                             isSelected: household.id == selectedHousehold?.id,
