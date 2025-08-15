@@ -119,7 +119,10 @@ export class UserResolver {
   private transformUserForGraphQL(user: UserRecord): User {
     return {
       ...user,
-      permissions: JSON.stringify(user.permissions) as UserPermissions,
+      permissions:
+        user.permissions !== null
+          ? (JSON.stringify(user.permissions) as UserPermissions)
+          : null,
       preferences: user.preferences as UserPreferences,
     };
   }
