@@ -45,51 +45,28 @@ public struct SharedHeaderToolbar: View {
         .padding(.vertical, 8)
         .background(Color(UIColor.systemBackground))
         .sheet(isPresented: $showingProfile) {
-            let currentAppState = appState
-            if #available(iOS 16.4, *) {
-                UserProfileView(
-                    currentUser: currentAppState?.currentUser,
-                    currentHousehold: currentAppState?.currentHousehold,
-                    households: [], // Will be loaded by ViewModel
-                    onSignOut: {
-                        Logger.app.info("🚪 UserProfileView onSignOut called from SharedHeaderToolbar")
-                        if let appState = currentAppState {
-                            await appState.signOut()
-                            showingProfile = false
-                        } else {
-                            Logger.app.error("❌ AppState is nil in SharedHeaderToolbar onSignOut")
-                        }
-                    },
-                    onSelectHousehold: { household in
-                        Logger.app.info("🏠 UserProfileView selectHousehold called from SharedHeaderToolbar")
-                        currentAppState?.selectHousehold(household)
+            UserProfileView(
+                currentUser: appState?.currentUser,
+                currentHousehold: appState?.currentHousehold,
+                households: [], // Will be loaded by ViewModel
+                onSignOut: {
+                    Logger.app.info("🚪 UserProfileView onSignOut called from SharedHeaderToolbar")
+                    if let appState {
+                        await appState.signOut()
                         showingProfile = false
-                    },
-                )
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(20)
-            } else {
-                UserProfileView(
-                    currentUser: currentAppState?.currentUser,
-                    currentHousehold: currentAppState?.currentHousehold,
-                    households: [], // Will be loaded by ViewModel
-                    onSignOut: {
-                        Logger.app.info("🚪 UserProfileView onSignOut called from SharedHeaderToolbar")
-                        if let appState = currentAppState {
-                            await appState.signOut()
-                            showingProfile = false
-                        } else {
-                            Logger.app.error("❌ AppState is nil in SharedHeaderToolbar onSignOut")
-                        }
-                    },
-                    onSelectHousehold: { household in
-                        Logger.app.info("🏠 UserProfileView selectHousehold called from SharedHeaderToolbar")
-                        currentAppState?.selectHousehold(household)
-                        showingProfile = false
-                    },
-                )
-            }
+                    } else {
+                        Logger.app.error("❌ AppState is nil in SharedHeaderToolbar onSignOut")
+                    }
+                },
+                onSelectHousehold: { household in
+                    Logger.app.info("🏠 UserProfileView selectHousehold called from SharedHeaderToolbar")
+                    appState?.selectHousehold(household)
+                    showingProfile = false
+                },
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(20)
         }
     }
 }

@@ -61,6 +61,7 @@ public final class AppState {
 
     // MARK: - Reactive Watchers
 
+    private var currentUserWatch: WatchedResult<User>?
     private var currentHouseholdWatch: WatchedResult<Household>?
 
     // MARK: - Services
@@ -196,11 +197,15 @@ public final class AppState {
         }
 
         // Always clear local state regardless of network sign out success
-        // Clear reactive watchers (they'll be cancelled when tasks are cancelled)
+        // Clear reactive watchers
+        currentUserWatch?.stopWatching()
+        currentUserWatch = nil
+        currentHouseholdWatch?.stopWatching()
+        currentHouseholdWatch = nil
 
         // Clear user data
-        currentHousehold = nil
         currentUser = nil
+        currentHousehold = nil
         needsOnboarding = false
 
         // Always go to unauthenticated state - user should be able to sign in again
@@ -270,9 +275,11 @@ public final class AppState {
 
         if let userService {
             do {
-                if let refreshedUser = try await userService.getCurrentUser() {
-                    // User refreshed
-                    currentUser = refreshedUser
+                // This will update the Apollo cache, which the watcher will detect
+                if try await userService.getCurrentUser() != nil {
+                    Self.logger.info("✅ User refreshed - watcher will update automatically")
+                    // The currentUserWatch will automatically detect this cache update
+                    // and update currentUser via the watcher's onChange handler
                 }
             } catch {
                 Self.logger.error("❌ Failed to refresh user: \(error)")
@@ -290,9 +297,10 @@ public final class AppState {
         {
             do {
                 // Refresh the current user to get updated name
-                if let refreshedUser = try await userService.getCurrentUser() {
-                    // Refreshed user after onboarding
-                    currentUser = refreshedUser
+                if try await userService.getCurrentUser() != nil {
+                    Self.logger.info("✅ User refreshed after onboarding - watcher will update")
+                    // The currentUserWatch will automatically detect this cache update
+                    // and update currentUser via the watcher's onChange handler
                 }
 
                 let household = try await householdService.getHousehold(id: householdId)
@@ -377,8 +385,9 @@ public final class AppState {
             // Execute the hydrate query
             try await hydrateUserData()
 
-            // Setup reactive household watcher AFTER hydration
-            // This ensures currentHousehold stays in sync with Apollo cache changes
+            // Setup reactive watchers AFTER hydration
+            // This ensures currentUser and currentHousehold stay in sync with Apollo cache changes
+            setupCurrentUserWatcher()
             setupHouseholdWatcher()
 
             // Start subscriptions after successful hydration
@@ -527,6 +536,60 @@ public final class AppState {
         }
 
         // Household watcher setup complete
+    }
+
+    /// Setup reactive current user watcher to keep AppState in sync with Apollo cache
+    private func setupCurrentUserWatcher() {
+        guard let userService else {
+            Self.logger.warning("⚠️ Cannot setup user watcher - UserService not available")
+            return
+        }
+
+        Self.logger.info("🔄 Setting up reactive user watcher")
+
+        // Create the watch for current user
+        currentUserWatch = userService.watchCurrentUser()
+
+        // Set up observation to detect changes
+        Task { @MainActor in
+            guard let watch = currentUserWatch else { return }
+
+            // Use withObservationTracking to observe changes to the WatchedResult
+            while !Task.isCancelled {
+                withObservationTracking {
+                    // Access the watched value to register observation
+                    _ = watch.value
+                    _ = watch.error
+                    _ = watch.isLoading
+                } onChange: {
+                    // This closure is called when the observed values change
+                    Task { @MainActor in
+                        // Update currentUser whenever the watch value changes
+                        if let updatedUser = watch.value {
+                            if self.currentUser?.id != updatedUser.id ||
+                                self.currentUser?.firstName != updatedUser.firstName ||
+                                self.currentUser?.lastName != updatedUser.lastName ||
+                                self.currentUser?.displayName != updatedUser.displayName ||
+                                self.currentUser?.email != updatedUser.email
+                            {
+                                Self.logger.info("👤 User watcher: detected user update")
+                                self.currentUser = updatedUser
+                            }
+                        }
+
+                        // Log errors but don't spam
+                        if let error = watch.error {
+                            Self.logger.warning("⚠️ User watcher error: \(error)")
+                        }
+                    }
+                }
+
+                // Small delay to prevent tight loop
+                try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+            }
+        }
+
+        Self.logger.info("✅ User watcher setup complete")
     }
 
     // MARK: - Phase Transition Management Methods
