@@ -14,7 +14,7 @@ public struct MainTabView: View {
 
     // Track if we're showing no household state
     private var showNoHouseholdState: Bool {
-        appState?.currentHousehold == nil
+        appState?.selectedHousehold == nil
     }
 
     // Sheet presentation states with @Bindable for two-way binding
@@ -120,7 +120,7 @@ public struct MainTabView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(appState?.currentUser?.name ?? L("user.generic"))
                                 .font(.headline)
-                            Text(appState?.currentHousehold?.name ?? "")
+                            Text(appState?.selectedHousehold?.name ?? "")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -179,7 +179,7 @@ public struct MainTabView: View {
         switch tab {
         case .pantry:
             JeevesTabView(
-                currentHousehold: appState?.currentHousehold,
+                selectedHousehold: appState?.selectedHousehold,
                 onSelectHousehold: { household in
                     appState?.selectHousehold(household)
                 },
@@ -189,12 +189,12 @@ public struct MainTabView: View {
         case .lists:
             ListsTabView()
         case .settings:
-            HouseholdSettingsView(household: appState?.currentHousehold)
+            HouseholdSettingsView(household: appState?.selectedHousehold)
         case .profile:
             let currentAppState = appState
             UserProfileView(
                 currentUser: currentAppState?.currentUser,
-                currentHousehold: currentAppState?.currentHousehold,
+                selectedHousehold: currentAppState?.selectedHousehold,
                 households: [], // Will be loaded by ViewModel
                 onSignOut: {
                     Logger.app.info("🚪 UserProfileView (tab) onSignOut callback invoked, appState: \(currentAppState != nil ? "exists" : "nil")")
@@ -203,9 +203,6 @@ public struct MainTabView: View {
                     } else {
                         Logger.app.error("❌ AppState is nil in UserProfileView (tab) onSignOut")
                     }
-                },
-                onSelectHousehold: { household in
-                    currentAppState?.selectHousehold(household)
                 },
             )
         }
@@ -272,7 +269,7 @@ public struct MainTabView: View {
             )
         case .householdSwitcher:
             HouseholdSwitcherView(
-                currentHouseholdId: appState?.currentHousehold?.id,
+                currentHouseholdId: appState?.selectedHousehold?.id,
                 onSelectHousehold: { _ in
                     // Handle household selection through container
                 },
@@ -282,7 +279,7 @@ public struct MainTabView: View {
             let currentAppState = appState
             UserProfileView(
                 currentUser: currentAppState?.currentUser,
-                currentHousehold: currentAppState?.currentHousehold,
+                selectedHousehold: currentAppState?.selectedHousehold,
                 households: [], // Will be loaded by ViewModel
                 onSignOut: {
                     Logger.app.info("🚪 UserProfileView signOut called, appState: \(currentAppState != nil ? "exists" : "nil")")
@@ -291,10 +288,6 @@ public struct MainTabView: View {
                     } else {
                         Logger.app.error("❌ AppState is nil in UserProfileView signOut")
                     }
-                },
-                onSelectHousehold: { household in
-                    Logger.app.info("🏠 UserProfileView selectHousehold called, appState: \(currentAppState != nil ? "exists" : "nil")")
-                    currentAppState?.selectHousehold(household)
                 },
             )
         case .appearanceSettings:

@@ -123,6 +123,17 @@ public struct SafeViewModelFactory {
         return HouseholdCreationViewModel(dependencies: dependencies)
     }
 
+    /// Create HouseholdJoinViewModel
+    public func makeHouseholdJoinViewModel() throws -> HouseholdJoinViewModel {
+        let householdService = try container.getHouseholdService()
+
+        let dependencies = HouseholdJoinDependencies(
+            householdService: householdService,
+        )
+
+        return HouseholdJoinViewModel(dependencies: dependencies)
+    }
+
     // MARK: - Household ViewModels
 
     /// Create HouseholdListViewModel

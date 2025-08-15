@@ -310,6 +310,21 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         }
     }
 
+    /// Refetch households from the server
+    /// This explicitly calls getUserHouseholds() to ensure fresh data after mutations
+    /// Note: This is necessary because Apollo mutations don't automatically update list queries
+    @MainActor
+    public func refetchHouseholds() async {
+        Self.logger.info("🔄 Refetching households from server")
+
+        // Use performLoadUserHouseholds which already handles the fetching logic
+        // This maintains consistency with the existing load pattern
+        await executeTask(.load) { [weak self] in
+            guard let self else { return }
+            await performLoadUserHouseholds()
+        }
+    }
+
     /// Start editing profile
     public func startEditingProfile() {
         guard let user = state.currentUser else { return }

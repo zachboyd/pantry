@@ -277,7 +277,7 @@ public final class DependencyContainer {
         if _subscriptionService == nil {
             Self.logger.info("📡 Creating SubscriptionService...")
             guard let apolloClientService = _apolloClientService,
-                  let authService = _authService
+                  _authService != nil
             else {
                 Self.logger.warning("⚠️ Cannot create SubscriptionService - ApolloClientService or AuthService not available")
                 return
@@ -288,7 +288,7 @@ public final class DependencyContainer {
             }
             _subscriptionService = SubscriptionService(
                 store: store,
-                apolloClient: apolloClientService.apollo
+                apolloClient: apolloClientService.apollo,
             )
         }
 

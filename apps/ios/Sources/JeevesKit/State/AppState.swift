@@ -46,10 +46,14 @@ public final class AppState {
     public var phase: AppPhase { _phase }
 
     public private(set) var needsOnboarding: Bool = false
-    public private(set) var currentHousehold: Household?
+    public private(set) var selectedHousehold: Household?
     public private(set) var currentUser: User?
     public private(set) var error: Error?
     public private(set) var isInitialized: Bool = false
+
+    // Household switching state
+    public private(set) var isSwitchingHousehold: Bool = false
+    public private(set) var switchingHouseholdId: String?
 
     // MARK: - Phase Transition Management
 
@@ -62,7 +66,8 @@ public final class AppState {
     // MARK: - Reactive Watchers
 
     private var currentUserWatch: WatchedResult<User>?
-    private var currentHouseholdWatch: WatchedResult<Household>?
+    private var selectedHouseholdWatch: WatchedResult<Household>?
+    private var householdsListWatch: WatchedResult<[Household]>?
 
     // MARK: - Services
 
@@ -188,6 +193,13 @@ public final class AppState {
                 // Network sign out successful
             }
 
+            // Clear Apollo cache for privacy/security
+            // This ensures no user data remains in the cache after signout
+            if let graphQLService = container.graphQLService {
+                try? await graphQLService.clearCache()
+                Self.logger.info("🗑️ Apollo cache cleared on signout")
+            }
+
             // Clear all services
             await container.clearServices()
 
@@ -200,12 +212,14 @@ public final class AppState {
         // Clear reactive watchers
         currentUserWatch?.stopWatching()
         currentUserWatch = nil
-        currentHouseholdWatch?.stopWatching()
-        currentHouseholdWatch = nil
+        selectedHouseholdWatch?.stopWatching()
+        selectedHouseholdWatch = nil
+        householdsListWatch?.stopWatching()
+        householdsListWatch = nil
 
         // Clear user data
         currentUser = nil
-        currentHousehold = nil
+        selectedHousehold = nil
         needsOnboarding = false
 
         // Always go to unauthenticated state - user should be able to sign in again
@@ -240,8 +254,15 @@ public final class AppState {
 
     /// Update the selected household
     public func selectHousehold(_ household: Household?) {
-        // Selecting household
-        currentHousehold = household
+        Self.logger.info("🏠 Selecting household: \(household?.name ?? "nil")")
+
+        // Log whether this is the primary household
+        if let household {
+            let isPrimary = isPrimaryHousehold(household)
+            Self.logger.info(isPrimary ? "✅ Selecting primary household" : "🔄 Selecting non-primary household")
+        }
+
+        selectedHousehold = household
 
         // Setup watcher for the new household to keep it reactive
         // This will automatically stop any existing watcher first
@@ -267,6 +288,100 @@ public final class AppState {
         NotificationCenter.default.post(name: .householdChanged, object: household)
 
         // Household switch complete
+    }
+
+    /// Switch to a household by ID with loading state - fully reactive approach
+    public func switchToHousehold(withId householdId: String, isNewlyCreated: Bool = false) async {
+        Self.logger.info("🔄 Starting household switch to ID: \(householdId)")
+
+        // Always show loading state for visual consistency
+        isSwitchingHousehold = true
+        switchingHouseholdId = householdId
+
+        // Add delay for visual effect
+        try? await Task.sleep(for: .seconds(1))
+
+        guard let service = householdService else {
+            Self.logger.error("❌ Household service not available")
+            isSwitchingHousehold = false
+            switchingHouseholdId = nil
+            return
+        }
+
+        // Ensure we have a households list watcher
+        if householdsListWatch == nil {
+            setupHouseholdsListWatcher()
+        }
+
+        guard let watch = householdsListWatch else {
+            Self.logger.error("❌ Failed to setup households list watcher")
+            isSwitchingHousehold = false
+            switchingHouseholdId = nil
+            return
+        }
+
+        // For newly created households, trigger a refetch and wait for the watcher to update
+        if isNewlyCreated {
+            Self.logger.info("🔄 Newly created household - triggering cache+network refetch...")
+
+            // Trigger a refetch with cache+network policy
+            // This returns cache immediately and fetches in background
+            _ = try? await service.getUserHouseholds(cachePolicy: .returnCacheDataAndFetch)
+
+            // Now wait for the watcher to detect the new household
+            // The watcher will fire when the network response updates the cache
+            let maxWaitTime = 10.0 // seconds
+            let startTime = Date()
+
+            while Date().timeIntervalSince(startTime) < maxWaitTime {
+                // Check if the household is now in the watched list
+                if let households = watch.value,
+                   let household = households.first(where: { $0.id == householdId })
+                {
+                    Self.logger.info("✅ Found newly created household via watcher: \(household.name)")
+                    selectHousehold(household)
+                    break
+                }
+
+                // Wait a bit before checking again
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+
+            // Check if we found it
+            if selectedHousehold?.id != householdId {
+                Self.logger.error("❌ Timeout waiting for household \(householdId) to appear in cache")
+            }
+
+        } else {
+            // For existing households, the watcher should already have it
+            if let households = watch.value,
+               let household = households.first(where: { $0.id == householdId })
+            {
+                Self.logger.info("✅ Found household in cache: \(household.name)")
+                selectHousehold(household)
+            } else {
+                Self.logger.error("❌ Household \(householdId) not found in watched list")
+            }
+        }
+
+        // Hide loading state
+        isSwitchingHousehold = false
+        switchingHouseholdId = nil
+    }
+
+    /// Check if a household is the user's primary household
+    public func isPrimaryHousehold(_ household: Household?) -> Bool {
+        guard let household,
+              let primaryId = currentUser?.primaryHouseholdId
+        else {
+            return false
+        }
+        return household.id == primaryId
+    }
+
+    /// Check if the currently selected household is the primary
+    public var isViewingPrimaryHousehold: Bool {
+        isPrimaryHousehold(selectedHousehold)
     }
 
     /// Refresh the current user from the backend
@@ -304,7 +419,7 @@ public final class AppState {
                 }
 
                 let household = try await householdService.getHousehold(id: householdId)
-                currentHousehold = household
+                selectedHousehold = household
                 needsOnboarding = false
                 await setPhase(.hydrated)
 
@@ -386,9 +501,10 @@ public final class AppState {
             try await hydrateUserData()
 
             // Setup reactive watchers AFTER hydration
-            // This ensures currentUser and currentHousehold stay in sync with Apollo cache changes
+            // This ensures currentUser and selectedHousehold stay in sync with Apollo cache changes
             setupCurrentUserWatcher()
             setupHouseholdWatcher()
+            setupHouseholdsListWatcher()
 
             // Start subscriptions after successful hydration
             if let subscriptionService {
@@ -464,14 +580,36 @@ public final class AppState {
         } else {
             needsOnboarding = false
 
-            // Restore last selected household or use first
+            // Determine which household to select based on priority order
             let lastSelectedId = await userPreferencesService?.getLastSelectedHouseholdId()
+
+            // Priority order for household selection:
+            // 1. Last selected household (if still valid)
+            // 2. User's primary household (if set and valid)
+            // 3. First available household
             if let lastSelectedId,
                let household = households.first(where: { $0.id == lastSelectedId })
             {
-                currentHousehold = household
+                // Restore user's last selection
+                selectedHousehold = household
+                Self.logger.info("✅ Restored last selected household: \(household.name)")
+            } else if let primaryId = currentUser.primaryHouseholdId,
+                      let primaryHousehold = households.first(where: { $0.id == primaryId })
+            {
+                // Use user's primary household as default
+                selectedHousehold = primaryHousehold
+                Self.logger.info("✅ Using primary household as default: \(primaryHousehold.name)")
+                // Also save this as the selected household for next time
+                await userPreferencesService?.setLastSelectedHouseholdId(primaryId)
+            } else if let firstHousehold = households.first {
+                // Fallback to first available household
+                selectedHousehold = firstHousehold
+                Self.logger.info("⚠️ No primary household set, using first available: \(firstHousehold.name)")
+                await userPreferencesService?.setLastSelectedHouseholdId(firstHousehold.id)
             } else {
-                currentHousehold = households.first
+                // No households available
+                selectedHousehold = nil
+                Self.logger.warning("⚠️ No households available for user")
             }
 
             // Hydration complete
@@ -486,7 +624,7 @@ public final class AppState {
         }
 
         // Only setup if we have a current household to watch
-        guard let currentHousehold else {
+        guard let selectedHousehold else {
             // No current household to watch yet
             return
         }
@@ -494,14 +632,14 @@ public final class AppState {
         // Setting up reactive household watcher
 
         // Use watchHousehold(id:) with the actual household ID
-        currentHouseholdWatch = householdService.watchHousehold(id: currentHousehold.id)
+        selectedHouseholdWatch = householdService.watchHousehold(id: selectedHousehold.id)
 
         // Set up observation to detect changes
         Task { @MainActor in
-            guard let watch = currentHouseholdWatch else { return }
+            guard let watch = selectedHouseholdWatch else { return }
 
             // Store the current name to detect changes
-            var lastKnownName = currentHousehold.name
+            var lastKnownName = selectedHousehold.name
 
             // Use withObservationTracking to observe changes to the WatchedResult
             while !Task.isCancelled {
@@ -515,11 +653,11 @@ public final class AppState {
                     Task { @MainActor in
                         // Check if we have a valid updated household
                         if let updatedHousehold = watch.value,
-                           updatedHousehold.id == self.currentHousehold?.id,
+                           updatedHousehold.id == self.selectedHousehold?.id,
                            updatedHousehold.name != lastKnownName
                         {
                             // Household watcher: detected name change
-                            self.currentHousehold = updatedHousehold
+                            self.selectedHousehold = updatedHousehold
                             lastKnownName = updatedHousehold.name
                         }
 
@@ -590,6 +728,26 @@ public final class AppState {
         }
 
         Self.logger.info("✅ User watcher setup complete")
+    }
+
+    /// Setup reactive households list watcher to keep list in sync with Apollo cache
+    private func setupHouseholdsListWatcher() {
+        guard let householdService else {
+            Self.logger.warning("⚠️ Cannot setup households list watcher - HouseholdService not available")
+            return
+        }
+
+        Self.logger.info("🔄 Setting up reactive households list watcher")
+
+        // Create the watch for households list
+        householdsListWatch = householdService.watchUserHouseholds()
+
+        // The watcher will automatically update when:
+        // 1. Mutations update the cache
+        // 2. Refetches update the cache
+        // 3. Subscriptions update the cache
+
+        Self.logger.info("✅ Households list watcher setup complete")
     }
 
     // MARK: - Phase Transition Management Methods

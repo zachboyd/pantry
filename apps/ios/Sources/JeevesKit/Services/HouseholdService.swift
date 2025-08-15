@@ -39,12 +39,6 @@ public final class HouseholdService: HouseholdServiceProtocol {
     private let authService: any AuthServiceProtocol
     private let watchManager: WatchManager?
 
-    /// Cache for current household to reduce network calls
-    private var currentHouseholdCache: Household?
-    private var householdsCache: [Household] = []
-    private var lastCacheUpdate: Date?
-    private let cacheTimeout: TimeInterval = 300 // 5 minutes
-
     /// Cached watched results for query deduplication
     private var householdWatches: [String: WatchedResult<Household>] = [:]
     private var householdsListWatch: WatchedResult<[Household]>?
@@ -74,15 +68,6 @@ public final class HouseholdService: HouseholdServiceProtocol {
             throw ServiceError.notAuthenticated
         }
 
-        // Check cache first
-        if let cached = currentHouseholdCache,
-           let lastUpdate = lastCacheUpdate,
-           Date().timeIntervalSince(lastUpdate) < cacheTimeout
-        {
-            Self.logger.debug("📦 Returning cached current household")
-            return cached
-        }
-
         do {
             // Use the hydrate query to get authenticated user's household
             // For authenticated household query, we use a placeholder ID since the backend
@@ -93,10 +78,6 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
             let data = try await graphQLService.query(query)
             let household = mapGraphQLHouseholdToDomain(data.household)
-
-            // Update cache
-            currentHouseholdCache = household
-            lastCacheUpdate = Date()
 
             Self.logger.info("✅ Current household retrieved: \(household.name)")
             return household
@@ -116,22 +97,14 @@ public final class HouseholdService: HouseholdServiceProtocol {
             throw ServiceError.notAuthenticated
         }
 
-        // Check cache first
-        if !householdsCache.isEmpty,
-           let lastUpdate = lastCacheUpdate,
-           Date().timeIntervalSince(lastUpdate) < cacheTimeout
-        {
-            Self.logger.debug("📦 Returning cached households list")
-            return householdsCache
-        }
-
         do {
             // Use the new ListHouseholds query
+            // Apollo handles caching automatically - no need for service-level cache
             let query = JeevesGraphQL.ListHouseholdsQuery()
             let data = try await graphQLService.query(query)
 
             // Map GraphQL households to domain models
-            householdsCache = data.households.map { graphQLHousehold in
+            let households = data.households.map { graphQLHousehold in
                 Household(
                     id: graphQLHousehold.id,
                     name: graphQLHousehold.name,
@@ -143,9 +116,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 )
             }
 
-            lastCacheUpdate = Date()
-            Self.logger.info("✅ Retrieved \(householdsCache.count) household(s)")
-            return householdsCache
+            Self.logger.info("✅ Retrieved \(households.count) household(s)")
+            return households
 
         } catch {
             Self.logger.error("❌ Failed to get households: \(error)")
@@ -153,10 +125,50 @@ public final class HouseholdService: HouseholdServiceProtocol {
         }
     }
 
-    /// Get all households for the current user (alias for getHouseholds)
-    public func getUserHouseholds() async throws -> [Household] {
-        Self.logger.info("🔍 Getting user households")
-        return try await getHouseholds()
+    /// Get all households for the current user with specified cache policy
+    /// - Parameter cachePolicy: The cache policy to use (defaults to .returnCacheDataElseFetch)
+    /// - Returns: Array of households for the current user
+    public func getUserHouseholds(cachePolicy: CachePolicy = .returnCacheDataElseFetch) async throws -> [Household] {
+        // Log the cache policy being used
+        let policyDescription = switch cachePolicy {
+        case .returnCacheDataElseFetch: "cache-first"
+        case .returnCacheDataAndFetch: "cache+network"
+        case .fetchIgnoringCacheData: "network-only"
+        case .returnCacheDataDontFetch: "cache-only"
+        default: "custom"
+        }
+        Self.logger.info("🔍 Getting user households with \(policyDescription) policy")
+
+        guard authService.isAuthenticated else {
+            Self.logger.warning("⚠️ User not authenticated")
+            throw ServiceError.notAuthenticated
+        }
+
+        do {
+            // Use the specified cache policy
+            let query = JeevesGraphQL.ListHouseholdsQuery()
+            let data = try await graphQLService.query(query, cachePolicy: cachePolicy)
+
+            // Map GraphQL households to domain models
+            let households = data.households.map { graphQLHousehold in
+                Household(
+                    id: graphQLHousehold.id,
+                    name: graphQLHousehold.name,
+                    description: graphQLHousehold.description,
+                    createdBy: graphQLHousehold.created_by,
+                    createdAt: DateUtilities.dateFromGraphQL(graphQLHousehold.created_at) ?? Date(),
+                    updatedAt: DateUtilities.dateFromGraphQL(graphQLHousehold.updated_at) ?? Date(),
+                    memberCount: graphQLHousehold.memberCount.flatMap { Int($0) } ?? 0,
+                )
+            }
+
+            Self.logger.info("✅ Retrieved \(households.count) household(s) with \(policyDescription) policy")
+            return households
+
+        } catch {
+            Self.logger.error("❌ Failed to get households: \(error)")
+            throw handleServiceError(error, operation: "getUserHouseholds")
+        }
     }
 
     /// Get a specific household by ID
@@ -169,14 +181,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
         }
 
         do {
-            // Check if we have it in cache first
-            if let cached = currentHouseholdCache, cached.id == id {
-                Self.logger.debug("📦 Returning cached household")
-                return cached
-            }
-
-            // For MVP, use the same query as getCurrentHousehold
-            // In a full implementation, you would have a specific getHousehold query
+            // Apollo handles caching automatically
             let query = JeevesGraphQL.GetHouseholdQuery(
                 input: JeevesGraphQL.GetHouseholdInput(id: id),
             )
@@ -220,10 +225,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
             let data = try await graphQLService.mutate(mutation)
             let household = mapGraphQLHouseholdToDomain(data.createHousehold)
 
-            // Update cache
-            currentHouseholdCache = household
-            householdsCache = [household]
-            lastCacheUpdate = Date()
+            // Apollo cache will automatically update when mutations return the same fields
+            // However, backend eventual consistency may delay the household appearing in list queries
 
             Self.logger.info("✅ Household created successfully: \(household.name)")
             return household
@@ -262,19 +265,11 @@ public final class HouseholdService: HouseholdServiceProtocol {
             let data = try await graphQLService.mutate(mutation)
             let household = mapGraphQLHouseholdToDomain(data.updateHousehold)
 
-            // Update local cache with the new data
-            currentHouseholdCache = household
-            if let index = householdsCache.firstIndex(where: { $0.id == household.id }) {
-                householdsCache[index] = household
-            }
-            lastCacheUpdate = Date()
-
             // The mutation response will automatically update Apollo's cache
             // because it returns the same fields (via HouseholdFields fragment)
             // that the watched queries use. This will trigger the watchers automatically.
 
-            // DEBUG: Cache should be automatically updated by the mutation response
-            Self.logger.debug("🔍 Mutation completed - cache should now contain updated household data")
+            Self.logger.debug("🔍 Mutation completed - Apollo cache automatically updated")
 
             Self.logger.info("✅ Household updated successfully: \(household.name)")
             return household
@@ -313,10 +308,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
             memberCount: 0,
         )
 
-        // Update cache
-        currentHouseholdCache = household
-        householdsCache = [household]
-        lastCacheUpdate = Date()
+        // Apollo cache will update when the join mutation completes
+        // Backend eventual consistency may delay the household appearing in list queries
 
         Self.logger.info("✅ Successfully joined household: \(household.name)")
         return household
@@ -501,15 +494,6 @@ public final class HouseholdService: HouseholdServiceProtocol {
                         result.update(value: household, source: source)
                         result.setLoading(false)
 
-                        // Also update our cache - MATCH THE WORKING USER PATTERN
-                        if household.id == self.currentHouseholdCache?.id {
-                            self.currentHouseholdCache = household
-                        }
-                        // Also update the households list cache
-                        if let index = self.householdsCache.firstIndex(where: { $0.id == household.id }) {
-                            self.householdsCache[index] = household
-                        }
-
                         Self.logger.info("🔄 Household watch updated from \(source) for ID: \(id)")
                     }
                 } else {
@@ -573,8 +557,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
         let watcher = graphQLService.apolloClientService.apollo.watch(
             query: query,
             cachePolicy: .returnCacheDataAndFetch,
-        ) { [weak self, weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.ListHouseholdsQuery.Data>, Error>) in
-            guard let self, let result else { return }
+        ) { [weak result] (graphQLResult: Result<GraphQLResult<JeevesGraphQL.ListHouseholdsQuery.Data>, Error>) in
+            guard let result else { return }
 
             switch graphQLResult {
             case let .success(data):
@@ -598,10 +582,6 @@ public final class HouseholdService: HouseholdServiceProtocol {
                             data.source == .cache ? .cache : .server
                         result.update(value: households, source: source)
                         result.setLoading(false)
-
-                        // Also update our cache
-                        self.householdsCache = households
-                        self.lastCacheUpdate = Date()
 
                         Self.logger.info("🔄 User households watch updated from \(source) with \(households.count) households")
                     }
@@ -794,12 +774,13 @@ public final class HouseholdService: HouseholdServiceProtocol {
         return ServiceError.operationFailed("Household operation failed: \(error.localizedDescription)")
     }
 
-    /// Invalidate cached data
-    private func invalidateCache() {
-        Self.logger.debug("🗑️ Invalidating household cache")
-        currentHouseholdCache = nil
-        householdsCache = []
-        lastCacheUpdate = nil
+    /// Clean up watchers (Apollo cache is managed automatically)
+    public func invalidateCache() {
+        Self.logger.debug("🗑️ Cleaning up household watchers")
+
+        // Note: We don't clear Apollo's cache - it manages itself intelligently
+        // Mutations automatically update the cache when they return the same fields
+        // Watchers will detect cache updates and refresh the UI
 
         // Clear watched results
         householdWatches.removeAll()
@@ -814,7 +795,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
         apolloMemberWatchers.values.forEach { $0.cancel() }
         apolloMemberWatchers.removeAll()
 
-        Self.logger.info("✅ Household cache and watchers cleared")
+        Self.logger.info("✅ Household watchers cleaned up")
     }
 }
 

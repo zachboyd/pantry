@@ -9,10 +9,8 @@ import SwiftUI
 
 /// View for joining an existing household
 public struct HouseholdJoinView: View {
-    @State private var inviteCode = ""
-    @State private var isLoading = false
-    @State private var showingAlert = false
-    @State private var alertMessage = ""
+    @Environment(\.safeViewModelFactory) private var viewModelFactory
+    @State private var viewModel: HouseholdJoinViewModel?
 
     let showBackButton: Bool
     let onBack: () -> Void
@@ -26,10 +24,6 @@ public struct HouseholdJoinView: View {
         self.showBackButton = showBackButton
         self.onBack = onBack
         self.onComplete = onComplete
-    }
-
-    private var isFormValid: Bool {
-        inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6
     }
 
     public var body: some View {
@@ -53,17 +47,24 @@ public struct HouseholdJoinView: View {
                     FormTextField(
                         label: L("household.invite_code"),
                         placeholder: L("household.invite_code.placeholder"),
-                        text: $inviteCode,
+                        text: Binding(
+                            get: { viewModel?.inviteCode ?? "" },
+                            set: { viewModel?.inviteCode = $0 },
+                        ),
                         autocapitalization: .never,
                         autocorrectionDisabled: true,
                         validation: { $0.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6 },
-                        errorMessage: L("household.invite_code.minimum_length"),
+                        errorMessage: viewModel?.validationError ?? L("household.invite_code.minimum_length"),
                         font: .monospaced(.body)(),
                         autoFocus: true,
                     )
                     .onSubmit {
-                        if isFormValid {
-                            joinHousehold()
+                        if viewModel?.isFormValid == true {
+                            Task {
+                                if let householdId = await viewModel?.joinHousehold() {
+                                    onComplete(householdId)
+                                }
+                            }
                         }
                     }
                 }
@@ -93,40 +94,40 @@ public struct HouseholdJoinView: View {
                 // Join button
                 PrimaryButton(
                     L("household.join"),
-                    isLoading: isLoading,
-                    isDisabled: !isFormValid,
-                    action: joinHousehold,
+                    isLoading: viewModel?.isJoining ?? false,
+                    isDisabled: !(viewModel?.isFormValid ?? false),
+                    action: {
+                        Task {
+                            if let householdId = await viewModel?.joinHousehold() {
+                                onComplete(householdId)
+                            }
+                        }
+                    },
                 )
             }
             .padding(DesignTokens.Spacing.lg)
         }
         .scrollDismissesKeyboard(.interactively)
         .navigationBarBackButtonHidden(!showBackButton)
-        .alert(L("error"), isPresented: $showingAlert) {
-            Button(L("ok")) {}
+        .alert(
+            L("error"),
+            isPresented: Binding(
+                get: { viewModel?.joinError != nil },
+                set: { _ in viewModel?.clearError() },
+            ),
+        ) {
+            Button(L("ok")) {
+                viewModel?.clearError()
+            }
         } message: {
-            Text(alertMessage)
+            Text(viewModel?.joinError?.localizedDescription ?? L("error.generic"))
         }
-    }
-
-    private func joinHousehold() {
-        isLoading = true
-
-        Task {
-            do {
-                // TODO: Implement actual household joining
-                try await Task.sleep(for: .seconds(1))
-
-                await MainActor.run {
-                    isLoading = false
-                    // Return a mock household ID
-                    onComplete("household_\(UUID().uuidString)")
-                }
-            } catch {
-                await MainActor.run {
-                    isLoading = false
-                    alertMessage = "Invalid invite code or failed to join household. Please try again."
-                    showingAlert = true
+        .onAppear {
+            if viewModel == nil, let factory = viewModelFactory {
+                do {
+                    viewModel = try factory.makeHouseholdJoinViewModel()
+                } catch {
+                    Logger.ui.error("Failed to create HouseholdJoinViewModel: \(error)")
                 }
             }
         }

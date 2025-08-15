@@ -20,7 +20,7 @@ public protocol HouseholdServiceProtocol: Sendable {
     // Core household operations
     func getCurrentHousehold() async throws -> Household?
     func getHouseholds() async throws -> [Household]
-    func getUserHouseholds() async throws -> [Household]
+    func getUserHouseholds(cachePolicy: CachePolicy) async throws -> [Household]
     func getHousehold(id: String) async throws -> Household
     func createHousehold(name: String, description: String?) async throws -> Household
     func updateHousehold(id: String, name: String, description: String?) async throws -> Household
@@ -36,6 +36,18 @@ public protocol HouseholdServiceProtocol: Sendable {
     func watchHousehold(id: String) -> WatchedResult<Household>
     func watchUserHouseholds() -> WatchedResult<[Household]>
     func watchHouseholdMembers(householdId: String) -> WatchedResult<[HouseholdMember]>
+
+    // Cache management
+    func invalidateCache()
+}
+
+// MARK: - HouseholdServiceProtocol Extension for Default Parameters
+
+public extension HouseholdServiceProtocol {
+    /// Get all households for the current user with default cache policy
+    func getUserHouseholds() async throws -> [Household] {
+        try await getUserHouseholds(cachePolicy: .returnCacheDataElseFetch)
+    }
 }
 
 /// User Service Protocol
@@ -84,6 +96,7 @@ public protocol UserPreferencesServiceProtocol: Sendable {
 public protocol GraphQLServiceProtocol: Sendable {
     // Generic query and mutation methods
     func query<Query: ApolloAPI.GraphQLQuery>(_ query: Query) async throws -> Query.Data
+    func query<Query: ApolloAPI.GraphQLQuery>(_ query: Query, cachePolicy: CachePolicy) async throws -> Query.Data
     func mutate<Mutation: ApolloAPI.GraphQLMutation>(_ mutation: Mutation) async throws -> Mutation.Data
 
     // Cache management

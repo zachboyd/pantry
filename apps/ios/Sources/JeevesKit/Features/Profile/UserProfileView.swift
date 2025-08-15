@@ -2,28 +2,26 @@ import SwiftUI
 
 /// User profile view that displays user information and allows household switching
 public struct UserProfileView: View {
+    @Environment(\.appState) private var appState
     @Environment(\.safeViewModelFactory) private var viewModelFactory
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: UserSettingsViewModel?
 
     let currentUser: User?
-    let currentHousehold: Household?
+    let selectedHousehold: Household?
     let households: [Household]
     let onSignOut: () async -> Void
-    let onSelectHousehold: (Household) -> Void
 
     public init(
         currentUser: User? = nil,
-        currentHousehold: Household? = nil,
+        selectedHousehold: Household? = nil,
         households: [Household] = [],
-        onSignOut: @escaping () async -> Void = {},
-        onSelectHousehold: @escaping (Household) -> Void = { _ in }
+        onSignOut: @escaping () async -> Void = {}
     ) {
         self.currentUser = currentUser
-        self.currentHousehold = currentHousehold
+        self.selectedHousehold = selectedHousehold
         self.households = households
         self.onSignOut = onSignOut
-        self.onSelectHousehold = onSelectHousehold
     }
 
     public var body: some View {
@@ -165,63 +163,42 @@ public struct UserProfileView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-            } else if let displayHouseholds = viewModel?.userHouseholds ?? (households.isEmpty ? nil : households), !displayHouseholds.isEmpty {
-                ForEach(displayHouseholds) { household in
-                    HouseholdRow(
-                        household: household,
-                        isSelected: household.id == currentHousehold?.id,
-                        onTap: {
-                            onSelectHousehold(household)
-                            dismiss()
-                        },
-                    )
-                }
-
-                // Create/Join buttons
-                NavigationLink {
-                    HouseholdCreationView(
-                        showBackButton: true,
-                        onComplete: { _ in
-                            Task {
-                                await viewModel?.refresh()
-                            }
-                            dismiss()
-                        },
-                    )
-                } label: {
-                    Label(L("household.create_new"), systemImage: "plus.circle")
-                        .foregroundColor(.accentColor)
-                }
-
-                NavigationLink {
-                    HouseholdJoinView(
-                        showBackButton: true,
-                        onBack: { dismiss() },
-                        onComplete: { _ in
-                            Task {
-                                await viewModel?.refresh()
-                            }
-                            dismiss()
-                        },
-                    )
-                } label: {
-                    Label(L("household.join_existing"), systemImage: "person.badge.plus")
-                        .foregroundColor(.accentColor)
-                }
             } else {
-                // Empty state
-                Text(L("household.no_households"))
-                    .foregroundColor(.secondary)
-                    .padding(.vertical, 8)
+                let displayHouseholds = viewModel?.userHouseholds ?? (households.isEmpty ? nil : households)
 
+                // Show households list or empty state
+                if let displayHouseholds, !displayHouseholds.isEmpty {
+                    ForEach(displayHouseholds) { household in
+                        HouseholdRow(
+                            household: household,
+                            isSelected: household.id == selectedHousehold?.id,
+                            isPrimary: household.id == (viewModel?.currentUser ?? currentUser)?.primaryHouseholdId,
+                            onTap: {
+                                dismiss()
+                                Task {
+                                    // Use unified switching method for existing households
+                                    await appState?.switchToHousehold(withId: household.id, isNewlyCreated: false)
+                                }
+                            },
+                        )
+                    }
+                } else {
+                    // Empty state
+                    Text(L("household.no_households"))
+                        .foregroundColor(.secondary)
+                        .padding(.vertical, 8)
+                }
+
+                // Create/Join buttons (shown in both cases)
                 NavigationLink {
                     HouseholdCreationView(
                         showBackButton: true,
-                        onComplete: { _ in
-                            Task {
-                                await viewModel?.refresh()
-                            }
+                        onComplete: { householdId in
                             dismiss()
+                            Task {
+                                // Mark as newly created to show loading state
+                                await appState?.switchToHousehold(withId: householdId, isNewlyCreated: true)
+                            }
                         },
                     )
                 } label: {
@@ -233,11 +210,12 @@ public struct UserProfileView: View {
                     HouseholdJoinView(
                         showBackButton: true,
                         onBack: { dismiss() },
-                        onComplete: { _ in
-                            Task {
-                                await viewModel?.refresh()
-                            }
+                        onComplete: { householdId in
                             dismiss()
+                            Task {
+                                // Mark as newly created to show loading state
+                                await appState?.switchToHousehold(withId: householdId, isNewlyCreated: true)
+                            }
                         },
                     )
                 } label: {
@@ -255,7 +233,7 @@ public struct UserProfileView: View {
                 }
             }
         } footer: {
-            if let household = currentHousehold {
+            if let household = selectedHousehold {
                 Text(L("profile.current_household", household.name))
                     .font(.caption)
             }
@@ -304,15 +282,29 @@ public struct UserProfileView: View {
 private struct HouseholdRow: View {
     let household: Household
     let isSelected: Bool
+    let isPrimary: Bool
     let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(household.name)
-                        .font(.body)
-                        .foregroundColor(.primary)
+                    HStack(spacing: 8) {
+                        Text(household.name)
+                            .font(.body)
+                            .foregroundColor(.primary)
+
+                        if isPrimary {
+                            Text(L("household.primary"))
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(Color.gray.opacity(0.3))
+                                .cornerRadius(8)
+                        }
+                    }
 
                     Text(Lp("household.members.count", household.memberCount))
                         .font(.caption)

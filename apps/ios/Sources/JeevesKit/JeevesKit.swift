@@ -38,64 +38,90 @@ struct AppRootContentView: View {
 
     var body: some View {
         ZStack {
-            switch appState.phase {
-            case .launching:
-                StandardLoadingView(showLogo: true)
-                    .fadeTransition(duration: TransitionConstants.launchToAuthDuration)
-                    .zIndex(1)
+            // Main content
+            Group {
+                switch appState.phase {
+                case .launching:
+                    StandardLoadingView(showLogo: true)
+                        .fadeTransition(duration: TransitionConstants.launchToAuthDuration)
+                        .zIndex(1)
 
-            case .initializing:
-                StandardLoadingView(showLogo: true)
-                    .fadeTransition()
-                    .zIndex(2)
+                case .initializing:
+                    StandardLoadingView(showLogo: true)
+                        .fadeTransition()
+                        .zIndex(2)
 
-            case .authenticating:
-                StandardLoadingView(showLogo: true)
-                    .fadeTransition()
-                    .zIndex(3)
+                case .authenticating:
+                    StandardLoadingView(showLogo: true)
+                        .fadeTransition()
+                        .zIndex(3)
 
-            case .unauthenticated:
-                AuthenticationContainerView()
-                    .fadeTransition(duration: TransitionConstants.authToMainDuration)
-                    .zIndex(4)
-
-            case .authenticated:
-                StandardLoadingView(showLogo: true)
-                    .fadeTransition()
-                    .zIndex(5)
-
-            case .hydrating:
-                StandardLoadingView(showLogo: true)
-                    .fadeTransition()
-                    .zIndex(6)
-
-            case .hydrated:
-                if appState.needsOnboarding {
-                    OnboardingContainerView(
-                        onSignOut: {
-                            await appState.signOut()
-                        },
-                        onComplete: { householdId in
-                            await appState.completeOnboarding(householdId: householdId)
-                        },
-                    )
-                    .fadeTransition(duration: TransitionConstants.authToMainDuration)
-                    .zIndex(7)
-                } else {
-                    MainTabView()
+                case .unauthenticated:
+                    AuthenticationContainerView()
                         .fadeTransition(duration: TransitionConstants.authToMainDuration)
-                        .zIndex(8)
+                        .zIndex(4)
+
+                case .authenticated:
+                    StandardLoadingView(showLogo: true)
+                        .fadeTransition()
+                        .zIndex(5)
+
+                case .hydrating:
+                    StandardLoadingView(showLogo: true)
+                        .fadeTransition()
+                        .zIndex(6)
+
+                case .hydrated:
+                    if appState.needsOnboarding {
+                        OnboardingContainerView(
+                            onSignOut: {
+                                await appState.signOut()
+                            },
+                            onComplete: { householdId in
+                                await appState.completeOnboarding(householdId: householdId)
+                            },
+                        )
+                        .fadeTransition(duration: TransitionConstants.authToMainDuration)
+                        .zIndex(7)
+                    } else {
+                        MainTabView()
+                            .fadeTransition(duration: TransitionConstants.authToMainDuration)
+                            .zIndex(8)
+                    }
+
+                case .signingOut:
+                    StandardLoadingView(showLogo: true)
+                        .fadeTransition()
+                        .zIndex(9)
+
+                case .error:
+                    ErrorView(appState: appState)
+                        .fadeTransition(duration: TransitionConstants.errorTransitionDuration)
+                        .zIndex(10)
                 }
+            }
+            .blur(radius: appState.isSwitchingHousehold ? 10 : 0)
+            .animation(.easeInOut(duration: 0.3), value: appState.isSwitchingHousehold)
 
-            case .signingOut:
-                StandardLoadingView(showLogo: true)
-                    .fadeTransition()
-                    .zIndex(9)
+            // Loading overlay when switching household
+            if appState.isSwitchingHousehold {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .zIndex(100)
 
-            case .error:
-                ErrorView(appState: appState)
-                    .fadeTransition(duration: TransitionConstants.errorTransitionDuration)
-                    .zIndex(10)
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+
+                    Text(L("household.switching"))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+                .padding(40)
+                .background(Color.black.opacity(0.7))
+                .cornerRadius(20)
+                .zIndex(101)
             }
         }
         .animation(TransitionConstants.standardEasing(duration: TransitionConstants.totalTransitionDuration), value: appState.phase)

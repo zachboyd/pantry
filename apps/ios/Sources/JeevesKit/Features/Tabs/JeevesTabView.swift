@@ -15,14 +15,14 @@ public struct JeevesTabView: View {
 
     // MARK: - Parameters
 
-    let currentHousehold: Household?
+    let selectedHousehold: Household?
     let onSelectHousehold: (Household) -> Void
 
     public init(
-        currentHousehold: Household? = nil,
+        selectedHousehold: Household? = nil,
         onSelectHousehold: @escaping (Household) -> Void = { _ in }
     ) {
-        self.currentHousehold = currentHousehold
+        self.selectedHousehold = selectedHousehold
         self.onSelectHousehold = onSelectHousehold
     }
 
@@ -49,8 +49,8 @@ public struct JeevesTabView: View {
         .task {
             await loadViewModel()
         }
-        .onChange(of: currentHousehold?.id) { _, _ in
-            viewModel?.setHousehold(currentHousehold)
+        .onChange(of: selectedHousehold?.id) { _, _ in
+            viewModel?.setHousehold(selectedHousehold)
         }
     }
 
@@ -164,8 +164,8 @@ public struct JeevesTabView: View {
         do {
             let newViewModel = try factory.makeJeevesTabViewModel()
 
-            // Set the current household
-            newViewModel.setHousehold(currentHousehold)
+            // Set the selected household
+            newViewModel.setHousehold(selectedHousehold)
 
             await newViewModel.onAppear()
 

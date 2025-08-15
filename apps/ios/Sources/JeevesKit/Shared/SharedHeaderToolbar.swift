@@ -15,7 +15,7 @@ public struct SharedHeaderToolbar: View {
         HStack {
             // Title
             VStack(alignment: .leading, spacing: 2) {
-                if let household = appState?.currentHousehold {
+                if let household = appState?.selectedHousehold {
                     Text(household.name)
                         .font(.headline)
                         .foregroundColor(.primary)
@@ -47,7 +47,7 @@ public struct SharedHeaderToolbar: View {
         .sheet(isPresented: $showingProfile) {
             UserProfileView(
                 currentUser: appState?.currentUser,
-                currentHousehold: appState?.currentHousehold,
+                selectedHousehold: appState?.selectedHousehold,
                 households: [], // Will be loaded by ViewModel
                 onSignOut: {
                     Logger.app.info("🚪 UserProfileView onSignOut called from SharedHeaderToolbar")
@@ -57,11 +57,6 @@ public struct SharedHeaderToolbar: View {
                     } else {
                         Logger.app.error("❌ AppState is nil in SharedHeaderToolbar onSignOut")
                     }
-                },
-                onSelectHousehold: { household in
-                    Logger.app.info("🏠 UserProfileView selectHousehold called from SharedHeaderToolbar")
-                    appState?.selectHousehold(household)
-                    showingProfile = false
                 },
             )
             .presentationDetents([.large])

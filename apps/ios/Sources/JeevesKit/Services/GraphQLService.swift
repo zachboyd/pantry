@@ -94,9 +94,14 @@ public final class GraphQLService: GraphQLServiceProtocol {
 
     // MARK: - GraphQLServiceProtocol Implementation
 
-    /// Execute a GraphQL query
+    /// Execute a GraphQL query with default cache policy
     public func query<Query: ApolloAPI.GraphQLQuery>(_ query: Query) async throws -> Query.Data {
-        Self.logger.info("📡 Executing GraphQL query")
+        try await self.query(query, cachePolicy: .returnCacheDataElseFetch)
+    }
+
+    /// Execute a GraphQL query with specific cache policy
+    public func query<Query: ApolloAPI.GraphQLQuery>(_ query: Query, cachePolicy: CachePolicy) async throws -> Query.Data {
+        Self.logger.info("📡 Executing GraphQL query with cache policy: \(cachePolicy)")
         // Apollo queries may not always have accessible __variables
         Self.logger.debug("🔍 Query execution started")
 
@@ -106,9 +111,15 @@ public final class GraphQLService: GraphQLServiceProtocol {
         let startTime = Date()
 
         return try await withCheckedThrowingContinuation { continuation in
-            apollo.fetch(query: query) { [weak self] result in
+            // Track if we've already resumed to prevent double-resume with returnCacheDataAndFetch
+            var hasResumed = false
+
+            apollo.fetch(query: query, cachePolicy: cachePolicy) { [weak self] result in
                 guard let self else {
-                    continuation.resume(throwing: ServiceError.operationFailed("Service deallocated"))
+                    if !hasResumed {
+                        hasResumed = true
+                        continuation.resume(throwing: ServiceError.operationFailed("Service deallocated"))
+                    }
                     return
                 }
 
@@ -116,7 +127,14 @@ public final class GraphQLService: GraphQLServiceProtocol {
 
                 switch result {
                 case let .success(graphQLResult):
-                    Self.logger.info("✅ Query completed in \(String(format: "%.2f", executionTime))s")
+                    // For returnCacheDataAndFetch, we get called twice (cache then network)
+                    // Only resume with the network response (source != .cache for final response)
+                    if cachePolicy == .returnCacheDataAndFetch, graphQLResult.source == .cache {
+                        Self.logger.debug("📦 Got cached data, waiting for network response...")
+                        return // Don't resume yet, wait for network response
+                    }
+
+                    Self.logger.info("✅ Query completed in \(String(format: "%.2f", executionTime))s from \(graphQLResult.source)")
 
                     if let errors = graphQLResult.errors, !errors.isEmpty {
                         Self.logger.warning("⚠️ Query returned with GraphQL errors: \(errors)")
@@ -128,7 +146,10 @@ public final class GraphQLService: GraphQLServiceProtocol {
 
                         if hasAuthError {
                             Self.logger.error("🔐 Authentication error detected in query")
-                            continuation.resume(throwing: ServiceError.unauthorized)
+                            if !hasResumed {
+                                hasResumed = true
+                                continuation.resume(throwing: ServiceError.unauthorized)
+                            }
                             return
                         }
                     }
@@ -140,9 +161,15 @@ public final class GraphQLService: GraphQLServiceProtocol {
                         Task { @MainActor [weak self] in
                             self?.connectionStatus = true
                         }
-                        continuation.resume(returning: sendableData.value)
+                        if !hasResumed {
+                            hasResumed = true
+                            continuation.resume(returning: sendableData.value)
+                        }
                     } else {
-                        continuation.resume(throwing: ServiceError.invalidData("No data returned from query"))
+                        if !hasResumed {
+                            hasResumed = true
+                            continuation.resume(throwing: ServiceError.invalidData("No data returned from query"))
+                        }
                     }
 
                 case let .failure(error):
@@ -151,7 +178,10 @@ public final class GraphQLService: GraphQLServiceProtocol {
                         self?.connectionStatus = false
                     }
                     Self.logger.error("❌ Query failed: \(error)")
-                    continuation.resume(throwing: handleGraphQLError(error, operation: "GraphQL Query"))
+                    if !hasResumed {
+                        hasResumed = true
+                        continuation.resume(throwing: handleGraphQLError(error, operation: "GraphQL Query"))
+                    }
                 }
             }
         }

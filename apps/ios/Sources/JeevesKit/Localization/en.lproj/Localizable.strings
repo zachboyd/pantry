@@ -120,6 +120,7 @@
 
 // MARK: - Household
 "household.title" = "Household";
+"household.primary" = "Primary";
 "household.create" = "Create Household";
 "household.name" = "Household Name";
 "household.description" = "Description (optional)";
@@ -163,6 +164,7 @@
 "household.switcher.your_households" = "Your Households";
 "household.switcher.actions" = "Actions";
 "household.switcher.title" = "Switch Household";
+"household.switching" = "Switching household...";
 "household.edit.section_title" = "Household Information";
 "household.edit.section_footer" = "This information will be visible to all household members.";
 "household.edit.title" = "Edit Household";

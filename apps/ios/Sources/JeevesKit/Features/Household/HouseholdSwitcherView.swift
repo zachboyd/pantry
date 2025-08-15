@@ -10,6 +10,7 @@ import SwiftUI
 /// View for switching between user's households
 public struct HouseholdSwitcherView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appState) private var appState
     @State private var households: [Household] = Household.mockHouseholds
     @State private var showingCreateHousehold = false
     @State private var showingJoinHousehold = false
@@ -105,8 +106,16 @@ public struct HouseholdSwitcherView: View {
     }
 
     private func selectHousehold(_ household: Household) {
-        onSelectHousehold(household)
         dismiss()
+        Task {
+            // Use the environment AppState to switch households
+            if let appState {
+                await appState.switchToHousehold(withId: household.id, isNewlyCreated: false)
+            } else {
+                // Fallback to callback if no AppState available
+                onSelectHousehold(household)
+            }
+        }
     }
 }
 
