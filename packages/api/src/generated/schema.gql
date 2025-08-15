@@ -15,7 +15,7 @@ type User {
   managed_by: String
   relationship_to_manager: String
   primary_household_id: String
-  permissions: JSON
+  permissions: String
   preferences: JSON
   is_ai: Boolean!
   created_at: DateTime!
