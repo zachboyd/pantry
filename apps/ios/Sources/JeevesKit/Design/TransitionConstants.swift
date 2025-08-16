@@ -39,14 +39,23 @@ public enum TransitionConstants {
 
     // MARK: - Household Switching Animation
 
-    /// Duration for the blur effect when switching households
-    public static let householdSwitchBlurDuration: Double = 0.3
+    /// Duration for the waiting phase before animation starts
+    public static let householdSwitchWaitDuration: Double = 0.3
+
+    /// Duration for the blur in effect when switching households
+    public static let householdSwitchBlurInDuration: Double = 0.2
+
+    /// Duration for the blur out effect when switching households
+    public static let householdSwitchBlurOutDuration: Double = 0.2
+
+    /// Duration for the scale down animation when switching households
+    public static let householdSwitchScaleDownDuration: Double = 0.15
+
+    /// Duration for the scale up animation when switching households
+    public static let householdSwitchScaleUpDuration: Double = 0.15
 
     /// Duration for the slide animation when switching households
     public static let householdSwitchSlideDuration: Double = 0.5
-
-    /// Duration for the scale animation when switching households
-    public static let householdSwitchScaleDuration: Double = 0.2
 
     /// Scale factor when switching households (0.9 = 90%)
     public static let householdSwitchScaleFactor: Double = 0.9
