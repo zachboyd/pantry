@@ -2,14 +2,14 @@ import SwiftUI
 
 /// View for inviting members to a household
 public struct HouseholdInviteView: View {
-    let householdId: String
+    let householdId: LowercaseUUID
     let householdName: String
 
     @State private var inviteCode: String = ""
     @State private var isGeneratingCode = false
     @State private var showingCopiedAlert = false
 
-    public init(householdId: String, householdName: String) {
+    public init(householdId: LowercaseUUID, householdName: String) {
         self.householdId = householdId
         self.householdName = householdName
     }
@@ -150,7 +150,7 @@ public struct HouseholdInviteView: View {
 #Preview("Invite Members") {
     NavigationStack {
         HouseholdInviteView(
-            householdId: "123",
+            householdId: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000123")!,
             householdName: "Smith Family",
         )
     }
