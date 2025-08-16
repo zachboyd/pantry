@@ -124,7 +124,7 @@ public class AuthService: AuthServiceProtocol {
         // The real business user will be loaded by UserService
         // We create a placeholder UUID since we don't have the business user ID yet
         return User(
-            id: UUID(), // Placeholder - real business user ID will be loaded by UserService
+            id: LowercaseUUID(), // Placeholder - real business user ID will be loaded by UserService
             email: apiUser.email,
             name: apiUser.name,
             createdAt: DateUtilities.dateFromGraphQLOrNow(apiUser.createdAt),

@@ -14,7 +14,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         var name = ""
         var description = ""
         var mode: HouseholdEditMode = .create
-        var householdId: UUID?
+        var householdId: LowercaseUUID?
         var originalHousehold: Household?
         var viewState: CommonViewState = .idle
         var showingError = false
@@ -65,7 +65,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         state.mode
     }
 
-    public var householdId: UUID? {
+    public var householdId: LowercaseUUID? {
         state.householdId
     }
 
@@ -129,7 +129,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
 
     public init(
         dependencies: HouseholdEditDependencies,
-        householdId: UUID? = nil,
+        householdId: LowercaseUUID? = nil,
         mode: HouseholdEditMode = .create,
         isReadOnly: Bool = false
     ) {
@@ -193,7 +193,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
     }
 
     /// Load household data for editing
-    public func loadHousehold(id: UUID) async {
+    public func loadHousehold(id: LowercaseUUID) async {
         await executeTask(.load) { [weak self] in
             guard let self else { return }
             await performLoadHousehold(id: id)
@@ -364,7 +364,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
         return result != nil
     }
 
-    private func performLoadHousehold(id: UUID) async {
+    private func performLoadHousehold(id: LowercaseUUID) async {
         Self.logger.info("📡 Loading household: \(id)")
 
         updateState { $0.viewState = .loading }

@@ -780,18 +780,18 @@ public enum DependencyContainerError: Error, LocalizedError {
 
 @MainActor
 public protocol ItemServiceProtocol: Sendable {
-    func getItems(for householdId: UUID) async throws -> [Item]
+    func getItems(for householdId: LowercaseUUID) async throws -> [Item]
     func addItem(_ item: Item) async throws
     func updateItem(_ item: Item) async throws
-    func deleteItem(id: UUID) async throws
+    func deleteItem(id: LowercaseUUID) async throws
 }
 
 @MainActor
 public protocol ShoppingListServiceProtocol: Sendable {
-    func getLists(for householdId: UUID) async throws -> [ShoppingList]
-    func createList(name: String, householdId: UUID) async throws -> ShoppingList
-    func addItem(to listId: UUID, item: ShoppingListItem) async throws
-    func removeItem(from listId: UUID, itemId: UUID) async throws
+    func getLists(for householdId: LowercaseUUID) async throws -> [ShoppingList]
+    func createList(name: String, householdId: LowercaseUUID) async throws -> ShoppingList
+    func addItem(to listId: LowercaseUUID, item: ShoppingListItem) async throws
+    func removeItem(from listId: LowercaseUUID, itemId: LowercaseUUID) async throws
 }
 
 @MainActor
@@ -808,8 +808,8 @@ public protocol NotificationServiceProtocol: Sendable {
 // Models have been moved to Sources/JeevesKit/Models/
 
 public struct Item: Codable, Identifiable, Sendable {
-    public let id: UUID
-    public let householdId: UUID
+    public let id: LowercaseUUID
+    public let householdId: LowercaseUUID
     public let name: String
     public let quantity: Double
     public let unit: String
@@ -817,7 +817,7 @@ public struct Item: Codable, Identifiable, Sendable {
     public let expirationDate: Date?
     public let location: String?
     public let notes: String?
-    public let addedBy: UUID
+    public let addedBy: LowercaseUUID
     public let createdAt: Date
     public let updatedAt: Date
 }
@@ -833,23 +833,23 @@ public enum ItemCategory: String, Codable, CaseIterable, Sendable {
 }
 
 public struct ShoppingList: Codable, Identifiable, Sendable {
-    public let id: UUID
-    public let householdId: UUID
+    public let id: LowercaseUUID
+    public let householdId: LowercaseUUID
     public let name: String
     public let items: [ShoppingListItem]
-    public let createdBy: UUID
+    public let createdBy: LowercaseUUID
     public let createdAt: Date
     public let updatedAt: Date
 }
 
 public struct ShoppingListItem: Codable, Identifiable, Sendable {
-    public let id: UUID
+    public let id: LowercaseUUID
     public let name: String
     public let quantity: Double
     public let unit: String
     public let category: ItemCategory
     public let isCompleted: Bool
-    public let addedBy: UUID
-    public let completedBy: UUID?
+    public let addedBy: LowercaseUUID
+    public let completedBy: LowercaseUUID?
     public let completedAt: Date?
 }

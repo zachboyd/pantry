@@ -13,9 +13,9 @@ public struct HouseholdMembersView: View {
     @State private var viewModel: HouseholdMembersViewModel?
     @State private var membersWatch: WatchedResult<[HouseholdMember]>?
 
-    let householdId: UUID
+    let householdId: LowercaseUUID
 
-    public init(householdId: UUID) {
+    public init(householdId: LowercaseUUID) {
         self.householdId = householdId
     }
 
@@ -189,6 +189,6 @@ public extension MemberRole {
 
 #Preview {
     NavigationStack {
-        HouseholdMembersView(householdId: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
+        HouseholdMembersView(householdId: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
     }
 }

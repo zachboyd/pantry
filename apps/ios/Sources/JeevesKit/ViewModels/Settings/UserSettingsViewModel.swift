@@ -21,7 +21,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
     public struct State: Sendable {
         var currentUser: User?
         var userHouseholds: [Household] = []
-        var selectedHouseholdId: UUID?
+        var selectedHouseholdId: LowercaseUUID?
         var viewState: CommonViewState = .idle
         var showingError = false
         var errorMessage: String?
@@ -59,7 +59,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
         householdsWatch.value ?? state.userHouseholds
     }
 
-    public var selectedHouseholdId: UUID? {
+    public var selectedHouseholdId: LowercaseUUID? {
         state.selectedHouseholdId
     }
 
@@ -212,7 +212,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
 
     /// Check if current user can create new members for a specific household (e.g., invite members)
     /// This is reactive and will automatically update when permissions change
-    public func canCreateHouseholdMember(for householdId: UUID) -> Bool {
+    public func canCreateHouseholdMember(for householdId: LowercaseUUID) -> Bool {
         // Use the permission service which is Observable
         // This will automatically trigger view updates when permissions change
         dependencies.permissionService.canCreateHouseholdMember(for: householdId)
@@ -582,7 +582,7 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
 
     private func loadSelectedHousehold() {
         if let selectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
-           let selectedId = UUID(uuidString: selectedIdString)
+           let selectedId = LowercaseUUID(uuidString: selectedIdString)
         {
             updateState { $0.selectedHouseholdId = selectedId }
         }

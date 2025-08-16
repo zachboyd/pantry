@@ -48,7 +48,7 @@ public final class HouseholdViewModel {
 
     /// Fetch household data by ID
     /// - Parameter householdId: ID of the household to fetch
-    public func fetchHousehold(id householdId: UUID) async {
+    public func fetchHousehold(id householdId: LowercaseUUID) async {
         Self.logger.info("📡 Fetching household data for ID: \(householdId)")
 
         isLoading = true
@@ -101,7 +101,7 @@ public final class HouseholdViewModel {
     /// - Parameters:
     ///   - userId: ID of the user to add
     ///   - role: Role for the new member ("manager", "member", "ai")
-    public func addMember(userId: UUID, role: String) async {
+    public func addMember(userId: LowercaseUUID, role: String) async {
         guard let household = currentHousehold else {
             Self.logger.error("❌ No current household to add member to")
             return
@@ -129,7 +129,7 @@ public final class HouseholdViewModel {
 
     /// Remove member from current household
     /// - Parameter userId: ID of the user to remove
-    public func removeMember(userId: UUID) async {
+    public func removeMember(userId: LowercaseUUID) async {
         guard let household = currentHousehold else {
             Self.logger.error("❌ No current household to remove member from")
             return
@@ -157,7 +157,7 @@ public final class HouseholdViewModel {
     /// - Parameters:
     ///   - userId: ID of the user
     ///   - newRole: New role for the member
-    public func changeMemberRole(userId: UUID, newRole: String) async {
+    public func changeMemberRole(userId: LowercaseUUID, newRole: String) async {
         guard let household = currentHousehold else {
             Self.logger.error("❌ No current household to change member role in")
             return

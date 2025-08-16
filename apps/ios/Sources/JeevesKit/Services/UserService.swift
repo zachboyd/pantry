@@ -21,17 +21,17 @@ public final class UserService: UserServiceProtocol {
     private let watchManager: WatchManager?
 
     /// User data cache
-    private var userCache: [UUID: User] = [:]
+    private var userCache: [LowercaseUUID: User] = [:]
 
     /// Current user ID for proper cache tracking
-    private var currentUserId: UUID?
+    private var currentUserId: LowercaseUUID?
 
     /// Cached watched results for query deduplication
     private var currentUserWatch: WatchedResult<User>?
-    private var userWatches: [UUID: WatchedResult<User>] = [:]
+    private var userWatches: [LowercaseUUID: WatchedResult<User>] = [:]
 
     /// Apollo watchers for reactive updates (stored to allow cancellation)
-    private var apolloWatchers: [UUID: GraphQLQueryWatcher<JeevesGraphQL.GetUserQuery>] = [:]
+    private var apolloWatchers: [LowercaseUUID: GraphQLQueryWatcher<JeevesGraphQL.GetUserQuery>] = [:]
     private var currentUserApolloWatcher: GraphQLQueryWatcher<JeevesGraphQL.GetCurrentUserQuery>?
 
     // MARK: - Initialization
@@ -58,7 +58,7 @@ public final class UserService: UserServiceProtocol {
     }
 
     /// Get a user by ID
-    public func getUser(id: UUID) async throws -> User? {
+    public func getUser(id: LowercaseUUID) async throws -> User? {
         Self.logger.info("🔍 Getting business user by ID: \(id)")
 
         // Check cache first
@@ -75,7 +75,7 @@ public final class UserService: UserServiceProtocol {
     }
 
     /// Get multiple users by IDs
-    public func getUsersByIds(_ ids: [UUID]) async throws -> [User] {
+    public func getUsersByIds(_ ids: [LowercaseUUID]) async throws -> [User] {
         Self.logger.info("🔍 Getting \(ids.count) business users by IDs")
 
         var users: [User] = []
@@ -181,7 +181,7 @@ public final class UserService: UserServiceProtocol {
             case let .success(data):
                 if let userData = data.data?.currentUser {
                     // Transform GraphQL data to User model
-                    guard let id = userData.id.uuid else {
+                    guard let id = LowercaseUUID(uuidString: userData.id) else {
                         Self.logger.error("❌ Invalid UUID in user data")
                         return
                     }
@@ -195,9 +195,9 @@ public final class UserService: UserServiceProtocol {
                         avatarUrl: userData.avatar_url,
                         phone: userData.phone,
                         birthDate: userData.birth_date,
-                        managedBy: userData.managed_by?.uuid,
+                        managedBy: userData.managed_by.flatMap { LowercaseUUID(uuidString: $0) },
                         relationshipToManager: userData.relationship_to_manager,
-                        primaryHouseholdId: userData.primary_household_id?.uuid,
+                        primaryHouseholdId: userData.primary_household_id.flatMap { LowercaseUUID(uuidString: $0) },
                         isAi: userData.is_ai,
                         createdAt: userData.created_at,
                         updatedAt: userData.updated_at,
@@ -245,7 +245,7 @@ public final class UserService: UserServiceProtocol {
     }
 
     /// Watch specific user by ID with reactive updates
-    public func watchUser(id: UUID) -> WatchedResult<User> {
+    public func watchUser(id: LowercaseUUID) -> WatchedResult<User> {
         Self.logger.info("👁️ Creating watched result for user: \(id)")
 
         // Return existing watch if available
@@ -329,7 +329,7 @@ public final class UserService: UserServiceProtocol {
 
     // Helper method to create User from GraphQL data
     private func createUserFromGraphQLData(_ userData: JeevesGraphQL.GetUserQuery.Data.User) -> User {
-        guard let id = userData.id.uuid else {
+        guard let id = LowercaseUUID(uuidString: userData.id) else {
             fatalError("Invalid UUID in GraphQL user data")
         }
         return User(
@@ -342,9 +342,9 @@ public final class UserService: UserServiceProtocol {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by?.uuid,
+            managedBy: userData.managed_by.flatMap { LowercaseUUID(uuidString: $0) },
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id?.uuid,
+            primaryHouseholdId: userData.primary_household_id.flatMap { LowercaseUUID(uuidString: $0) },
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,
@@ -364,7 +364,7 @@ private extension UserService {
 
         let userData = data.currentUser
 
-        guard let id = userData.id.uuid else {
+        guard let id = LowercaseUUID(uuidString: userData.id) else {
             throw ServiceError.invalidData("Invalid UUID in user data")
         }
         let user = User(
@@ -377,9 +377,9 @@ private extension UserService {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by?.uuid,
+            managedBy: userData.managed_by.flatMap { LowercaseUUID(uuidString: $0) },
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id?.uuid,
+            primaryHouseholdId: userData.primary_household_id.flatMap { LowercaseUUID(uuidString: $0) },
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,
@@ -400,7 +400,7 @@ private extension UserService {
 
         let userData = data.user
 
-        guard let id = userData.id.uuid else {
+        guard let id = LowercaseUUID(uuidString: userData.id) else {
             throw ServiceError.invalidData("Invalid UUID in user data")
         }
         let user = User(
@@ -413,9 +413,9 @@ private extension UserService {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by?.uuid,
+            managedBy: userData.managed_by.flatMap { LowercaseUUID(uuidString: $0) },
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id?.uuid,
+            primaryHouseholdId: userData.primary_household_id.flatMap { LowercaseUUID(uuidString: $0) },
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,
@@ -447,7 +447,7 @@ private extension UserService {
 
         let userData = data.updateUser
 
-        guard let id = userData.id.uuid else {
+        guard let id = LowercaseUUID(uuidString: userData.id) else {
             throw ServiceError.invalidData("Invalid UUID in user data")
         }
         let updatedUser = User(
@@ -460,9 +460,9 @@ private extension UserService {
             avatarUrl: userData.avatar_url,
             phone: userData.phone,
             birthDate: userData.birth_date,
-            managedBy: userData.managed_by?.uuid,
+            managedBy: userData.managed_by.flatMap { LowercaseUUID(uuidString: $0) },
             relationshipToManager: userData.relationship_to_manager,
-            primaryHouseholdId: userData.primary_household_id?.uuid,
+            primaryHouseholdId: userData.primary_household_id.flatMap { LowercaseUUID(uuidString: $0) },
             isAi: userData.is_ai,
             createdAt: userData.created_at,
             updatedAt: userData.updated_at,

@@ -9,7 +9,7 @@ import Foundation
 
 /// User model representing an authenticated user
 public struct User: Identifiable, Sendable {
-    public let id: UUID
+    public let id: LowercaseUUID
     public let authUserId: String?
     public let email: String?
     public let firstName: String
@@ -18,9 +18,9 @@ public struct User: Identifiable, Sendable {
     public let avatarUrl: String?
     public let phone: String?
     public let birthDate: String?
-    public let managedBy: UUID?
+    public let managedBy: LowercaseUUID?
     public let relationshipToManager: String?
-    public let primaryHouseholdId: UUID?
+    public let primaryHouseholdId: LowercaseUUID?
     public let isAi: Bool
     public let createdAt: String
     public let updatedAt: String
@@ -61,7 +61,7 @@ public struct User: Identifiable, Sendable {
     }
 
     /// Compatibility initializer for the old User struct interface
-    public init(id: UUID, email: String, name: String?, createdAt: Date) {
+    public init(id: LowercaseUUID, email: String, name: String?, createdAt: Date) {
         self.id = id
         authUserId = nil
         self.email = email
@@ -82,7 +82,7 @@ public struct User: Identifiable, Sendable {
     }
 
     public init(
-        id: UUID,
+        id: LowercaseUUID,
         authUserId: String?,
         email: String?,
         firstName: String,
@@ -91,9 +91,9 @@ public struct User: Identifiable, Sendable {
         avatarUrl: String?,
         phone: String?,
         birthDate: String?,
-        managedBy: UUID?,
+        managedBy: LowercaseUUID?,
         relationshipToManager: String?,
-        primaryHouseholdId: UUID?,
+        primaryHouseholdId: LowercaseUUID?,
         isAi: Bool,
         createdAt: String,
         updatedAt: String

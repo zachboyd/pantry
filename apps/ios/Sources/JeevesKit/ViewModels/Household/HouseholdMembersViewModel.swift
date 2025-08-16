@@ -22,7 +22,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
         var filteredMembers: [HouseholdMemberInfo] = []
 
         // Member management
-        var selectedMemberId: UUID?
+        var selectedMemberId: LowercaseUUID?
         var showingMemberActions = false
         var showingRemoveMemberConfirmation = false
         var memberToRemove: HouseholdMemberInfo?
@@ -30,9 +30,9 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     /// Extended member information combining HouseholdMember with User details
     public struct HouseholdMemberInfo: Identifiable, Sendable {
-        public let id: UUID
-        public let userId: UUID
-        public let householdId: UUID
+        public let id: LowercaseUUID
+        public let userId: LowercaseUUID
+        public let householdId: LowercaseUUID
         public let role: MemberRole
         public let joinedAt: Date
         public let user: User?
@@ -61,7 +61,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     // MARK: - Dependencies
 
-    public let householdId: UUID
+    public let householdId: LowercaseUUID
 
     // MARK: - Computed Properties
 
@@ -156,7 +156,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     // MARK: - Initialization
 
-    public init(dependencies: HouseholdMembersDependencies, householdId: UUID) {
+    public init(dependencies: HouseholdMembersDependencies, householdId: LowercaseUUID) {
         self.householdId = householdId
         let initialState = State()
         super.init(dependencies: dependencies, initialState: initialState)
@@ -165,13 +165,13 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
 
     public required init(dependencies: HouseholdMembersDependencies) {
         // This should not be used directly - use init with householdId
-        householdId = UUID() // Placeholder UUID
+        householdId = LowercaseUUID() // Placeholder UUID
         let initialState = State()
         super.init(dependencies: dependencies, initialState: initialState)
     }
 
     public required init(dependencies: HouseholdMembersDependencies, initialState: State) {
-        householdId = UUID() // Placeholder UUID
+        householdId = LowercaseUUID() // Placeholder UUID
         super.init(dependencies: dependencies, initialState: initialState)
     }
 
@@ -436,7 +436,7 @@ public final class HouseholdMembersViewModel: BaseReactiveViewModel<HouseholdMem
         Self.logger.info("🔗 Generating invite code")
 
         // For MVP, generate a simple invite code
-        let inviteCode = "INVITE-\(UUID().uuidString.prefix(8))"
+        let inviteCode = "INVITE-\(LowercaseUUID().uuidString.prefix(8))"
 
         updateState { state in
             state.inviteCode = inviteCode

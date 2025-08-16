@@ -20,9 +20,9 @@ public enum NavigationDestination: Hashable, Codable, Sendable {
 
     case householdCreation
     case householdJoin
-    case householdDetails(householdId: UUID)
-    case householdEdit(householdId: UUID)
-    case householdMembers(householdId: UUID)
+    case householdDetails(householdId: LowercaseUUID)
+    case householdEdit(householdId: LowercaseUUID)
+    case householdMembers(householdId: LowercaseUUID)
     case householdSwitcher
 
     // MARK: - Main App Navigation

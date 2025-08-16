@@ -40,7 +40,7 @@ public final class HydrationService {
         Self.logger.info("🔑 Auth User ID: \(currentUser.auth_user_id ?? "nil")")
 
         // Convert GraphQL user to our User model
-        guard let id = currentUser.id.uuid else {
+        guard let id = LowercaseUUID(uuidString: currentUser.id) else {
             throw ServiceError.invalidData("Invalid UUID in user data")
         }
         let user = User(
@@ -53,9 +53,9 @@ public final class HydrationService {
             avatarUrl: currentUser.avatar_url,
             phone: currentUser.phone,
             birthDate: currentUser.birth_date,
-            managedBy: currentUser.managed_by?.uuid,
+            managedBy: currentUser.managed_by.flatMap { LowercaseUUID(uuidString: $0) },
             relationshipToManager: currentUser.relationship_to_manager,
-            primaryHouseholdId: currentUser.primary_household_id?.uuid,
+            primaryHouseholdId: currentUser.primary_household_id.flatMap { LowercaseUUID(uuidString: $0) },
             isAi: currentUser.is_ai,
             createdAt: currentUser.created_at,
             updatedAt: currentUser.updated_at,
@@ -63,8 +63,8 @@ public final class HydrationService {
 
         // Extract households data
         let households: [Household] = hydrateData.households.compactMap { graphQLHousehold in
-            guard let householdId = graphQLHousehold.id.uuid,
-                  let createdBy = graphQLHousehold.created_by.uuid
+            guard let householdId = LowercaseUUID(uuidString: graphQLHousehold.id),
+                  let createdBy = LowercaseUUID(uuidString: graphQLHousehold.created_by)
             else {
                 Self.logger.warning("⚠️ Invalid UUID in household data")
                 return nil
@@ -130,7 +130,7 @@ public final class HydrationService {
                     let currentUser = hydrateData.currentUser
 
                     // Convert GraphQL user to our User model
-                    guard let userId = currentUser.id.uuid else {
+                    guard let userId = LowercaseUUID(uuidString: currentUser.id) else {
                         Self.logger.error("❌ Invalid UUID in user data")
                         return
                     }
@@ -144,9 +144,9 @@ public final class HydrationService {
                         avatarUrl: currentUser.avatar_url,
                         phone: currentUser.phone,
                         birthDate: currentUser.birth_date,
-                        managedBy: currentUser.managed_by?.uuid,
+                        managedBy: currentUser.managed_by.flatMap { LowercaseUUID(uuidString: $0) },
                         relationshipToManager: currentUser.relationship_to_manager,
-                        primaryHouseholdId: currentUser.primary_household_id?.uuid,
+                        primaryHouseholdId: currentUser.primary_household_id.flatMap { LowercaseUUID(uuidString: $0) },
                         isAi: currentUser.is_ai,
                         createdAt: currentUser.created_at,
                         updatedAt: currentUser.updated_at,
@@ -154,8 +154,8 @@ public final class HydrationService {
 
                     // Extract households data
                     let households: [Household] = hydrateData.households.compactMap { graphQLHousehold in
-                        guard let householdId = graphQLHousehold.id.uuid,
-                              let createdBy = graphQLHousehold.created_by.uuid
+                        guard let householdId = LowercaseUUID(uuidString: graphQLHousehold.id),
+                              let createdBy = LowercaseUUID(uuidString: graphQLHousehold.created_by)
                         else {
                             Self.logger.warning("⚠️ Invalid UUID in household data")
                             return nil

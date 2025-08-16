@@ -53,7 +53,7 @@ public final class AppState {
 
     // Household switching state
     public private(set) var isSwitchingHousehold: Bool = false
-    public private(set) var switchingHouseholdId: UUID?
+    public private(set) var switchingHouseholdId: LowercaseUUID?
 
     // MARK: - Phase Transition Management
 
@@ -291,7 +291,7 @@ public final class AppState {
     }
 
     /// Switch to a household by ID with loading state - fully reactive approach
-    public func switchToHousehold(withId householdId: UUID, isNewlyCreated: Bool = false) async {
+    public func switchToHousehold(withId householdId: LowercaseUUID, isNewlyCreated: Bool = false) async {
         Self.logger.info("🔄 Starting household switch to ID: \(householdId)")
 
         // Always show loading state for visual consistency
@@ -403,7 +403,7 @@ public final class AppState {
     }
 
     /// Complete onboarding with a selected household
-    public func completeOnboarding(householdId: UUID) async {
+    public func completeOnboarding(householdId: LowercaseUUID) async {
         // Completing onboarding with household
 
         // Get the household

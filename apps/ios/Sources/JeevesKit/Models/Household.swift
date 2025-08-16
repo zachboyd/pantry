@@ -9,10 +9,10 @@ import Foundation
 
 /// Household model representing a group of users
 public struct Household: Codable, Identifiable, Sendable {
-    public let id: UUID
+    public let id: LowercaseUUID
     public let name: String
     public let description: String?
-    public let createdBy: UUID
+    public let createdBy: LowercaseUUID
     public let createdAt: Date
     public let updatedAt: Date
 
@@ -28,7 +28,7 @@ public struct Household: Codable, Identifiable, Sendable {
         false
     }
 
-    public init(id: UUID, name: String, description: String?, createdBy: UUID, createdAt: Date, updatedAt: Date, memberCount: Int = 0) {
+    public init(id: LowercaseUUID, name: String, description: String?, createdBy: LowercaseUUID, createdAt: Date, updatedAt: Date, memberCount: Int = 0) {
         self.id = id
         self.name = name
         self.description = description

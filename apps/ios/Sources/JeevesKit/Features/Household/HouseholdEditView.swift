@@ -11,14 +11,14 @@ import SwiftUI
 public struct HouseholdEditView: View {
     private static let logger = Logger.household
 
-    let householdId: UUID
+    let householdId: LowercaseUUID
     let isReadOnly: Bool
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.safeViewModelFactory) private var factory
     @State private var viewModel: HouseholdEditViewModel?
 
-    public init(householdId: UUID, isReadOnly: Bool = false) {
+    public init(householdId: LowercaseUUID, isReadOnly: Bool = false) {
         self.householdId = householdId
         self.isReadOnly = isReadOnly
     }
@@ -132,5 +132,5 @@ public struct HouseholdEditView: View {
 }
 
 #Preview {
-    HouseholdEditView(householdId: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
+    HouseholdEditView(householdId: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
 }

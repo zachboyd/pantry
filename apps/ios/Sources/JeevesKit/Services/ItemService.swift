@@ -8,7 +8,7 @@ public final class ItemService: ItemServiceProtocol {
     private static let logger = Logger.jeeves
 
     private let householdService: HouseholdServiceProtocol
-    private var itemsStorage: [UUID: [Item]] = [:]
+    private var itemsStorage: [LowercaseUUID: [Item]] = [:]
 
     public init(householdService: HouseholdServiceProtocol) {
         self.householdService = householdService
@@ -17,7 +17,7 @@ public final class ItemService: ItemServiceProtocol {
 
     // MARK: - Public Methods
 
-    public func getItems(for householdId: UUID) async throws -> [Item] {
+    public func getItems(for householdId: LowercaseUUID) async throws -> [Item] {
         Self.logger.info("📡 Getting pantry items for household: \(householdId)")
 
         // Simulate network delay
@@ -61,7 +61,7 @@ public final class ItemService: ItemServiceProtocol {
         Self.logger.info("✅ Updated pantry item successfully")
     }
 
-    public func deleteItem(id: UUID) async throws {
+    public func deleteItem(id: LowercaseUUID) async throws {
         Self.logger.info("🗑️ Deleting pantry item: \(id)")
 
         // Simulate network delay
@@ -87,12 +87,12 @@ public final class ItemService: ItemServiceProtocol {
     // MARK: - Private Methods
 
     private func seedMockData() {
-        let mockHouseholdId = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+        let mockHouseholdId = LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000001")!
         let now = Date()
 
         let mockItems = [
             Item(
-                id: UUID(),
+                id: LowercaseUUID(),
                 householdId: mockHouseholdId,
                 name: "Milk",
                 quantity: 1.0,
@@ -101,12 +101,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .day, value: 3, to: now),
                 location: "Refrigerator",
                 notes: "2% milk",
-                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+                addedBy: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID(),
+                id: LowercaseUUID(),
                 householdId: mockHouseholdId,
                 name: "Bananas",
                 quantity: 6.0,
@@ -115,12 +115,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .day, value: 5, to: now),
                 location: "Counter",
                 notes: "Getting ripe",
-                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+                addedBy: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID(),
+                id: LowercaseUUID(),
                 householdId: mockHouseholdId,
                 name: "Chicken Breast",
                 quantity: 2.0,
@@ -129,12 +129,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .day, value: 2, to: now),
                 location: "Refrigerator",
                 notes: "Organic, free-range",
-                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+                addedBy: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID(),
+                id: LowercaseUUID(),
                 householdId: mockHouseholdId,
                 name: "Rice",
                 quantity: 5.0,
@@ -143,12 +143,12 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .year, value: 1, to: now),
                 location: "Pantry",
                 notes: "Jasmine rice",
-                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+                addedBy: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),
             Item(
-                id: UUID(),
+                id: LowercaseUUID(),
                 householdId: mockHouseholdId,
                 name: "Frozen Peas",
                 quantity: 1.0,
@@ -157,7 +157,7 @@ public final class ItemService: ItemServiceProtocol {
                 expirationDate: Calendar.current.date(byAdding: .month, value: 6, to: now),
                 location: "Freezer",
                 notes: "Organic",
-                addedBy: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+                addedBy: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
                 createdAt: now,
                 updatedAt: now,
             ),

@@ -40,9 +40,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
     private let watchManager: WatchManager?
 
     /// Cached watched results for query deduplication
-    private var householdWatches: [UUID: WatchedResult<Household>] = [:]
+    private var householdWatches: [LowercaseUUID: WatchedResult<Household>] = [:]
     private var householdsListWatch: WatchedResult<[Household]>?
-    private var memberWatches: [UUID: WatchedResult<[HouseholdMember]>] = [:]
+    private var memberWatches: [LowercaseUUID: WatchedResult<[HouseholdMember]>] = [:]
 
     // MARK: - Initialization
 
@@ -105,8 +105,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
             // Map GraphQL households to domain models
             let households: [Household] = data.households.compactMap { graphQLHousehold in
-                guard let id = graphQLHousehold.id.uuid,
-                      let createdBy = graphQLHousehold.created_by.uuid
+                guard let id = LowercaseUUID(uuidString: graphQLHousehold.id),
+                      let createdBy = LowercaseUUID(uuidString: graphQLHousehold.created_by)
                 else {
                     Self.logger.warning("⚠️ Invalid UUID in household data")
                     return nil
@@ -157,8 +157,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
             // Map GraphQL households to domain models
             let households: [Household] = data.households.compactMap { graphQLHousehold in
-                guard let id = graphQLHousehold.id.uuid,
-                      let createdBy = graphQLHousehold.created_by.uuid
+                guard let id = LowercaseUUID(uuidString: graphQLHousehold.id),
+                      let createdBy = LowercaseUUID(uuidString: graphQLHousehold.created_by)
                 else {
                     Self.logger.warning("⚠️ Invalid UUID in household data")
                     return nil
@@ -184,7 +184,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     /// Get a specific household by ID
-    public func getHousehold(id: UUID) async throws -> Household {
+    public func getHousehold(id: LowercaseUUID) async throws -> Household {
         Self.logger.info("🔍 Getting household by ID: \(id)")
 
         guard authService.isAuthenticated else {
@@ -250,7 +250,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     /// Update an existing household
-    public func updateHousehold(id: UUID, name: String, description: String?) async throws -> Household {
+    public func updateHousehold(id: LowercaseUUID, name: String, description: String?) async throws -> Household {
         Self.logger.info("🔧 Updating household: \(id)")
 
         guard authService.isAuthenticated else {
@@ -311,10 +311,10 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
         // Create a mock household for now
         let household = Household(
-            id: UUID(),
+            id: LowercaseUUID(),
             name: "Joined Household",
             description: "Household joined with invite code",
-            createdBy: UUID(),
+            createdBy: LowercaseUUID(),
             createdAt: Date(),
             updatedAt: Date(),
             memberCount: 0,
@@ -328,7 +328,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     /// Get household members
-    public func getHouseholdMembers(householdId: UUID) async throws -> [HouseholdMember] {
+    public func getHouseholdMembers(householdId: LowercaseUUID) async throws -> [HouseholdMember] {
         Self.logger.info("👥 Getting household members for: \(householdId)")
 
         guard authService.isAuthenticated else {
@@ -345,9 +345,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
             // Map GraphQL members to domain models
             let members: [HouseholdMember] = data.householdMembers.compactMap { graphQLMember in
-                guard let id = graphQLMember.id.uuid,
-                      let userId = graphQLMember.user_id.uuid,
-                      let householdId = graphQLMember.household_id.uuid
+                guard let id = LowercaseUUID(uuidString: graphQLMember.id),
+                      let userId = LowercaseUUID(uuidString: graphQLMember.user_id),
+                      let householdId = LowercaseUUID(uuidString: graphQLMember.household_id)
                 else {
                     Self.logger.warning("⚠️ Invalid UUID in member data")
                     return nil
@@ -371,7 +371,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     /// Add a member to a household
-    public func addMember(to householdId: UUID, userId: UUID, role: MemberRole) async throws -> HouseholdMember {
+    public func addMember(to householdId: LowercaseUUID, userId: LowercaseUUID, role: MemberRole) async throws -> HouseholdMember {
         Self.logger.info("➕ Adding member to household: \(householdId)")
 
         guard authService.isAuthenticated else {
@@ -401,7 +401,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     /// Update a member's role
-    public func updateMemberRole(householdId: UUID, userId: UUID, role: MemberRole) async throws -> HouseholdMember {
+    public func updateMemberRole(householdId: LowercaseUUID, userId: LowercaseUUID, role: MemberRole) async throws -> HouseholdMember {
         Self.logger.info("🔧 Updating member role in household: \(householdId)")
 
         guard authService.isAuthenticated else {
@@ -431,7 +431,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     /// Remove a member from a household
-    public func removeMember(from householdId: UUID, userId: UUID) async throws {
+    public func removeMember(from householdId: LowercaseUUID, userId: LowercaseUUID) async throws {
         Self.logger.info("➖ Removing member from household: \(householdId)")
 
         guard authService.isAuthenticated else {
@@ -459,12 +459,12 @@ public final class HouseholdService: HouseholdServiceProtocol {
     // MARK: - Reactive Watch Methods
 
     /// Apollo watchers for reactive updates (stored to allow cancellation)
-    private var apolloHouseholdWatchers: [UUID: GraphQLQueryWatcher<JeevesGraphQL.GetHouseholdQuery>] = [:]
+    private var apolloHouseholdWatchers: [LowercaseUUID: GraphQLQueryWatcher<JeevesGraphQL.GetHouseholdQuery>] = [:]
     private var apolloHouseholdsListWatcher: GraphQLQueryWatcher<JeevesGraphQL.ListHouseholdsQuery>?
-    private var apolloMemberWatchers: [UUID: GraphQLQueryWatcher<JeevesGraphQL.GetHouseholdMembersQuery>] = [:]
+    private var apolloMemberWatchers: [LowercaseUUID: GraphQLQueryWatcher<JeevesGraphQL.GetHouseholdMembersQuery>] = [:]
 
     /// Watch specific household with reactive updates
-    public func watchHousehold(id: UUID) -> WatchedResult<Household> {
+    public func watchHousehold(id: LowercaseUUID) -> WatchedResult<Household> {
         Self.logger.info("👁️ Creating watched result for household: \(id)")
 
         // Return existing watch if available
@@ -584,8 +584,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 if let householdsData = data.data?.households {
                     // Transform GraphQL data to Household models
                     let households: [Household] = householdsData.compactMap { graphQLHousehold in
-                        guard let id = graphQLHousehold.id.uuid,
-                              let createdBy = graphQLHousehold.created_by.uuid
+                        guard let id = LowercaseUUID(uuidString: graphQLHousehold.id),
+                              let createdBy = LowercaseUUID(uuidString: graphQLHousehold.created_by)
                         else {
                             Self.logger.warning("⚠️ Invalid UUID in household data")
                             return nil
@@ -639,7 +639,7 @@ public final class HouseholdService: HouseholdServiceProtocol {
     }
 
     /// Watch household members with reactive updates
-    public func watchHouseholdMembers(householdId: UUID) -> WatchedResult<[HouseholdMember]> {
+    public func watchHouseholdMembers(householdId: LowercaseUUID) -> WatchedResult<[HouseholdMember]> {
         Self.logger.info("👁️ Creating watched result for household members: \(householdId)")
 
         // Return existing watch if available
@@ -675,9 +675,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
                 if let membersData = data.data?.householdMembers {
                     // Transform GraphQL data to HouseholdMember models
                     let members: [HouseholdMember] = membersData.compactMap { graphQLMember in
-                        guard let id = graphQLMember.id.uuid,
-                              let userId = graphQLMember.user_id.uuid,
-                              let householdId = graphQLMember.household_id.uuid
+                        guard let id = LowercaseUUID(uuidString: graphQLMember.id),
+                              let userId = LowercaseUUID(uuidString: graphQLMember.user_id),
+                              let householdId = LowercaseUUID(uuidString: graphQLMember.household_id)
                         else {
                             Self.logger.warning("⚠️ Invalid UUID in member data")
                             return nil
@@ -732,8 +732,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
     /// Map GraphQL Household to domain model
     private func mapGraphQLHouseholdToDomain(_ graphqlHousehold: JeevesGraphQL.GetHouseholdQuery.Data.Household) -> Household {
-        guard let id = graphqlHousehold.id.uuid,
-              let createdBy = graphqlHousehold.created_by.uuid
+        guard let id = LowercaseUUID(uuidString: graphqlHousehold.id),
+              let createdBy = LowercaseUUID(uuidString: graphqlHousehold.created_by)
         else {
             fatalError("Invalid UUID in GraphQL household data")
         }
@@ -750,8 +750,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
     /// Map GraphQL CreateHousehold to domain model
     private func mapGraphQLHouseholdToDomain(_ graphqlHousehold: JeevesGraphQL.CreateHouseholdMutation.Data.CreateHousehold) -> Household {
-        guard let id = graphqlHousehold.id.uuid,
-              let createdBy = graphqlHousehold.created_by.uuid
+        guard let id = LowercaseUUID(uuidString: graphqlHousehold.id),
+              let createdBy = LowercaseUUID(uuidString: graphqlHousehold.created_by)
         else {
             fatalError("Invalid UUID in GraphQL household data")
         }
@@ -768,8 +768,8 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
     /// Map GraphQL Household to domain model (generic)
     private func mapGraphQLHouseholdToDomain(_ graphqlHousehold: any GraphQLHouseholdSelectionSet) -> Household {
-        guard let id = graphqlHousehold.id.uuid,
-              let createdBy = graphqlHousehold.created_by.uuid
+        guard let id = LowercaseUUID(uuidString: graphqlHousehold.id),
+              let createdBy = LowercaseUUID(uuidString: graphqlHousehold.created_by)
         else {
             fatalError("Invalid UUID in GraphQL household data")
         }
@@ -786,9 +786,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
     /// Map GraphQL Member to domain model
     private func mapGraphQLMemberToDomain(_ graphqlMember: JeevesGraphQL.AddHouseholdMemberMutation.Data.AddHouseholdMember) -> HouseholdMember {
-        guard let id = graphqlMember.id.uuid,
-              let userId = graphqlMember.user_id.uuid,
-              let householdId = graphqlMember.household_id.uuid
+        guard let id = LowercaseUUID(uuidString: graphqlMember.id),
+              let userId = LowercaseUUID(uuidString: graphqlMember.user_id),
+              let householdId = LowercaseUUID(uuidString: graphqlMember.household_id)
         else {
             fatalError("Invalid UUID in GraphQL member data")
         }
@@ -803,9 +803,9 @@ public final class HouseholdService: HouseholdServiceProtocol {
 
     /// Map GraphQL Member to domain model (for role change)
     private func mapGraphQLMemberToDomain(_ graphqlMember: JeevesGraphQL.ChangeHouseholdMemberRoleMutation.Data.ChangeHouseholdMemberRole) -> HouseholdMember {
-        guard let id = graphqlMember.id.uuid,
-              let userId = graphqlMember.user_id.uuid,
-              let householdId = graphqlMember.household_id.uuid
+        guard let id = LowercaseUUID(uuidString: graphqlMember.id),
+              let userId = LowercaseUUID(uuidString: graphqlMember.user_id),
+              let householdId = LowercaseUUID(uuidString: graphqlMember.household_id)
         else {
             fatalError("Invalid UUID in GraphQL member data")
         }

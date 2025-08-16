@@ -17,7 +17,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
 
     public struct State: Sendable {
         var households: [Household] = []
-        var selectedHouseholdId: UUID?
+        var selectedHouseholdId: LowercaseUUID?
         var viewState: CommonViewState = .idle
         var showingError = false
         var errorMessage: String?
@@ -32,7 +32,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
         householdsWatch.value ?? state.households
     }
 
-    public var selectedHouseholdId: UUID? {
+    public var selectedHouseholdId: LowercaseUUID? {
         state.selectedHouseholdId
     }
 
@@ -123,7 +123,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
 
                 // Restore selected household from UserDefaults
                 if let savedSelectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
-                   let savedSelectedId = UUID(uuidString: savedSelectedIdString),
+                   let savedSelectedId = LowercaseUUID(uuidString: savedSelectedIdString),
                    households.contains(where: { $0.id == savedSelectedId })
                 {
                     state.selectedHouseholdId = savedSelectedId
@@ -340,7 +340,7 @@ public final class HouseholdListViewModel: BaseReactiveViewModel<HouseholdListVi
 
                 // Restore selected household from UserDefaults
                 if let savedSelectedIdString = UserDefaults.standard.string(forKey: "selectedHouseholdId"),
-                   let savedSelectedId = UUID(uuidString: savedSelectedIdString),
+                   let savedSelectedId = LowercaseUUID(uuidString: savedSelectedIdString),
                    households.contains(where: { $0.id == savedSelectedId })
                 {
                     state.selectedHouseholdId = savedSelectedId

@@ -142,7 +142,7 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
         }
 
         let updatedUser = User(
-            id: authService.currentAuthUser?.id.uuid ?? UUID(),
+            id: authService.currentAuthUser?.id.lowercaseUUID ?? LowercaseUUID(),
             email: preferences.email,
             name: preferences.name,
             createdAt: createdAt,
@@ -155,11 +155,11 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
     }
 
     /// Get last selected household ID
-    public func getLastSelectedHouseholdId() async -> UUID? {
+    public func getLastSelectedHouseholdId() async -> LowercaseUUID? {
         Self.logger.debug("🏠 Getting last selected household ID")
 
         let householdIdString = userDefaults.string(forKey: Keys.lastSelectedHousehold)
-        let householdId = householdIdString?.uuid
+        let householdId = householdIdString.flatMap { LowercaseUUID(uuidString: $0) }
 
         if let id = householdId {
             Self.logger.debug("✅ Found last selected household: \(id)")
@@ -171,7 +171,7 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
     }
 
     /// Set last selected household ID
-    public func setLastSelectedHouseholdId(_ householdId: UUID?) async {
+    public func setLastSelectedHouseholdId(_ householdId: LowercaseUUID?) async {
         Self.logger.info("🏠 Setting last selected household ID: \(householdId?.uuidString ?? "nil")")
 
         if let id = householdId {
@@ -297,7 +297,7 @@ public final class UserPreferencesService: UserPreferencesServiceProtocol {
 
         // Import simple preferences
         if let householdIdString = preferences["lastHousehold"] as? String,
-           let householdId = UUID(uuidString: householdIdString)
+           let householdId = LowercaseUUID(uuidString: householdIdString)
         {
             await setLastSelectedHouseholdId(householdId)
             Self.logger.debug("✅ Imported last selected household")
@@ -444,7 +444,7 @@ public extension UserPreferencesService {
 
     /// Quick save for commonly changed preferences
     func quickSave(
-        householdId: UUID? = nil,
+        householdId: LowercaseUUID? = nil,
         theme: ThemePreference? = nil,
     ) async {
         if let householdId {

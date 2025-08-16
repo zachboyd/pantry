@@ -8,16 +8,16 @@ import SwiftUI
 /// Context needed for permission evaluation
 /// This contains the current user data and related information from GraphQL cache
 public struct PermissionContext: @unchecked Sendable {
-    public let currentUserId: UUID
+    public let currentUserId: LowercaseUUID
     public let currentUser: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser?
     public let householdMembers: [HouseholdMemberInfo]
 
     public struct HouseholdMemberInfo: Sendable {
-        public let householdId: UUID
-        public let userId: UUID
+        public let householdId: LowercaseUUID
+        public let userId: LowercaseUUID
         public let role: String
 
-        public init(householdId: UUID, userId: UUID, role: String) {
+        public init(householdId: LowercaseUUID, userId: LowercaseUUID, role: String) {
             self.householdId = householdId
             self.userId = userId
             self.role = role
@@ -25,7 +25,7 @@ public struct PermissionContext: @unchecked Sendable {
     }
 
     public init(
-        currentUserId: UUID,
+        currentUserId: LowercaseUUID,
         currentUser: JeevesGraphQL.GetCurrentUserQuery.Data.CurrentUser? = nil,
         householdMembers: [HouseholdMemberInfo] = []
     ) {
@@ -54,22 +54,22 @@ public protocol PermissionServiceProtocol: AnyObject, Sendable {
     // MARK: - Permission Check Methods
 
     /// Check if user can create a household member
-    func canCreateHouseholdMember(for householdId: UUID) -> Bool
+    func canCreateHouseholdMember(for householdId: LowercaseUUID) -> Bool
 
     /// Check if user can update a household member
-    func canUpdateHouseholdMember(for householdId: UUID, memberId: UUID) -> Bool
+    func canUpdateHouseholdMember(for householdId: LowercaseUUID, memberId: LowercaseUUID) -> Bool
 
     /// Check if user can delete a household member
-    func canDeleteHouseholdMember(for householdId: UUID, memberId: UUID) -> Bool
+    func canDeleteHouseholdMember(for householdId: LowercaseUUID, memberId: LowercaseUUID) -> Bool
 
     /// Check if user can manage a household
-    func canManageHousehold(_ householdId: UUID) -> Bool
+    func canManageHousehold(_ householdId: LowercaseUUID) -> Bool
 
     /// Check if user can update household details
-    func canUpdateHousehold(_ householdId: UUID) -> Bool
+    func canUpdateHousehold(_ householdId: LowercaseUUID) -> Bool
 
     /// Check if user can delete a household
-    func canDeleteHousehold(_ householdId: UUID) -> Bool
+    func canDeleteHousehold(_ householdId: LowercaseUUID) -> Bool
 }
 
 // MARK: - Permission Service Implementation
@@ -87,7 +87,7 @@ public final class PermissionService: PermissionServiceProtocol {
 
     // Cache for permission data
     private var cachedCurrentUser: User?
-    private var cachedHouseholdMembers: [UUID: [HouseholdMember]] = [:] // householdId -> members
+    private var cachedHouseholdMembers: [LowercaseUUID: [HouseholdMember]] = [:] // householdId -> members
 
     // MARK: - Initialization
 
@@ -139,7 +139,7 @@ public final class PermissionService: PermissionServiceProtocol {
 
         // For now, create a simple context with just the user ID
         // In the future, we can fetch household member data here if needed
-        guard let userId = user.id.uuid else {
+        guard let userId = LowercaseUUID(uuidString: user.id) else {
             logger.error("Invalid UUID in user data")
             permissionContext = nil
             return
@@ -165,7 +165,7 @@ public final class PermissionService: PermissionServiceProtocol {
     // MARK: - Private Helper Methods
 
     /// Check if a specific member is a manager in the specified household
-    private func isMemberManager(householdId: UUID, memberId: UUID) -> Bool {
+    private func isMemberManager(householdId: LowercaseUUID, memberId: LowercaseUUID) -> Bool {
         let members = cachedHouseholdMembers[householdId] ?? []
 
         if let member = members.first(where: { $0.id == memberId }) {
@@ -176,7 +176,7 @@ public final class PermissionService: PermissionServiceProtocol {
     }
 
     /// Check if the current user is a manager in the specified household
-    private func isCurrentUserManager(in householdId: UUID) -> Bool {
+    private func isCurrentUserManager(in householdId: LowercaseUUID) -> Bool {
         // Use cached data if available
         guard let currentUser = cachedCurrentUser else {
             logger.debug("No cached current user for manager check")
@@ -218,7 +218,7 @@ public final class PermissionService: PermissionServiceProtocol {
     // MARK: - Permission Check Methods
 
     /// Check if user can create a household member
-    public func canCreateHouseholdMember(for householdId: UUID) -> Bool {
+    public func canCreateHouseholdMember(for householdId: LowercaseUUID) -> Bool {
         logger.debug("Checking canCreateHouseholdMember for household: \(householdId)")
 
         // Only managers can create household members
@@ -228,7 +228,7 @@ public final class PermissionService: PermissionServiceProtocol {
     }
 
     /// Check if user can update a household member
-    public func canUpdateHouseholdMember(for householdId: UUID, memberId: UUID) -> Bool {
+    public func canUpdateHouseholdMember(for householdId: LowercaseUUID, memberId: LowercaseUUID) -> Bool {
         logger.debug("Checking canUpdateHouseholdMember for household: \(householdId), member: \(memberId)")
 
         // Check if current user is a manager
@@ -249,7 +249,7 @@ public final class PermissionService: PermissionServiceProtocol {
 
     /// Check if user can delete a household member
     /// Uses the same logic as canUpdateHouseholdMember - managers can delete non-managers
-    public func canDeleteHouseholdMember(for householdId: UUID, memberId: UUID) -> Bool {
+    public func canDeleteHouseholdMember(for householdId: LowercaseUUID, memberId: LowercaseUUID) -> Bool {
         logger.debug("Checking canDeleteHouseholdMember for household: \(householdId), member: \(memberId)")
 
         // Use the same logic as updating - managers can delete non-managers
@@ -259,7 +259,7 @@ public final class PermissionService: PermissionServiceProtocol {
     }
 
     /// Check if user can manage a household
-    public func canManageHousehold(_ householdId: UUID) -> Bool {
+    public func canManageHousehold(_ householdId: LowercaseUUID) -> Bool {
         logger.debug("Checking canManageHousehold for household: \(householdId)")
 
         // Only managers can manage households
@@ -269,7 +269,7 @@ public final class PermissionService: PermissionServiceProtocol {
     }
 
     /// Check if user can update household details
-    public func canUpdateHousehold(_ householdId: UUID) -> Bool {
+    public func canUpdateHousehold(_ householdId: LowercaseUUID) -> Bool {
         logger.debug("Checking canUpdateHousehold for household: \(householdId)")
 
         // Only managers can update household details
@@ -279,7 +279,7 @@ public final class PermissionService: PermissionServiceProtocol {
     }
 
     /// Check if user can delete a household
-    public func canDeleteHousehold(_ householdId: UUID) -> Bool {
+    public func canDeleteHousehold(_ householdId: LowercaseUUID) -> Bool {
         logger.debug("Checking canDeleteHousehold for household: \(householdId)")
 
         // Only managers can delete households
@@ -308,7 +308,7 @@ public final class PermissionService: PermissionServiceProtocol {
     }
 
     /// Refresh the cached household members for a specific household
-    public func refreshHouseholdMembersCache(householdId: UUID) async {
+    public func refreshHouseholdMembersCache(householdId: LowercaseUUID) async {
         do {
             let members = try await householdService.getHouseholdMembers(householdId: householdId)
             cachedHouseholdMembers[householdId] = members

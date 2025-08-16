@@ -34,7 +34,7 @@ public final class HouseholdCreationViewModel: BaseReactiveViewModel<HouseholdCr
     }
 
     /// Create the household
-    public func createHousehold() async -> UUID? {
+    public func createHousehold() async -> LowercaseUUID? {
         let trimmedName = state.householdName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
             Self.logger.warning("Attempted to create household with empty name")

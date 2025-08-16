@@ -9,13 +9,13 @@ import SwiftUI
 
 /// View for displaying household details
 public struct HouseholdDetailsView: View {
-    let householdId: UUID
+    let householdId: LowercaseUUID
     @State private var household: Household? = .mock // Mock data
     @State private var showingEdit = false
     @State private var showingInviteCode = false
     @State private var inviteCode = "PANTRY-ABC123"
 
-    public init(householdId: UUID) {
+    public init(householdId: LowercaseUUID) {
         self.householdId = householdId
     }
 
@@ -218,6 +218,6 @@ struct InviteCodeSheet: View {
 
 #Preview {
     NavigationStack {
-        HouseholdDetailsView(householdId: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
+        HouseholdDetailsView(householdId: LowercaseUUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
     }
 }

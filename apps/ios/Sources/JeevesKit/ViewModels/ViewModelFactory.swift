@@ -153,7 +153,7 @@ public struct SafeViewModelFactory {
 
     /// Create HouseholdEditViewModel
     public func makeHouseholdEditViewModel(
-        householdId: UUID? = nil,
+        householdId: LowercaseUUID? = nil,
         mode: HouseholdEditMode = .create,
         isReadOnly: Bool = false,
     ) throws -> HouseholdEditViewModel {
@@ -176,7 +176,7 @@ public struct SafeViewModelFactory {
     }
 
     /// Create HouseholdMembersViewModel
-    public func makeHouseholdMembersViewModel(householdId: UUID) throws -> HouseholdMembersViewModel {
+    public func makeHouseholdMembersViewModel(householdId: LowercaseUUID) throws -> HouseholdMembersViewModel {
         let householdService = try container.getHouseholdService()
         let userService = try container.getUserService()
         let authService = try container.getAuthService()

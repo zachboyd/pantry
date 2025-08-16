@@ -350,20 +350,6 @@ public enum KeychainError: Error, LocalizedError {
 
 // MARK: - Supporting Types
 
-/// UUID type that ensures lowercase string representation
-public struct LowercaseUUID: Codable, Hashable, Sendable {
-    public let uuidString: String
-
-    public init?(uuidString: String) {
-        guard UUID(uuidString: uuidString) != nil else { return nil }
-        self.uuidString = uuidString.lowercased()
-    }
-
-    public init() {
-        uuidString = UUID().uuidString.lowercased()
-    }
-}
-
 /// Auth error types
 public enum AuthError: Error {
     case updateFailed

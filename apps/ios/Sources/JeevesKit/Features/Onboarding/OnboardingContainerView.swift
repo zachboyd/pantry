@@ -17,9 +17,9 @@ public struct OnboardingContainerView: View {
     @State private var householdCreationViewModel: HouseholdCreationViewModel?
 
     let onSignOut: () async -> Void
-    let onComplete: (UUID) async -> Void
+    let onComplete: (LowercaseUUID) async -> Void
 
-    public init(onSignOut: @escaping () async -> Void, onComplete: @escaping (UUID) async -> Void) {
+    public init(onSignOut: @escaping () async -> Void, onComplete: @escaping (LowercaseUUID) async -> Void) {
         self.onSignOut = onSignOut
         self.onComplete = onComplete
     }
@@ -64,7 +64,7 @@ public struct OnboardingContainerView: View {
                                         HouseholdCreationView(
                                             viewModel: householdCreationViewModel,
                                             onBack: nil, // No back button in simplified flow
-                                            onComplete: { householdId in
+                                            onComplete: { (householdId: LowercaseUUID) in
                                                 withAnimation(TransitionConstants.smoothSpring) {
                                                     viewModel.handleHouseholdCreated(householdId: householdId)
                                                 }
@@ -138,7 +138,7 @@ public struct OnboardingContainerView: View {
         }
     }
 
-    private func completeOnboarding(with householdId: UUID) {
+    private func completeOnboarding(with householdId: LowercaseUUID) {
         Task {
             await onComplete(householdId)
         }
