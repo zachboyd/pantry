@@ -22,9 +22,13 @@ For the best development experience, install these extensions:
 1. **Sweetpad** - Run iOS simulator directly from VS Code/Cursor
    - Extension ID: `sweetpad.sweetpad`
    - Allows running and debugging iOS apps without leaving the editor
+   - Generates build server configurations that enable SourceKit-LSP features
+   - Facilitates jump-to-definition and references through xcode-build-server
 2. **Swift Language Support**
-   - Extension ID: `sswg.swift-lang`
+   - Extension ID: `chrisatwindsurf.swift-vscode`
    - Provides syntax highlighting, code completion, and diagnostics
+   - Offers AI-powered coding assistance in Cursor
+   - Quick access to documentation
 3. **SwiftFormat**
    - Extension ID: `vknabel.vscode-swiftformat`
    - Automatic code formatting for Swift files
@@ -34,15 +38,39 @@ For the best development experience, install these extensions:
 ```bash
 # Install extensions via command palette (Cmd+P)
 ext install sweetpad.sweetpad
-ext install sswg.swift-lang
+ext install chrisatwindsurf.swift-vscode
 ext install vknabel.vscode-swiftformat
+
+# Install additional development tools for enhanced Swift support
+brew install xcode-build-server
+brew install xcbeautify
+brew install swiftformat  # If not already installed
 ```
+
+### Advanced Swift Development
+
+For optimal Swift development experience in Cursor:
+
+1. **Xcode Build Server** - Required for code completion and navigation
+   ```bash
+   brew install xcode-build-server
+   ```
+   After installing, use Sweetpad's "Generate Build Server Config" command to enable SourceKit-LSP features like auto-completion and jump-to-definition.
+
+2. **XCBeautify** - Formats Xcode build output for better readability
+   ```bash
+   brew install xcbeautify
+   ```
+
+3. **Build Without Xcode** - Sweetpad allows building and running projects directly in Cursor
+   - No need to have Xcode open (though it must be installed)
+   - Full debugging capabilities within the editor
 
 After installing Sweetpad, you can:
 
 - Press `Cmd+Shift+R` to run the app in simulator
 - Use the Sweetpad panel in the sidebar to select devices
-- View build logs directly in VS Code
+- View build logs directly in VS Code/Cursor
 
 ## Project Structure
 
