@@ -85,18 +85,6 @@ public final class ApolloClientService {
         self.authService = authService
 
         Self.logger.info("🔄 Updating AuthService in ApolloClientService")
-        if let authService {
-            Self.logger.info("   - Auth service is authenticated: \(authService.isAuthenticated)")
-            Self.logger.info("   - Current auth user: \(authService.currentAuthUser?.email ?? "nil")")
-            if let token = authService.tokenManager.loadToken() {
-                Self.logger.info("   - Token available: YES")
-                Self.logger.info("   - Token value: \(token.accessToken.prefix(20))...")
-            } else {
-                Self.logger.warning("   - Token available: NO")
-            }
-        } else {
-            Self.logger.warning("   - Auth service is nil")
-        }
 
         // CRITICAL: We must recreate the Apollo Client to ensure the authentication
         // interceptors get the updated authService reference. Otherwise, requests
@@ -140,7 +128,7 @@ public final class ApolloClientService {
         }
 
         if let sessionCookie = signedSessionCookie {
-            Self.logger.debug("🍪 Found session cookie: \(sessionCookie.name) for domain: \(sessionCookie.domain)")
+            Self.logger.debug("🍪 Session cookie available")
 
             // Ensure cookie is available for GraphQL endpoint
             if let graphQLURL = URL(string: "http://localhost:3001/graphql") {
@@ -301,53 +289,19 @@ public final class ApolloClientService {
             }
 
             if let cookie = sessionCookie {
-                // IMPORTANT: Better-auth might expect the cookie value as-is
-                // Try sending the raw cookie value without any decoding first
-                let rawValue = cookie.value
-
-                // Also prepare a decoded version for comparison
-                let decodedValue = cookie.value
-                    .replacingOccurrences(of: "%2B", with: "+")
-                    .replacingOccurrences(of: "%3D", with: "=")
-                    .replacingOccurrences(of: "%2F", with: "/")
-                    .replacingOccurrences(of: "%20", with: " ")
-                    .replacingOccurrences(of: "%2D", with: "-")
-                    .replacingOccurrences(of: "%5F", with: "_")
-                    .replacingOccurrences(of: "%2E", with: ".")
-                    .replacingOccurrences(of: "%7E", with: "~")
-
-                // CRITICAL INSIGHT: HTTP requests send the RAW cookie value and they WORK!
-                // The HTTP interceptor does: "\(cookie.name)=\(cookie.value)"
-                // Let's use the SAME format for WebSocket
-                let cookieString = "\(cookie.name)=\(rawValue)"
+                // Use the raw cookie value as-is for WebSocket connection
+                let cookieString = "\(cookie.name)=\(cookie.value)"
                 payload["cookie"] = cookieString
 
-                // Log for debugging
-                logger.info("🔐 Cookie for connection_init:")
-                logger.info("   Name: \(cookie.name)")
-                logger.info("   Raw (stored): \(rawValue.prefix(50))...")
-                logger.info("   Decoded: \(decodedValue.prefix(50))...")
-                logger.info("   Using: RAW value (same as working HTTP requests)")
-                logger.info("   Has signature: \(decodedValue.contains("."))")
-                logger.info("   Full cookie string length: \(cookieString.count)")
+                // Cookie found and prepared for connection_init
+                logger.debug("🔐 Cookie prepared for WebSocket connection")
             } else {
-                // Check if we have an unsigned cookie (shouldn't happen)
-                if let unsignedCookie = cookies.first(where: { $0.name == "jeeves.session_token" }) {
-                    logger.warning("⚠️ Found unsigned session cookie: \(unsignedCookie.value)")
-                    logger.warning("⚠️ This won't work for authentication - need signed cookie from server")
-                } else {
-                    logger.warning("⚠️ No session cookie in storage for connection_init")
-                }
+                // No valid session cookie found
+                logger.warning("⚠️ Authentication may fail - check session state")
             }
         }
 
-        logger.info("🔐 WebSocket auth payload keys: \(payload.keys.joined(separator: ", "))")
-
-        // Log the actual payload for debugging
-        if let cookieValue = payload["cookie"] as? String {
-            logger.info("📦 connection_init payload will contain:")
-            logger.info("   cookie: \(cookieValue.prefix(100))...")
-        }
+        // Auth payload prepared
 
         return payload.isEmpty ? nil : payload
     }
@@ -417,7 +371,7 @@ public final class ApolloClientService {
         if let existingCookies = HTTPCookieStorage.shared.cookies,
            let sessionCookie = existingCookies.first(where: { $0.name == "jeeves.session_token" && $0.value.contains(".") })
         {
-            logger.debug("🍪 Found session cookie, ensuring it's available for GraphQL")
+            logger.debug("🍪 Ensuring session availability")
 
             // Ensure cookie is available for both HTTP and WebSocket URLs
             let graphQLCookies = HTTPCookieStorage.shared.cookies(for: httpURL) ?? []
@@ -452,19 +406,7 @@ public final class ApolloClientService {
 
         let authPayload = createWebSocketAuthPayload(authService: authService)
 
-        // Log the full auth payload for debugging
-        if let payload = authPayload {
-            logger.info("📤 Full connection_init payload:")
-            for (key, value) in payload {
-                if let stringValue = value as? String {
-                    logger.info("   \(key): \(stringValue)")
-                } else {
-                    logger.info("   \(key): \(value)")
-                }
-            }
-        } else {
-            logger.warning("⚠️ No auth payload for WebSocket connection_init")
-        }
+        // Auth payload configured for WebSocket connection
 
         // Use graphql_transport_ws which actually maps to "graphql-ws" protocol string
         // The naming is confusing: .graphql_transport_ws = "graphql-ws" (v6+)
@@ -883,10 +825,7 @@ private final class RequestLoggingInterceptor: ApolloInterceptor, @unchecked Sen
 
         // First, let's see ALL cookies in the storage
         if let allCookies = HTTPCookieStorage.shared.cookies, !allCookies.isEmpty {
-            Self.logger.debug("🍪 All cookies in storage (\(allCookies.count)):")
-            for cookie in allCookies {
-                Self.logger.debug("   - \(cookie.name) for domain: \(cookie.domain), path: \(cookie.path)")
-            }
+            Self.logger.debug("🍪 Cookies found in storage")
         } else {
             Self.logger.debug("🍪 No cookies in storage at all!")
         }
@@ -896,10 +835,7 @@ private final class RequestLoggingInterceptor: ApolloInterceptor, @unchecked Sen
             if cookies.isEmpty {
                 Self.logger.warning("   Cookies: (none) for \(request.graphQLEndpoint)")
             } else {
-                Self.logger.info("   Cookies:")
-                for cookie in cookies {
-                    Self.logger.info("     \(cookie.name): \(cookie.value.prefix(20))... [expires: \(cookie.expiresDate?.description ?? "session")]")
-                }
+                Self.logger.info("   Cookies available for request")
             }
         } else {
             Self.logger.warning("   Cookies: Unable to retrieve cookies for URL: \(request.graphQLEndpoint)")
