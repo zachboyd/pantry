@@ -436,6 +436,47 @@ public final class AppState {
 
     // MARK: - Private Methods
 
+    /// Check if an error is related to network connectivity
+    private func isNetworkConnectivityError(_ error: Error) -> Bool {
+        // Check for URLError indicating network issues
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet,
+                 .networkConnectionLost,
+                 .cannotConnectToHost,
+                 .timedOut,
+                 .cannotFindHost,
+                 .dnsLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for NSURLErrorDomain errors
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet,
+                 NSURLErrorNetworkConnectionLost,
+                 NSURLErrorCannotConnectToHost,
+                 NSURLErrorTimedOut,
+                 NSURLErrorCannotFindHost,
+                 NSURLErrorDNSLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for common network error messages
+        let errorDescription = error.localizedDescription.lowercased()
+        return errorDescription.contains("could not connect to the server") ||
+            errorDescription.contains("network") ||
+            errorDescription.contains("connection") ||
+            errorDescription.contains("offline")
+    }
+
     /// Start the hydration process
     private func startHydration() async {
         // Starting hydration process
@@ -525,10 +566,21 @@ public final class AppState {
             // Handle authentication errors by signing out
             Self.logger.error("Authentication error during hydration - signing out")
             await signOut()
+        } catch ServiceError.networkError {
+            // Silently handle network errors (offline mode)
+            Self.logger.info("Network unavailable - continuing in offline mode")
+            // Stay in current phase without showing error
+            // The app will retry when network becomes available
         } catch {
-            Self.logger.error("Hydration failed: \(error)")
-            self.error = error
-            await setPhase(.error)
+            // Check if this is a network connectivity error
+            if isNetworkConnectivityError(error) {
+                Self.logger.info("Network unavailable - continuing in offline mode")
+                // Stay in current phase without showing error
+            } else {
+                Self.logger.error("Hydration failed: \(error)")
+                self.error = error
+                await setPhase(.error)
+            }
         }
     }
 

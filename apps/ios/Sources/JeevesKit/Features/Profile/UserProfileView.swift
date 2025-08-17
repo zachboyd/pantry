@@ -34,7 +34,10 @@ public struct UserProfileView: View {
                             .progressViewStyle(CircularProgressViewStyle())
                             .scaleEffect(1.5)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if let error = viewModel.watchedDataError {
+                    } else if let error = viewModel.watchedDataError,
+                              viewModel.currentUserWatch.value == nil, viewModel.householdsWatch.value == nil
+                    {
+                        // Only show error if there's NO cached data available
                         ProfileErrorView(
                             error: error,
                             onRetry: {
@@ -44,6 +47,7 @@ public struct UserProfileView: View {
                             },
                         )
                     } else {
+                        // Show content if we have any cached data, even with network errors
                         profileContent
                     }
                 } else {

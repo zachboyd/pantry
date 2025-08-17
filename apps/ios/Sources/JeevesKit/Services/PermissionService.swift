@@ -123,7 +123,12 @@ public final class PermissionService: PermissionServiceProtocol {
                     }
 
                 case let .failure(error):
-                    self.logger.error("Failed to watch user updates: \(error)")
+                    // Check if this is a network connectivity error
+                    if self.isNetworkConnectivityError(error) {
+                        self.logger.debug("📶 Network unavailable for permission updates - offline mode")
+                    } else {
+                        self.logger.error("Failed to watch user updates: \(error)")
+                    }
                 }
             }
         }
@@ -293,6 +298,49 @@ public final class PermissionService: PermissionServiceProtocol {
     /// Check if permissions are loaded
     public var isLoaded: Bool {
         permissionContext != nil
+    }
+
+    // MARK: - Private Helpers
+
+    /// Check if an error is related to network connectivity
+    private func isNetworkConnectivityError(_ error: Error) -> Bool {
+        // Check for URLError indicating network issues
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet,
+                 .networkConnectionLost,
+                 .cannotConnectToHost,
+                 .timedOut,
+                 .cannotFindHost,
+                 .dnsLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for NSURLErrorDomain errors
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet,
+                 NSURLErrorNetworkConnectionLost,
+                 NSURLErrorCannotConnectToHost,
+                 NSURLErrorTimedOut,
+                 NSURLErrorCannotFindHost,
+                 NSURLErrorDNSLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for common network error messages
+        let errorDescription = error.localizedDescription.lowercased()
+        return errorDescription.contains("could not connect to the server") ||
+            errorDescription.contains("network") ||
+            errorDescription.contains("connection") ||
+            errorDescription.contains("offline")
     }
 
     // MARK: - Cache Management

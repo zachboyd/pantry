@@ -88,6 +88,8 @@ swift build
 swift test
 ```
 
+See **[Scripts Documentation](Scripts/README.md)** for all available build and utility scripts.
+
 ### Opening in Xcode
 
 Open `Jeeves.xcworkspace` in Xcode to work with the project.
@@ -99,6 +101,9 @@ This project uses:
 - **SwiftUI** for the user interface
 - **Swift Package Manager** for dependency management
 - **Apollo GraphQL** for API communication (direct service-to-GraphQL pattern)
+  - **SQLite Cache Persistence** - Cached data persists across app launches
+  - **Offline Support** - App works offline with cached data
+  - **Reactive Cache** - UI updates automatically when cache changes
 - **Better-Auth** for authentication
 - **MVVM + Observable** architecture pattern
 - **No Repository Pattern** - Services interact directly with GraphQL for cleaner architecture
@@ -110,6 +115,7 @@ This project uses:
 - **[Development Guide](Documentation/DEVELOPMENT_GUIDE.md)** - Step-by-step guide for common tasks 🆕
 - **[Architecture Guide](Documentation/ARCHITECTURE.md)** - How to work with the app architecture
 - **[API Integration](Documentation/API_INTEGRATION.md)** - GraphQL operations and service patterns
+- **[Error Handling Guide](Documentation/ERROR_HANDLING_GUIDE.md)** - Error handling patterns and best practices
 - **[Deployment](Documentation/DEPLOYMENT.md)** - Build, test, and release procedures
 - **[Troubleshooting](Documentation/TROUBLESHOOTING.md)** - Debug logging and common issues
 
@@ -118,15 +124,26 @@ This project uses:
 - **[GraphQL Integration](Sources/JeevesKit/GraphQL/README.md)** - Apollo setup and usage
 - **[Service Layer](Sources/JeevesKit/Services/README.md)** - How to use and extend services
 - **[ViewModels](Sources/JeevesKit/ViewModels/README.md)** - ViewModel patterns and examples
+- **[Build Scripts](Scripts/README.md)** - Build and utility scripts documentation
+
+### Implementation Status
+
+- **[Current Status](Documentation/CURRENT_STATUS.md)** - Implementation status and completion tracking
+- **[Onboarding Implementation](Documentation/ONBOARDING_IMPLEMENTATION.md)** - Onboarding flow details and logic
 
 ### Advanced Patterns
 
 - **[Reactive Watching Pattern](Documentation/REACTIVE_WATCHING_PATTERN.md)** - Apollo cache reactive updates pattern
+- **[Apollo Cache Persistence](Documentation/APOLLO_CACHE_PERSISTENCE.md)** - SQLite cache persistence implementation
+- **[Offline Behavior](Documentation/OFFLINE_BEHAVIOR.md)** - How the app handles offline scenarios
 
 ## Key Technologies
 
 - **SwiftUI** - Modern declarative UI framework
 - **Apollo GraphQL** - Type-safe API client (v1.23.0+)
+  - SQLite cache persistence for offline support
+  - Normalized cache with reactive watchers
+  - Automatic cache updates from mutations
 - **Swift 6** - With strict concurrency checking
 - **@Observable** - Native reactive state management
 - **Keychain** - Secure authentication token storage

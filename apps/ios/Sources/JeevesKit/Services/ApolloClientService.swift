@@ -1,5 +1,6 @@
 @preconcurrency import Apollo
 @preconcurrency import ApolloAPI
+@preconcurrency import ApolloSQLite
 @preconcurrency import ApolloWebSocket
 import Foundation
 
@@ -250,6 +251,33 @@ public final class ApolloClientService {
 
     // MARK: - Private Methods
 
+    /// Create a SQLite cache for persistence
+    /// - Returns: A SQLite normalized cache that persists data across app launches
+    private static func createPersistentCache() throws -> any NormalizedCache {
+        // Get the app's cache directory
+        let documentsPath = NSSearchPathForDirectoriesInDomains(
+            .cachesDirectory,
+            .userDomainMask,
+            true,
+        ).first!
+
+        let sqliteFileURL = URL(fileURLWithPath: documentsPath)
+            .appendingPathComponent("jeeves_apollo_cache.sqlite")
+
+        logger.info("📁 SQLite cache location: \(sqliteFileURL.path)")
+
+        // Create SQLite cache for persistence
+        // Note: SQLite cache is slower than in-memory but provides persistence
+        // The shouldVacuumOnClear parameter should be true if storing PII
+        let sqliteCache = try SQLiteNormalizedCache(
+            fileURL: sqliteFileURL,
+            shouldVacuumOnClear: true,
+        )
+
+        logger.info("✅ Created SQLite cache for persistence")
+        return sqliteCache
+    }
+
     /// Create WebSocket authentication payload
     private static func createWebSocketAuthPayload(
         authService _: AuthServiceProtocol?,
@@ -342,8 +370,16 @@ public final class ApolloClientService {
         logger.info("📡 HTTP endpoint: \(httpEndpoint)")
         logger.info("🌐 WebSocket endpoint: \(wsEndpoint)")
 
-        // Create cache and store
-        let cache = InMemoryNormalizedCache()
+        // Create cache - use SQLite for persistence, fall back to in-memory if it fails
+        let cache: any NormalizedCache
+        do {
+            cache = try createPersistentCache()
+            logger.info("✅ Using SQLite cache for persistence")
+        } catch {
+            logger.error("❌ Failed to create SQLite cache: \(error)")
+            logger.info("⚠️ Falling back to in-memory cache only (no persistence)")
+            cache = InMemoryNormalizedCache()
+        }
         let store = ApolloStore(cache: cache)
 
         // Create authentication interceptors
@@ -483,8 +519,16 @@ public final class ApolloClientService {
 
         logger.info("🔧 Creating Apollo Client for endpoint: \(endpoint)")
 
-        // Create the cache
-        let cache = InMemoryNormalizedCache()
+        // Create cache - use SQLite for persistence, fall back to in-memory if it fails
+        let cache: any NormalizedCache
+        do {
+            cache = try createPersistentCache()
+            logger.info("✅ Using SQLite cache for persistence")
+        } catch {
+            logger.error("❌ Failed to create SQLite cache: \(error)")
+            logger.info("⚠️ Falling back to in-memory cache only (no persistence)")
+            cache = InMemoryNormalizedCache()
+        }
         let store = ApolloStore(cache: cache)
 
         // Create authentication interceptors
@@ -727,6 +771,49 @@ private final class AuthErrorInterceptor: ApolloInterceptor, @unchecked Sendable
     }
 }
 
+// MARK: - Network Connectivity Helper
+
+/// Check if an error is related to network connectivity
+private func isNetworkConnectivityError(_ error: Error) -> Bool {
+    // Check for URLError indicating network issues
+    if let urlError = error as? URLError {
+        switch urlError.code {
+        case .notConnectedToInternet,
+             .networkConnectionLost,
+             .cannotConnectToHost,
+             .timedOut,
+             .cannotFindHost,
+             .dnsLookupFailed:
+            return true
+        default:
+            break
+        }
+    }
+
+    // Check for NSURLErrorDomain errors
+    let nsError = error as NSError
+    if nsError.domain == NSURLErrorDomain {
+        switch nsError.code {
+        case NSURLErrorNotConnectedToInternet,
+             NSURLErrorNetworkConnectionLost,
+             NSURLErrorCannotConnectToHost,
+             NSURLErrorTimedOut,
+             NSURLErrorCannotFindHost,
+             NSURLErrorDNSLookupFailed:
+            return true
+        default:
+            break
+        }
+    }
+
+    // Check for common network error messages
+    let errorDescription = error.localizedDescription.lowercased()
+    return errorDescription.contains("could not connect to the server") ||
+        errorDescription.contains("network") ||
+        errorDescription.contains("connection") ||
+        errorDescription.contains("offline")
+}
+
 // MARK: - Request Logging Interceptor
 
 /// Interceptor that logs all GraphQL request details including headers
@@ -853,9 +940,14 @@ private final class RequestLoggingInterceptor: ApolloInterceptor, @unchecked Sen
                 }
             }
         case let .failure(error):
-            // ALWAYS log failures (temporary debugging)
-            Self.logger.error("❌ GraphQL Response for \(Operation.operationName): Failed")
-            Self.logger.error("   Error: \(error)")
+            // Check if this is a network connectivity error and log appropriately
+            if isNetworkConnectivityError(error) {
+                Self.logger.debug("📶 Network unavailable for \(Operation.operationName) - offline mode")
+            } else {
+                // ALWAYS log failures (temporary debugging)
+                Self.logger.error("❌ GraphQL Response for \(Operation.operationName): Failed")
+                Self.logger.error("   Error: \(error)")
+            }
         }
     }
 }
@@ -909,6 +1001,12 @@ public extension ApolloClientService {
     /// - Parameter error: The error to handle
     /// - Returns: A user-friendly error message
     func handleGraphQLError(_ error: Error) -> String {
+        // Check for network connectivity issues first
+        if isNetworkConnectivityError(error) {
+            Self.logger.debug("📶 Network unavailable - offline mode")
+            return "Network unavailable. Please check your connection."
+        }
+
         Self.logger.error("🚨 GraphQL Error: \(error)")
 
         if let graphQLError = error as? GraphQLError {
@@ -918,6 +1016,47 @@ public extension ApolloClientService {
         } else {
             return "Network error occurred. Please try again."
         }
+    }
+
+    /// Check if an error is related to network connectivity
+    private func isNetworkConnectivityError(_ error: Error) -> Bool {
+        // Check for URLError indicating network issues
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet,
+                 .networkConnectionLost,
+                 .cannotConnectToHost,
+                 .timedOut,
+                 .cannotFindHost,
+                 .dnsLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for NSURLErrorDomain errors
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet,
+                 NSURLErrorNetworkConnectionLost,
+                 NSURLErrorCannotConnectToHost,
+                 NSURLErrorTimedOut,
+                 NSURLErrorCannotFindHost,
+                 NSURLErrorDNSLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for common network error messages
+        let errorDescription = error.localizedDescription.lowercased()
+        return errorDescription.contains("could not connect to the server") ||
+            errorDescription.contains("network") ||
+            errorDescription.contains("connection") ||
+            errorDescription.contains("offline")
     }
 
     /// Log GraphQL operation for debugging

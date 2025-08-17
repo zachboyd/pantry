@@ -128,10 +128,21 @@ public final class GraphQLService: GraphQLServiceProtocol {
                 switch result {
                 case let .success(graphQLResult):
                     // For returnCacheDataAndFetch, we get called twice (cache then network)
-                    // Only resume with the network response (source != .cache for final response)
+                    // Return cache data immediately and let network update happen in background
                     if cachePolicy == .returnCacheDataAndFetch, graphQLResult.source == .cache {
-                        Self.logger.debug("📦 Got cached data, waiting for network response...")
-                        return // Don't resume yet, wait for network response
+                        Self.logger.debug("📦 Got cached data from Apollo")
+
+                        // If we have valid cache data, return it immediately
+                        if let data = graphQLResult.data {
+                            let sendableData = SendableGraphQLData(data)
+                            if !hasResumed {
+                                hasResumed = true
+                                Self.logger.info("✅ Returning cached data immediately for offline support")
+                                continuation.resume(returning: sendableData.value)
+                            }
+                        }
+                        // Let the fetch continue in the background - the watcher will handle updates
+                        return
                     }
 
                     Self.logger.info("✅ Query completed in \(String(format: "%.2f", executionTime))s from \(graphQLResult.source)")
@@ -173,6 +184,18 @@ public final class GraphQLService: GraphQLServiceProtocol {
                     }
 
                 case let .failure(error):
+                    // For returnCacheDataAndFetch, network errors are expected when offline
+                    // Don't fail if we already returned cache data
+                    if cachePolicy == .returnCacheDataAndFetch, hasResumed {
+                        // We already returned cache data, just log the network error
+                        if isNetworkConnectivityError(error) {
+                            Self.logger.debug("📶 Network unavailable, but cache data was already returned")
+                        } else {
+                            Self.logger.warning("⚠️ Network fetch failed after cache return: \(error)")
+                        }
+                        return
+                    }
+
                     // Update connection status safely on main actor
                     Task { @MainActor [weak self] in
                         self?.connectionStatus = false
@@ -300,18 +323,70 @@ public final class GraphQLService: GraphQLServiceProtocol {
             return ServiceError.operationFailed(graphQLError.message ?? "GraphQL operation failed")
         }
 
-        // Apollo doesn't have JSONDecodingError as public type, check for GraphQL response errors
-        Self.logger.error("🚨 GraphQL Error in \(operation): \(error.localizedDescription)")
-
-        // Check for network errors
+        // Check for network errors first to handle them quietly
         if let urlError = error as? URLError {
-            Self.logger.error("🌐 Network Error in \(operation): \(urlError.localizedDescription)")
+            // Log network errors as info/debug level for offline scenarios
+            if isNetworkConnectivityError(urlError) {
+                Self.logger.debug("📶 Network unavailable for \(operation) - offline mode")
+            } else {
+                Self.logger.error("🌐 Network Error in \(operation): \(urlError.localizedDescription)")
+            }
             return ServiceError.networkError(urlError)
         }
+
+        // Check if error description indicates network connectivity issue
+        if isNetworkConnectivityError(error) {
+            Self.logger.debug("📶 Network unavailable for \(operation) - offline mode")
+            return ServiceError.networkError(error)
+        }
+
+        // Apollo doesn't have JSONDecodingError as public type, check for GraphQL response errors
+        Self.logger.error("🚨 GraphQL Error in \(operation): \(error.localizedDescription)")
 
         // Generic error handling
         Self.logger.error("🚨 Unknown Error in \(operation): \(error.localizedDescription)")
         return ServiceError.operationFailed(error.localizedDescription)
+    }
+
+    /// Check if an error is related to network connectivity
+    private func isNetworkConnectivityError(_ error: Error) -> Bool {
+        // Check for URLError indicating network issues
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet,
+                 .networkConnectionLost,
+                 .cannotConnectToHost,
+                 .timedOut,
+                 .cannotFindHost,
+                 .dnsLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for NSURLErrorDomain errors
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet,
+                 NSURLErrorNetworkConnectionLost,
+                 NSURLErrorCannotConnectToHost,
+                 NSURLErrorTimedOut,
+                 NSURLErrorCannotFindHost,
+                 NSURLErrorDNSLookupFailed:
+                return true
+            default:
+                break
+            }
+        }
+
+        // Check for common network error messages
+        let errorDescription = error.localizedDescription.lowercased()
+        return errorDescription.contains("could not connect to the server") ||
+            errorDescription.contains("network") ||
+            errorDescription.contains("connection") ||
+            errorDescription.contains("offline")
     }
 }
 
