@@ -1,6 +1,5 @@
 @preconcurrency import Apollo
 @preconcurrency import ApolloAPI
-@preconcurrency import ApolloSQLite
 @preconcurrency import ApolloWebSocket
 import Foundation
 
@@ -251,8 +250,8 @@ public final class ApolloClientService {
 
     // MARK: - Private Methods
 
-    /// Create a SQLite cache for persistence
-    /// - Returns: A SQLite normalized cache that persists data across app launches
+    /// Create a two-tier cache with in-memory as primary and SQLite for persistence
+    /// - Returns: A two-tier normalized cache that provides fast access with persistence
     private static func createPersistentCache() throws -> any NormalizedCache {
         // Get the app's cache directory
         let documentsPath = NSSearchPathForDirectoriesInDomains(
@@ -266,16 +265,21 @@ public final class ApolloClientService {
 
         logger.info("📁 SQLite cache location: \(sqliteFileURL.path)")
 
-        // Create SQLite cache for persistence
-        // Note: SQLite cache is slower than in-memory but provides persistence
-        // The shouldVacuumOnClear parameter should be true if storing PII
-        let sqliteCache = try SQLiteNormalizedCache(
+        // Create two-tier cache: in-memory (fast) + SQLite (persistent)
+        // This provides the best of both worlds:
+        // - Fast reads from memory cache
+        // - Persistence across app launches via SQLite
+        // - Automatic memory management on low memory warnings
+        let twoTierCache = try TwoTierNormalizedCache(
             fileURL: sqliteFileURL,
             shouldVacuumOnClear: true,
         )
 
-        logger.info("✅ Created SQLite cache for persistence")
-        return sqliteCache
+        // Register for memory warnings to automatically clear memory cache when needed
+        twoTierCache.registerForMemoryWarnings()
+
+        logger.info("✅ Created two-tier cache (Memory + SQLite) for optimal performance")
+        return twoTierCache
     }
 
     /// Create WebSocket authentication payload
@@ -370,13 +374,13 @@ public final class ApolloClientService {
         logger.info("📡 HTTP endpoint: \(httpEndpoint)")
         logger.info("🌐 WebSocket endpoint: \(wsEndpoint)")
 
-        // Create cache - use SQLite for persistence, fall back to in-memory if it fails
+        // Create cache - use two-tier cache for optimal performance
         let cache: any NormalizedCache
         do {
             cache = try createPersistentCache()
-            logger.info("✅ Using SQLite cache for persistence")
+            logger.info("✅ Using two-tier cache (Memory + SQLite)")
         } catch {
-            logger.error("❌ Failed to create SQLite cache: \(error)")
+            logger.error("❌ Failed to create two-tier cache: \(error)")
             logger.info("⚠️ Falling back to in-memory cache only (no persistence)")
             cache = InMemoryNormalizedCache()
         }
@@ -519,13 +523,13 @@ public final class ApolloClientService {
 
         logger.info("🔧 Creating Apollo Client for endpoint: \(endpoint)")
 
-        // Create cache - use SQLite for persistence, fall back to in-memory if it fails
+        // Create cache - use two-tier cache for optimal performance
         let cache: any NormalizedCache
         do {
             cache = try createPersistentCache()
-            logger.info("✅ Using SQLite cache for persistence")
+            logger.info("✅ Using two-tier cache (Memory + SQLite)")
         } catch {
-            logger.error("❌ Failed to create SQLite cache: \(error)")
+            logger.error("❌ Failed to create two-tier cache: \(error)")
             logger.info("⚠️ Falling back to in-memory cache only (no persistence)")
             cache = InMemoryNormalizedCache()
         }

@@ -6,12 +6,37 @@ The Jeeves iOS app gracefully handles offline scenarios without showing error sc
 
 ## Apollo Cache Architecture
 
-### SQLite Persistence
-- Apollo Client uses SQLite for persistent cache storage (`~/Library/Caches/jeeves_apollo_cache.sqlite`)
-- All GraphQL query responses are automatically cached and normalized by entity ID (configured in `SchemaConfiguration.swift`)
-- Cache persists across app launches, providing offline access to previously loaded data
+### Two-Tier Cache System (NEW)
+The app now uses a sophisticated **two-tier caching system** that combines in-memory and SQLite caches:
+
+#### Primary Layer: In-Memory Cache
+- Ultra-fast read/write operations (< 1ms)
+- Immediate data availability
+- Automatically cleared on iOS memory warnings
+- No disk I/O overhead
+
+#### Secondary Layer: SQLite Persistence
+- Persistent storage across app launches (`~/Library/Caches/jeeves_apollo_cache.sqlite`)
+- Survives app termination and updates
+- Automatic backup for memory cache
+- Enables true offline functionality
+
+#### How It Works
+1. **Read Path**: Memory → SQLite → Network
+   - First checks in-memory cache (microseconds)
+   - Falls back to SQLite if not in memory (milliseconds)
+   - Promotes SQLite data to memory for future access
+   - Only fetches from network if not cached anywhere
+
+2. **Write Path**: Parallel updates to both caches
+   - Writes to memory for immediate availability
+   - Writes to SQLite for persistence
+   - Both caches stay synchronized
+
+### Cache Normalization
+- All GraphQL responses are normalized by entity ID (configured in `SchemaConfiguration.swift`)
 - Cache updates are reactive - UI automatically updates when cache changes
-- Cache normalization ensures mutations and subscriptions update the same cache entries that queries watch
+- Mutations and subscriptions update the same cache entries that queries watch
 
 ### Cache Policies for Offline Support
 - **`.returnCacheDataAndFetch`** (Recommended): Returns cached data immediately, fetches fresh data in background
