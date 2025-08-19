@@ -20,12 +20,6 @@ public final class UserService: UserServiceProtocol {
     private let graphQLService: GraphQLServiceProtocol
     private let watchManager: WatchManager?
 
-    /// User data cache
-    private var userCache: [LowercaseUUID: User] = [:]
-
-    /// Current user ID for proper cache tracking
-    private var currentUserId: LowercaseUUID?
-
     /// Cached watched results for query deduplication
     private var currentUserWatch: WatchedResult<User>?
     private var userWatches: [LowercaseUUID: WatchedResult<User>] = [:]
@@ -61,17 +55,7 @@ public final class UserService: UserServiceProtocol {
     public func getUser(id: LowercaseUUID) async throws -> User? {
         Self.logger.info("🔍 Getting business user by ID: \(id)")
 
-        // Check cache first
-        if let cachedUser = userCache[id] {
-            Self.logger.debug("📦 Returning cached user: \(cachedUser.name ?? "Unknown")")
-            return cachedUser
-        }
-
-        let user = try await fetchUserFromGraphQL(userId: id.uuidString)
-        if let user {
-            userCache[id] = user
-        }
-        return user
+        return try await fetchUserFromGraphQL(userId: id.uuidString)
     }
 
     /// Get multiple users by IDs
@@ -101,9 +85,6 @@ public final class UserService: UserServiceProtocol {
 
         let updatedUser = try await updateUserInGraphQL(user: user)
 
-        // Update cache
-        userCache[user.id] = updatedUser
-
         // Apollo's cache normalization is now properly configured in SchemaConfiguration.swift
         // Mutations and queries for the same User (by id) update the same cache entry
         // The watcher will automatically fire when the mutation updates the cache
@@ -130,8 +111,6 @@ public final class UserService: UserServiceProtocol {
     /// Clear current user cache
     public func clearCurrentUserCache() {
         Self.logger.info("🗑️ Clearing current user cache")
-        userCache.removeAll()
-        currentUserId = nil
         currentUserWatch = nil
         userWatches.removeAll()
 
@@ -141,7 +120,7 @@ public final class UserService: UserServiceProtocol {
         currentUserApolloWatcher?.cancel()
         currentUserApolloWatcher = nil
 
-        Self.logger.info("✅ User cache and watchers cleared")
+        Self.logger.info("✅ Watchers cleared")
     }
 
     // MARK: - Reactive Watch Methods
@@ -209,10 +188,6 @@ public final class UserService: UserServiceProtocol {
                             data.source == .cache ? .cache : .server
                         result.update(value: user, source: source)
                         result.setLoading(false)
-
-                        // Also update our cache
-                        self.currentUserId = user.id
-                        self.userCache[user.id] = user
 
                         Self.logger.info("🔄 Current user watch updated from \(source)")
                     }
@@ -288,9 +263,6 @@ public final class UserService: UserServiceProtocol {
                             data.source == .cache ? .cache : .server
                         result.update(value: user, source: source)
                         result.setLoading(false)
-
-                        // Also update our cache
-                        self.userCache[user.id] = user
 
                         Self.logger.info("🔄 User watch updated from \(source) for ID: \(id)")
                     }
@@ -511,11 +483,6 @@ extension UserService: ServiceHealth {
 
         let startTime = Date()
         var errors: [String] = []
-
-        // Check if cache is available
-        if userCache.isEmpty {
-            Self.logger.debug("User cache is empty (this is normal)")
-        }
 
         // Check authentication service
         if !authService.isAuthenticated {

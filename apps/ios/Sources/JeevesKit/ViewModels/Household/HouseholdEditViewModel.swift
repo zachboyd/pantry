@@ -161,7 +161,7 @@ public final class HouseholdEditViewModel: BaseReactiveViewModel<HouseholdEditVi
             await loadHousehold(id: householdId)
 
             // Check if user has permission to edit this household
-            let canEdit = dependencies.permissionService.canUpdateHousehold(householdId)
+            let canEdit = await dependencies.permissionService.canUpdateHousehold(householdId)
             updateState { $0.isReadOnly = !canEdit }
         }
     }

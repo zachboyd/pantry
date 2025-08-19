@@ -212,10 +212,11 @@ public final class UserSettingsViewModel: BaseReactiveViewModel<UserSettingsView
 
     /// Check if current user can create new members for a specific household (e.g., invite members)
     /// This is reactive and will automatically update when permissions change
-    public func canCreateHouseholdMember(for householdId: LowercaseUUID) -> Bool {
+    @MainActor
+    public func canCreateHouseholdMember(for householdId: LowercaseUUID) async -> Bool {
         // Use the permission service which is Observable
         // This will automatically trigger view updates when permissions change
-        dependencies.permissionService.canCreateHouseholdMember(for: householdId)
+        await dependencies.permissionService.canCreateHouseholdMember(for: householdId)
     }
 
     // MARK: - Initialization

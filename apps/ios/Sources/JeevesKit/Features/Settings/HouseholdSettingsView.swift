@@ -4,6 +4,7 @@ import SwiftUI
 public struct HouseholdSettingsView: View {
     @Environment(\.safeViewModelFactory) private var factory
     @State private var settingsViewModel: UserSettingsViewModel?
+    @State private var canInviteMembers = false
 
     let household: Household?
 
@@ -32,6 +33,11 @@ public struct HouseholdSettingsView: View {
             }
 
             await settingsViewModel?.onAppear()
+
+            // Check permissions for invite member button
+            if let household {
+                canInviteMembers = await settingsViewModel?.canCreateHouseholdMember(for: household.id) ?? false
+            }
         }
         .onDisappear {
             Task {
@@ -94,7 +100,7 @@ public struct HouseholdSettingsView: View {
             }
 
             // Only show invite member option if user has permission to manage members
-            if settingsViewModel?.canCreateHouseholdMember(for: household.id) == true {
+            if canInviteMembers {
                 NavigationLink(destination: HouseholdInviteView(householdId: household.id, householdName: household.name)) {
                     HStack {
                         Label(L("household.invite_member"), systemImage: "person.badge.plus")
