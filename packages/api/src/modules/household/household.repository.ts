@@ -48,7 +48,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       this.logger.log(`Household created successfully: ${createdHousehold.id}`);
       return createdHousehold as HouseholdRecord;
     } catch (error) {
-      this.logger.error(`Failed to create household:`, error);
+      this.logger.error(error, `Failed to create household:`);
       throw error;
     }
   }
@@ -81,7 +81,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       );
       return createdMember as HouseholdMemberRecord;
     } catch (error) {
-      this.logger.error(`Failed to add household member:`, error);
+      this.logger.error(error, `Failed to add household member:`);
       throw error;
     }
   }
@@ -105,7 +105,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
 
       return household as HouseholdRecord;
     } catch (error) {
-      this.logger.error(`Failed to get household by ID ${householdId}:`, error);
+      this.logger.error(error, `Failed to get household by ID ${householdId}:`);
       throw error;
     }
   }
@@ -170,7 +170,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       );
       return households as HouseholdRecord[];
     } catch (error) {
-      this.logger.error(`Failed to get households for user ${userId}:`, error);
+      this.logger.error(error, `Failed to get households for user ${userId}:`);
       return [];
     }
   }
@@ -203,7 +203,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       );
       return removedMember as HouseholdMemberRecord;
     } catch (error) {
-      this.logger.error(`Failed to remove household member:`, error);
+      this.logger.error(error, `Failed to remove household member:`);
       throw error;
     }
   }
@@ -235,7 +235,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
 
       return member as HouseholdMemberRecord;
     } catch (error) {
-      this.logger.error(`Failed to get household member:`, error);
+      this.logger.error(error, `Failed to get household member:`);
       throw error;
     }
   }
@@ -259,7 +259,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       );
       return members as HouseholdMemberRecord[];
     } catch (error) {
-      this.logger.error(`Failed to get household members:`, error);
+      this.logger.error(error, `Failed to get household members:`);
       return [];
     }
   }
@@ -296,7 +296,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       );
       return updatedMember as HouseholdMemberRecord;
     } catch (error) {
-      this.logger.error(`Failed to update household member role:`, error);
+      this.logger.error(error, `Failed to update household member role:`);
       throw error;
     }
   }
@@ -323,7 +323,7 @@ export class HouseholdRepositoryImpl implements HouseholdRepository {
       this.logger.log(`Household updated successfully: ${id}`);
       return updatedHousehold as HouseholdRecord;
     } catch (error) {
-      this.logger.error(`Failed to update household ${id}:`, error);
+      this.logger.error(error, `Failed to update household ${id}:`);
       throw error;
     }
   }

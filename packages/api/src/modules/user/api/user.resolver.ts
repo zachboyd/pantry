@@ -52,7 +52,7 @@ export class User {
   @Field({ nullable: true })
   primary_household_id?: string;
 
-  @Field(() => GraphQLJSON, { nullable: true })
+  @Field(() => String, { nullable: true })
   permissions?: UserPermissions;
 
   @Field(() => GraphQLJSON, { nullable: true })
@@ -119,7 +119,10 @@ export class UserResolver {
   private transformUserForGraphQL(user: UserRecord): User {
     return {
       ...user,
-      permissions: user.permissions as UserPermissions,
+      permissions:
+        user.permissions !== null
+          ? (JSON.stringify(user.permissions) as UserPermissions)
+          : null,
       preferences: user.preferences as UserPreferences,
     };
   }

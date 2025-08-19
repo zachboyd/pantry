@@ -31,7 +31,7 @@ export class TypingIndicatorServiceImpl implements TypingIndicatorService {
       );
       return savedIndicator;
     } catch (error) {
-      this.logger.error(`Failed to process typing indicator:`, error);
+      this.logger.error(error, `Failed to process typing indicator:`);
       throw error;
     }
   }

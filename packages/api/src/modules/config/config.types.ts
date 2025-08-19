@@ -20,6 +20,10 @@ export interface Configuration {
   };
   betterAuth: {
     secret: string;
+    google: {
+      clientId: string;
+      clientSecret: string;
+    };
   };
   aws: {
     accessKeyId?: string;

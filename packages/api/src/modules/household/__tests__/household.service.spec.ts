@@ -199,8 +199,8 @@ describe('HouseholdService', () => {
       ).rejects.toThrow('Database error');
 
       expect(errorSpy).toHaveBeenCalledWith(
-        'Failed to create household:',
         expect.any(Error),
+        'Failed to create household:',
       );
 
       errorSpy.mockRestore();

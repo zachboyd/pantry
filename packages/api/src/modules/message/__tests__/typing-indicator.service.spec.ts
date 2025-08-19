@@ -204,8 +204,8 @@ describe('TypingIndicatorService', () => {
         typingIndicatorService.save(typingIndicatorInput),
       ).rejects.toThrow();
       expect(errorSpy).toHaveBeenCalledWith(
-        'Failed to process typing indicator:',
         dbError,
+        'Failed to process typing indicator:',
       );
     });
   });

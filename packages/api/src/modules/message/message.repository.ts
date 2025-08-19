@@ -51,7 +51,7 @@ export class MessageRepositoryImpl implements MessageRepository {
       this.logger.log(`Message saved successfully: ${savedMessage.id}`);
       return savedMessage as unknown as Message;
     } catch (error) {
-      this.logger.error(`Failed to save message:`, error);
+      this.logger.error(error, `Failed to save message:`);
       throw error;
     }
   }

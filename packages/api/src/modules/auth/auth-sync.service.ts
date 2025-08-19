@@ -47,10 +47,13 @@ export class AuthSyncServiceImpl implements AuthSyncService {
     } catch (error) {
       // Log error but don't throw - we don't want to break auth signup
       this.logger.error(error, '❌ Failed to create business user record');
-      this.logger.error('Auth user that failed:', {
-        id: authUser.id,
-        email: authUser.email || null,
-      });
+      this.logger.error(
+        {
+          id: authUser.id,
+          email: authUser.email || null,
+        },
+        'Auth user that failed:',
+      );
     }
   }
 
@@ -99,11 +102,14 @@ export class AuthSyncServiceImpl implements AuthSyncService {
         error,
         '❌ Failed to sync user update to business user',
       );
-      this.logger.error('User sync details:', {
-        authUserId: authUser.id,
-        email: authUser.email || null,
-        name: authUser.name,
-      });
+      this.logger.error(
+        {
+          authUserId: authUser.id,
+          email: authUser.email || null,
+          name: authUser.name,
+        },
+        'User sync details:',
+      );
     }
   }
 

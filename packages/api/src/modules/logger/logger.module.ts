@@ -1,26 +1,19 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 import { RequestContextService } from '../../common/context/request-context.service.js';
 import { AppConfigModule } from '../config/config.module.js';
+import { TOKENS } from '../../common/tokens.js';
+import type { ConfigService } from '../config/config.types.js';
 
 @Module({
   imports: [
     AppConfigModule, // Explicit dependency to ensure ConfigService is available
     PinoLoggerModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
-        // Get config values directly from NestJS ConfigService, matching our config structure
-        const nodeEnv = configService.get<string>('NODE_ENV', 'development');
-        const logLevel = configService.get<string>(
-          'LOG_LEVEL',
-          nodeEnv === 'production' ? 'info' : 'debug',
-        );
-
-        // Support LOG_PRETTY environment variable override, otherwise default based on NODE_ENV
-        const logPrettyEnv = configService.get<string>('LOG_PRETTY');
-        const isPretty = logPrettyEnv
-          ? logPrettyEnv.toLowerCase() === 'true'
-          : nodeEnv === 'development';
+        // Use our centralized config service
+        const config = configService.config;
+        const logLevel = config.logging.level;
+        const isPretty = config.logging.pretty;
 
         return {
           pinoHttp: {
@@ -67,7 +60,7 @@ import { AppConfigModule } from '../config/config.module.js';
           },
         };
       },
-      inject: [ConfigService], // Inject NestJS ConfigService directly
+      inject: [TOKENS.CONFIG.SERVICE], // Inject our ConfigService
     }),
   ],
 })

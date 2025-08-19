@@ -27,7 +27,7 @@ export class ConfigServiceImpl implements ConfigService {
           'LOG_LEVEL',
           nodeEnv === 'production' ? 'info' : 'debug',
         ),
-        pretty: nodeEnv === 'development',
+        pretty: this.configService.get<string>('LOG_PRETTY', 'true') === 'true',
       },
       database: {
         url: this.configService.get<string>('DATABASE_URL') || '',
@@ -41,7 +41,11 @@ export class ConfigServiceImpl implements ConfigService {
         apiKey: this.configService.get<string>('OPENAI_API_KEY'),
       },
       betterAuth: {
-        secret: this.configService.get<string>('BETTER_AUTH_SECRET') || '',
+        secret: this.configService.get<string>('BETTER_AUTH_SECRET')!,
+        google: {
+          clientId: this.configService.get<string>('GOOGLE_CLIENT_ID')!,
+          clientSecret: this.configService.get<string>('GOOGLE_CLIENT_SECRET')!,
+        },
       },
       aws: {
         accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),

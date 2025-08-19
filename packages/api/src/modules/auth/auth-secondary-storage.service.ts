@@ -32,7 +32,7 @@ export class AuthSecondaryStorageService implements SecondaryStorage {
       const value = await this.cacheManager.get<string>(key);
       return value || null;
     } catch (error) {
-      this.logger.error(`Redis get error for key ${key}:`, error);
+      this.logger.error(error, `Redis get error for key ${key}:`);
       return null;
     }
   }
@@ -49,7 +49,7 @@ export class AuthSecondaryStorageService implements SecondaryStorage {
         await this.cacheManager.set(key, value);
       }
     } catch (error) {
-      this.logger.error(`Redis set error for key ${key}:`, error);
+      this.logger.error(error, `Redis set error for key ${key}:`);
       throw error;
     }
   }
@@ -61,7 +61,7 @@ export class AuthSecondaryStorageService implements SecondaryStorage {
     try {
       await this.cacheManager.del(key);
     } catch (error) {
-      this.logger.error(`Redis delete error for key ${key}:`, error);
+      this.logger.error(error, `Redis delete error for key ${key}:`);
       throw error;
     }
   }

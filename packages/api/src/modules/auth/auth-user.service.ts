@@ -21,7 +21,7 @@ export class AuthUserServiceImpl implements AuthUserService {
     try {
       return await this.authUserRepository.getById(id);
     } catch (error) {
-      this.logger.error(`Error getting auth user by ID ${id}:`, error);
+      this.logger.error(error, `Error getting auth user by ID ${id}:`);
       throw error;
     }
   }
@@ -32,7 +32,7 @@ export class AuthUserServiceImpl implements AuthUserService {
     try {
       return await this.authUserRepository.getByEmail(email);
     } catch (error) {
-      this.logger.error(`Error getting auth user by email ${email}:`, error);
+      this.logger.error(error, `Error getting auth user by email ${email}:`);
       throw error;
     }
   }

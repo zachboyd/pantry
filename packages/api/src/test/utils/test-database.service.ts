@@ -66,13 +66,13 @@ export class TestDatabaseService implements DatabaseService {
       }
 
       if (error) {
-        this.logger.error('❌ Migration failed', error);
+        this.logger.error(error, '❌ Migration failed');
         throw error;
       }
 
       this.logger.log('🎯 Test migrations completed successfully');
     } catch (error) {
-      this.logger.error('❌ Test migration setup failed:', error);
+      this.logger.error(error, '❌ Test migration setup failed:');
       throw error;
     }
   }
