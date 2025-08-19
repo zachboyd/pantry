@@ -75,17 +75,19 @@ public final class SubscriptionService: SubscriptionServiceProtocol {
         switch result {
         case let .success(graphQLResult):
             if let errors = graphQLResult.errors {
-                Self.logger.error("❌ Subscription errors: \(errors)")
+                Self.logger.error("❌ GraphQL subscription errors: \(errors)")
                 return
             }
 
             if let userData = graphQLResult.data?.userUpdated {
                 Self.logger.info("📥 Received user update: \(userData.fragments.userFields.id)")
                 userHandler.handleUserUpdate(userData.fragments.userFields)
+            } else {
+                Self.logger.info("📭 Subscription result with no data")
             }
 
         case let .failure(error):
-            Self.logger.error("❌ Subscription error: \(error)")
+            Self.logger.error("❌ Subscription connection error: \(error)")
         }
     }
 
@@ -105,7 +107,6 @@ public final class SubscriptionService: SubscriptionServiceProtocol {
         // Use ApolloClient to start the real subscription
         userSubscriptionCancellable = apolloClient.subscribe(subscription: subscription) { [weak self] result in
             Task { @MainActor in
-                Self.logger.info("📥 Real subscription data received!")
                 self?.handleUserUpdateSubscription(result: result)
             }
         }
