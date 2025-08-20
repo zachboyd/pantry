@@ -2,12 +2,12 @@
 @preconcurrency import ApolloAPI
 import Foundation
 
-// MARK: - User Update Subscription Handler
+// MARK: - User Update Handler
 
 // This handler must be nonisolated to work properly with ApolloStore's dispatch queue
 // Per Apollo iOS developer guidance (GitHub issue #3552), withinReadWriteTransaction
 // should be called from a nonisolated context to avoid swift_task_isCurrentExecutorImpl crashes
-public final class UserUpdateSubscriptionHandler {
+public final class UserUpdateHandler {
     private let store: ApolloStore
     private static let logger = Logger(category: "SubscriptionService")
 
@@ -15,7 +15,7 @@ public final class UserUpdateSubscriptionHandler {
         self.store = store
     }
 
-    public nonisolated func handleUserUpdate(_ userFields: JeevesGraphQL.UserFields) {
+    public nonisolated func updateCache(with userFields: JeevesGraphQL.UserFields) {
         Self.logger.info("🔄 Processing user update for: \(userFields.id)")
 
         // Log the update details
@@ -59,36 +59,77 @@ public final class UserUpdateSubscriptionHandler {
 public final class SubscriptionService: SubscriptionServiceProtocol {
     private let store: ApolloStore
     private let apolloClient: ApolloClient
-    private let userHandler: UserUpdateSubscriptionHandler
+    private let userUpdateHandler: UserUpdateHandler
     private var userSubscriptionCancellable: Cancellable?
     private static let logger = Logger(category: "SubscriptionService")
 
     public init(store: ApolloStore, apolloClient: ApolloClient) {
         self.store = store
         self.apolloClient = apolloClient
-        userHandler = UserUpdateSubscriptionHandler(store: store)
+        userUpdateHandler = UserUpdateHandler(store: store)
     }
 
-    public func handleUserUpdateSubscription(
-        result: Result<GraphQLResult<JeevesGraphQL.UserUpdatedSubscription.Data>, Error>,
+    // MARK: - Generic Subscription Result Handling
+
+    /// Generic handler for all subscription results with common error handling
+    /// - Parameters:
+    ///   - result: The subscription result from Apollo
+    ///   - subscriptionName: Name of the subscription for logging
+    ///   - dataHandler: Closure to handle valid data
+    private func processSubscriptionResult<T>(
+        _ result: Result<GraphQLResult<T>, Error>,
+        subscriptionName: String,
+        dataHandler: (T) -> Void
     ) {
         switch result {
         case let .success(graphQLResult):
+            // Common error handling for all subscriptions
             if let errors = graphQLResult.errors {
-                Self.logger.error("❌ GraphQL subscription errors: \(errors)")
+                Self.logger.error("❌ \(subscriptionName) GraphQL errors: \(errors)")
                 return
             }
 
-            if let userData = graphQLResult.data?.userUpdated {
-                Self.logger.info("📥 Received user update: \(userData.fragments.userFields.id)")
-                userHandler.handleUserUpdate(userData.fragments.userFields)
+            // Call specific handler only if data exists
+            if let data = graphQLResult.data {
+                dataHandler(data)
             } else {
-                Self.logger.info("📭 Subscription result with no data")
+                Self.logger.info("📭 \(subscriptionName) result with no data")
             }
 
         case let .failure(error):
-            Self.logger.error("❌ Subscription connection error: \(error)")
+            Self.logger.error("❌ \(subscriptionName) connection error: \(error)")
         }
+    }
+
+    // MARK: - Specific Subscription Handlers
+
+    /// Handles UserUpdated subscription results
+    /// This method now only deals with valid UserUpdated data
+    private func processUserUpdate(_ data: JeevesGraphQL.UserUpdatedSubscription.Data) {
+        let userData = data.userUpdated
+        Self.logger.info("📥 Received user update: \(userData.fragments.userFields.id)")
+        userUpdateHandler.updateCache(with: userData.fragments.userFields)
+    }
+
+    // NOTE: Future subscription handlers will follow the same pattern:
+    // - Create a specific data processing method (e.g., processHouseholdUpdate)
+    // - Create a specific handler class if needed (e.g., HouseholdUpdateHandler)
+    // - Use processSubscriptionResult for consistent error handling
+    // Example:
+    // private func processHouseholdUpdate(_ data: JeevesGraphQL.HouseholdUpdatedSubscription.Data) {
+    //     let householdData = data.householdUpdated
+    //     householdUpdateHandler.updateCache(with: householdData.fragments.householdFields)
+    // }
+
+    /// Public method for compatibility with existing subscription setup
+    public func didReceiveUserUpdateResult(
+        result: Result<GraphQLResult<JeevesGraphQL.UserUpdatedSubscription.Data>, Error>,
+    ) {
+        processSubscriptionResult(
+            result,
+            subscriptionName: "UserUpdated",
+            dataHandler: processUserUpdate,
+        )
     }
 
     // MARK: - SubscriptionServiceProtocol Implementation
@@ -107,7 +148,7 @@ public final class SubscriptionService: SubscriptionServiceProtocol {
         // Use ApolloClient to start the real subscription
         userSubscriptionCancellable = apolloClient.subscribe(subscription: subscription) { [weak self] result in
             Task { @MainActor in
-                self?.handleUserUpdateSubscription(result: result)
+                self?.didReceiveUserUpdateResult(result: result)
             }
         }
 
