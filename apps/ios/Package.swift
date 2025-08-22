@@ -32,6 +32,7 @@ let package = Package(
             resources: [
                 .process("JeevesKit/Localization"),
                 .copy("JeevesKit/GraphQL/Operations"),
+                .process("JeevesKit/Resources"),
             ],
         ),
         .testTarget(

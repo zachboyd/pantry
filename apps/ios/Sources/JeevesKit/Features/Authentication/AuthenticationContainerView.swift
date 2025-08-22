@@ -16,31 +16,38 @@ public struct AuthenticationContainerView: View {
         Self.logger.info("🔐 AuthenticationContainerView initialized")
     }
 
-    @State private var showSignUp = false
+    enum AuthMode {
+        case method // Choose authentication method
+        case passwordSignIn
+        case passwordSignUp
+    }
+
+    @State private var authMode: AuthMode = .method
     @State private var email = ""
 
     public var body: some View {
         NavigationStack {
             ZStack {
-                if showSignUp {
-                    SignUpView(
-                        email: $email,
-                        onSignInTap: {
+                switch authMode {
+                case .method:
+                    AuthenticationMethodView(
+                        onEmailPasswordSelected: { isSignUp in
                             withAnimation(.easeInOut(duration: 0.3)) {
-                                showSignUp = false
+                                authMode = isSignUp ? .passwordSignUp : .passwordSignIn
                             }
                         },
-                        onSignUpSuccess: {
+                        onSocialAuthSuccess: {
                             await handleAuthenticationSuccess()
                         },
                     )
                     .transition(.opacity)
-                } else {
-                    SignInView(
+
+                case .passwordSignIn:
+                    PasswordSignInView(
                         email: $email,
                         onSignUpTap: {
                             withAnimation(.easeInOut(duration: 0.3)) {
-                                showSignUp = true
+                                authMode = .passwordSignUp
                             }
                         },
                         onSignInSuccess: {
@@ -48,6 +55,44 @@ public struct AuthenticationContainerView: View {
                         },
                     )
                     .transition(.opacity)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    authMode = .method
+                                }
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(.accentColor)
+                            }
+                        }
+                    }
+
+                case .passwordSignUp:
+                    PasswordSignUpView(
+                        email: $email,
+                        onSignInTap: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                authMode = .passwordSignIn
+                            }
+                        },
+                        onSignUpSuccess: {
+                            await handleAuthenticationSuccess()
+                        },
+                    )
+                    .transition(.opacity)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    authMode = .method
+                                }
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(.accentColor)
+                            }
+                        }
+                    }
                 }
             }
         }

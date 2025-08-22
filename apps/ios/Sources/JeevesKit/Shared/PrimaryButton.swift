@@ -59,22 +59,22 @@ public enum ButtonStyleVariant {
 
 // MARK: - Base Button Component
 
+/// Constants for button styling
+private enum ButtonConstants {
+    static let height: CGFloat = 54
+    static let cornerRadius: CGFloat = height / 2
+    static let contentSpacing: CGFloat = 8
+    static let disabledOpacity: CGFloat = 0.6
+    static let loadingScaleFactor: CGFloat = 0.8
+}
+
 /// Base button component that provides common functionality for all button styles
-struct BaseButton: View {
-    // MARK: - Constants
-
-    private enum Constants {
-        static let height: CGFloat = 54
-        static let cornerRadius: CGFloat = height / 2
-        static let contentSpacing: CGFloat = 8
-        static let disabledOpacity: CGFloat = 0.6
-        static let loadingScaleFactor: CGFloat = 0.8
-    }
-
+struct BaseButton<IconView: View>: View {
     // MARK: - Properties
 
     private let title: String
     private let icon: String?
+    private let customIcon: IconView?
     private let style: ButtonStyleVariant
     private let isLoading: Bool
     private let isDisabled: Bool
@@ -85,13 +85,32 @@ struct BaseButton: View {
     init(
         _ title: String,
         icon: String? = nil,
+        customIcon _: IconView? = nil,
+        style: ButtonStyleVariant,
+        isLoading: Bool = false,
+        isDisabled: Bool = false,
+        action: @escaping () -> Void
+    ) where IconView == EmptyView {
+        self.title = title
+        self.icon = icon
+        customIcon = nil
+        self.style = style
+        self.isLoading = isLoading
+        self.isDisabled = isDisabled
+        self.action = action
+    }
+
+    init(
+        _ title: String,
+        customIcon: IconView,
         style: ButtonStyleVariant,
         isLoading: Bool = false,
         isDisabled: Bool = false,
         action: @escaping () -> Void
     ) {
         self.title = title
-        self.icon = icon
+        icon = nil
+        self.customIcon = customIcon
         self.style = style
         self.isLoading = isLoading
         self.isDisabled = isDisabled
@@ -108,30 +127,32 @@ struct BaseButton: View {
             }
         }
         .disabled(isDisabled || isLoading)
-        .opacity((isDisabled || isLoading) ? Constants.disabledOpacity : 1.0)
+        .opacity((isDisabled || isLoading) ? ButtonConstants.disabledOpacity : 1.0)
     }
 
     // MARK: - View Components
 
     @ViewBuilder
     private var backgroundLayer: some View {
-        RoundedRectangle(cornerRadius: Constants.cornerRadius)
+        RoundedRectangle(cornerRadius: ButtonConstants.cornerRadius)
             .fill(style.backgroundColor)
-            .frame(height: Constants.height)
+            .frame(height: ButtonConstants.height)
 
         if let strokeColor = style.strokeColor {
-            RoundedRectangle(cornerRadius: Constants.cornerRadius)
+            RoundedRectangle(cornerRadius: ButtonConstants.cornerRadius)
                 .stroke(strokeColor, lineWidth: style.strokeWidth)
-                .frame(height: Constants.height)
+                .frame(height: ButtonConstants.height)
         }
     }
 
     private var contentLayer: some View {
-        HStack(spacing: Constants.contentSpacing) {
+        HStack(spacing: ButtonConstants.contentSpacing) {
             if isLoading, style == .primary {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: style.foregroundColor))
-                    .scaleEffect(Constants.loadingScaleFactor)
+                    .scaleEffect(ButtonConstants.loadingScaleFactor)
+            } else if let customIcon {
+                customIcon
             } else if let icon {
                 Image(systemName: icon)
                     .foregroundColor(style.foregroundColor)
@@ -192,13 +213,14 @@ public struct PrimaryButton: View {
 }
 
 /// A secondary button component with bordered style
-public struct SecondaryButton: View {
+public struct SecondaryButton<IconView: View>: View {
     private let title: String
     private let icon: String?
+    private let customIcon: IconView?
     private let action: () -> Void
     private let isDisabled: Bool
 
-    /// Creates a secondary button with the specified configuration
+    /// Creates a secondary button with an SF Symbol icon
     /// - Parameters:
     ///   - title: The button's title text
     ///   - icon: Optional SF Symbol name to display
@@ -209,21 +231,51 @@ public struct SecondaryButton: View {
         icon: String? = nil,
         isDisabled: Bool = false,
         action: @escaping () -> Void
-    ) {
+    ) where IconView == EmptyView {
         self.title = title
         self.icon = icon
+        customIcon = nil
+        self.isDisabled = isDisabled
+        self.action = action
+    }
+
+    /// Creates a secondary button with a custom icon view
+    /// - Parameters:
+    ///   - title: The button's title text
+    ///   - customIcon: Custom icon view to display
+    ///   - isDisabled: Whether the button should be disabled
+    ///   - action: The action to perform when tapped
+    public init(
+        _ title: String,
+        customIcon: IconView,
+        isDisabled: Bool = false,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        icon = nil
+        self.customIcon = customIcon
         self.isDisabled = isDisabled
         self.action = action
     }
 
     public var body: some View {
-        BaseButton(
-            title,
-            icon: icon,
-            style: .secondary,
-            isDisabled: isDisabled,
-            action: action,
-        )
+        if let customIcon {
+            BaseButton(
+                title,
+                customIcon: customIcon,
+                style: .secondary,
+                isDisabled: isDisabled,
+                action: action,
+            )
+        } else {
+            BaseButton<EmptyView>(
+                title,
+                icon: icon,
+                style: .secondary,
+                isDisabled: isDisabled,
+                action: action
+            )
+        }
     }
 }
 

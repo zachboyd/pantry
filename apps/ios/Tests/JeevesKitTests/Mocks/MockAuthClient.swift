@@ -127,4 +127,28 @@ final class MockAuthClient: AuthClientProtocol {
 
         return try await getSession()
     }
+
+    func completeSocialSignIn(provider: String, token: String?, code _: String?) async throws -> AuthResponse {
+        signInCallCount += 1
+
+        if shouldFailSignIn {
+            throw AuthClientError.unauthorized
+        }
+
+        let user = mockUser ?? APIUser(
+            id: "test_social_user_id",
+            email: "\(provider)_user@example.com",
+            name: "Test \(provider.capitalized) User",
+            image: nil,
+            emailVerified: true,
+            createdAt: ISO8601DateFormatter().string(from: Date()),
+            updatedAt: ISO8601DateFormatter().string(from: Date()),
+        )
+
+        currentAuthUser = user
+        mockToken = token ?? "test_social_token"
+        hasCookies = true
+
+        return AuthResponse(user: user, token: mockToken ?? "")
+    }
 }

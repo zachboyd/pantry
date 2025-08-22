@@ -15,6 +15,7 @@ public protocol AuthServiceProtocol: AnyObject, Sendable {
 
     func signIn(email: String, password: String) async throws -> String
     func signUp(email: String, password: String) async throws -> String
+    func signInWithSocial(provider: String) async throws -> String
     func signOut() async throws
     func validateCurrentSession() async throws -> Bool
     func validateSession() async -> Bool
@@ -36,6 +37,7 @@ public class AuthService: AuthServiceProtocol {
     private let authTokenManager: AuthTokenManager
     private let _permissionService: PermissionServiceProtocol?
     private let apolloClient: ApolloClient?
+    private let socialAuthHandler: SocialAuthenticationHandler
 
     // Published state for SwiftUI integration
     public var currentAuthUser: APIUser?
@@ -71,6 +73,7 @@ public class AuthService: AuthServiceProtocol {
         self.authTokenManager = authTokenManager
         self.apolloClient = apolloClient
         _permissionService = permissionService
+        socialAuthHandler = SocialAuthenticationHandler()
 
         // AuthService initializing
 
@@ -278,6 +281,91 @@ public class AuthService: AuthServiceProtocol {
 
             Self.logger.error("❌ Sign up failed: \(error)")
             throw AuthServiceError.signUpFailed(error)
+        }
+    }
+
+    /// Sign in with social provider (Google, etc.)
+    public func signInWithSocial(provider: String) async throws -> String {
+        Self.logger.info("🌐 Social sign-in initiated for provider: \(provider)")
+
+        await MainActor.run {
+            isLoading = true
+            lastError = nil
+        }
+
+        do {
+            // Use ASWebAuthenticationSession for OAuth flow
+            let response = try await socialAuthHandler.authenticate(
+                provider: provider,
+                callbackScheme: "jeeves", // This should match your app's URL scheme
+            )
+
+            // Complete the sign-in with the backend using the OAuth response
+            let authResponse = try await authClient.completeSocialSignIn(
+                provider: provider,
+                token: response.token,
+                code: response.code,
+            )
+
+            // Save authentication token if provided
+            if !authResponse.token.isEmpty {
+                do {
+                    let authToken = AuthToken(
+                        accessToken: authResponse.token,
+                        refreshToken: nil,
+                        userId: LowercaseUUID(uuidString: authResponse.user.id),
+                        expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 7), // Default to 7 days
+                    )
+                    try authTokenManager.saveToken(authToken)
+                    Self.logger.info("✅ Social auth token saved to Keychain")
+
+                    // Set the token in API client
+                    authClient.setBetterAuthSessionToken(authResponse.token)
+                } catch {
+                    Self.logger.warning("⚠️ Failed to save social auth token: \(error)")
+                    // Continue - not critical
+                }
+            }
+
+            await MainActor.run {
+                currentAuthUser = authResponse.user
+                isAuthenticated = true
+                isLoading = false
+            }
+
+            // Store user data for offline use
+            do {
+                try authTokenManager.saveUserData(AuthUserData(from: authResponse.user))
+                Self.logger.info("✅ Social auth user data saved")
+            } catch {
+                Self.logger.warning("⚠️ Failed to save social auth user data: \(error)")
+            }
+
+            // Start session validation
+            startSessionValidation()
+
+            Self.logger.info("✅ Social sign-in successful for \(provider)")
+            return authResponse.user.id
+
+        } catch {
+            await MainActor.run {
+                // Check if it's a cancellation error
+                if let authError = error as? AuthServiceError,
+                   case let .unknownError(underlyingError) = authError,
+                   let socialError = underlyingError as? SocialAuthError,
+                   case .userCanceled = socialError
+                {
+                    lastError = L("auth.error.social_signin_canceled")
+                } else {
+                    lastError = L("auth.error.social_signin_failed")
+                }
+                isLoading = false
+                isAuthenticated = false
+                currentAuthUser = nil
+            }
+
+            Self.logger.error("❌ Social sign-in failed: \(error)")
+            throw error
         }
     }
 

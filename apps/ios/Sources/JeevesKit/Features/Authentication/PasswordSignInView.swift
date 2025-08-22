@@ -1,14 +1,14 @@
 /*
- SignInView.swift
+ PasswordSignInView.swift
  JeevesKit
 
- Sign in form with email and password
+ Password-based sign in form with email and password
  */
 
 import SwiftUI
 
-/// Sign in view with form validation
-public struct SignInView: View {
+/// Password-based sign in view with form validation
+public struct PasswordSignInView: View {
     private static let logger = Logger.auth
 
     @Binding var email: String
@@ -33,7 +33,7 @@ public struct SignInView: View {
         _email = email
         self.onSignUpTap = onSignUpTap
         self.onSignInSuccess = onSignInSuccess
-        Self.logger.info("🔑 SignInView initialized")
+        Self.logger.info("🔑 PasswordSignInView initialized")
     }
 
     private var isFormValid: Bool {
@@ -119,7 +119,7 @@ public struct SignInView: View {
                 Text(alertMessage)
             }
             .onAppear {
-                Self.logger.info("📱 SignInView appeared")
+                Self.logger.info("📱 PasswordSignInView appeared")
             }
         }
     }
@@ -171,5 +171,5 @@ public struct SignInView: View {
 
 #Preview {
     @Previewable @State var email = ""
-    SignInView(email: $email, onSignUpTap: {}, onSignInSuccess: {})
+    PasswordSignInView(email: $email, onSignUpTap: {}, onSignInSuccess: {})
 }

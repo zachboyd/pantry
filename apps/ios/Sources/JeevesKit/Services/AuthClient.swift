@@ -81,6 +81,13 @@ public protocol AuthClientProtocol: Sendable {
 
     /// Validate existing session (cookie-based)
     func validateExistingSession() async throws -> SessionResponse
+
+    /// Complete social sign-in after OAuth flow
+    /// - Parameters:
+    ///   - provider: The social provider (e.g., "google")
+    ///   - token: Optional token from OAuth response
+    ///   - code: Optional authorization code from OAuth response
+    func completeSocialSignIn(provider: String, token: String?, code: String?) async throws -> AuthResponse
 }
 
 // MARK: - Auth Client Errors
@@ -494,6 +501,59 @@ public final class AuthClient: AuthClientProtocol {
 
         // Try to get session using cookies
         return try await getSession()
+    }
+
+    public func completeSocialSignIn(provider: String, token: String?, code: String?) async throws -> AuthResponse {
+        Self.logger.info("Completing social sign-in for provider: \(provider)")
+
+        // If we have a token, try to validate the session
+        if let token {
+            sessionToken = token
+
+            // Try to get session info with the token
+            do {
+                let sessionResponse = try await getSession()
+
+                // Create AuthResponse from SessionResponse
+                let authResponse = AuthResponse(
+                    user: sessionResponse.user,
+                    token: token,
+                )
+
+                currentAuthUser = sessionResponse.user
+
+                Self.logger.info("Social sign-in completed successfully")
+                return authResponse
+            } catch {
+                Self.logger.error("Failed to complete social sign-in: \(error)")
+                throw error
+            }
+        }
+
+        // If we have a code, exchange it for a token (OAuth authorization code flow)
+        if code != nil {
+            // This would typically exchange the code for a token with the backend
+            // For now, we'll just try to get the session
+            do {
+                let sessionResponse = try await getSession()
+
+                // Create AuthResponse from SessionResponse
+                let authResponse = AuthResponse(
+                    user: sessionResponse.user,
+                    token: sessionToken ?? "",
+                )
+
+                currentAuthUser = sessionResponse.user
+
+                Self.logger.info("Social sign-in completed successfully with code exchange")
+                return authResponse
+            } catch {
+                Self.logger.error("Failed to complete social sign-in with code: \(error)")
+                throw error
+            }
+        }
+
+        throw AuthClientError.unknownError("No token or code provided for social sign-in")
     }
 
     // MARK: - Private Methods

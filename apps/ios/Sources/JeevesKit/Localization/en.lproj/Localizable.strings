@@ -70,6 +70,10 @@
 "auth.sign_in_google" = "Sign in with Google";
 "auth.sign_in_apple" = "Sign in with Apple";
 "auth.or_sign_in_email" = "Or sign in with email";
+"auth.signin_with_email" = "Sign in with Email";
+"auth.create_new_account" = "Create New Account";
+"auth.or" = "OR";
+"auth.welcome.subtitle" = "Choose how you'd like to sign in";
 "auth.terms_of_service" = "Terms of Service";
 "auth.privacy_policy" = "Privacy Policy";
 "auth.agreement_prefix" = "By signing up, you agree to our";
@@ -81,6 +85,8 @@
 "auth.error.invalid_credentials" = "Invalid email or password";
 "auth.error.email_exists" = "An account with this email already exists";
 "auth.error.general" = "Authentication failed. Please try again.";
+"auth.error.social_signin_failed" = "Social sign-in failed. Please try again.";
+"auth.error.social_signin_canceled" = "Sign-in was canceled";
 
 // MARK: - Password Requirements
 "password.requirement.length" = "At least %d characters";
