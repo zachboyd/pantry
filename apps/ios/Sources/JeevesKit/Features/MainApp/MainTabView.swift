@@ -3,7 +3,7 @@ import SwiftUI
 /// Main tab view with household context
 public struct MainTabView: View {
     @Environment(\.appState) private var appState
-    @Environment(\.sizeClassInfo) private var sizeClassInfo
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var selectedTab: MainTab = .pantry
 
     // Separate navigation paths for each tab with @Bindable for improved iOS 18 navigation
@@ -21,9 +21,6 @@ public struct MainTabView: View {
     @State private var showingCreateHousehold = false
     @State private var showingJoinHousehold = false
 
-    // iOS 26 liquid glass fix - force single re-render after appearance
-    @State private var hasAppearedOnce = false
-
     public init() {}
 
     public var body: some View {
@@ -33,7 +30,7 @@ public struct MainTabView: View {
                     showingCreateHousehold: $showingCreateHousehold,
                     showingJoinHousehold: $showingJoinHousehold,
                 )
-            } else if DeviceType.isiPad, sizeClassInfo.isRegular {
+            } else if DeviceType.isiPad, horizontalSizeClass == .regular {
                 // iPad split view layout
                 iPadLayout
             } else {
@@ -41,10 +38,6 @@ public struct MainTabView: View {
                 iPhoneLayout
             }
         }
-        .withSizeClassInfo()
-        // iOS 26 liquid glass fix: Force exactly one re-render after first appearance
-        // This is the minimal approach that actually works for the glass effect bug
-        .id(hasAppearedOnce ? "rendered" : "initial")
         .onReceive(NotificationCenter.default.publisher(for: .householdChanged)) { _ in
             // Reset to first tab and all navigation paths when household changes
             selectedTab = .pantry
@@ -52,14 +45,6 @@ public struct MainTabView: View {
             chatPath = NavigationPath()
             listsPath = NavigationPath()
             settingsPath = NavigationPath()
-        }
-        .onAppear {
-            // Only trigger once, with a minimal delay to ensure glass effects are initialized
-            if !hasAppearedOnce {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    hasAppearedOnce = true
-                }
-            }
         }
         .sheet(isPresented: $showingCreateHousehold) {
             HouseholdCreationView()
